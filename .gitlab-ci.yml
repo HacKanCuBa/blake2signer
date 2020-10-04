@@ -1,0 +1,55 @@
+image: "docker:19.03.13"
+
+stages:
+  - static_analysis
+  - test
+  - build
+  - integration_test
+  - security_analysis
+  - publish
+
+python lint:
+  stage: static_analysis
+  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.0.10"
+  variables:
+    INVOKE_RUN_SHELL: /bin/ash
+    POETRY_VIRTUALENVS_CREATE: 0
+  before_script:
+    - poetry install
+  script:
+    - inv reformat
+    - changes="$(git status --porcelain=v2 2>/dev/null)"
+    - if [ -n "$changes" ]; then printf "Code is not properly formatted\n%s" "$changes"; exit 1; fi
+    - inv lint
+  except:
+    - main
+    - tags
+    - feature/deploy
+
+packages security:
+  stage: static_analysis
+  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.0.10"
+  before_script:
+    - pip install safety
+  script:
+    - poetry export -f requirements.txt -o requirements.txt --dev
+    - safety check --full-report -r requirements.txt
+  except:
+    - main
+    - tags
+    - feature/deploy
+
+tests:
+  stage: test
+  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.0.10"
+  variables:
+    INVOKE_RUN_SHELL: /bin/ash
+    POETRY_VIRTUALENVS_CREATE: 0
+  before_script:
+    - poetry install
+  script:
+    - inv tests
+  except:
+    - main
+    - tags
+    - feature/deploy

@@ -1,0 +1,24 @@
+[flake8]
+rst-directives =
+    # These are sorted alphabetically - but that does not matter
+    autosummary,data,currentmodule,deprecated,
+    glossary,moduleauthor,plot,testcode,
+    versionadded,versionchanged,
+
+rst-roles =
+    attr,class,func,meth,mod,obj,ref,term,
+    # C programming language:
+    c:member,
+    # Python programming language:
+    py:func,py:mod,
+
+max-line-length=89
+show-source=true
+enable-extensions=G
+import-order-style=pycharm
+
+# Maximum Cyclomatic Complexity allowed
+max-complexity = 5
+
+# Set the application name
+application-import-names=blake2signer

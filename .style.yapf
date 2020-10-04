@@ -1,0 +1,195 @@
+# The last version is 0.30.0
+[style]
+based_on_style = pep8
+
+# Align closing bracket with visual indentation.
+ALIGN_CLOSING_BRACKET_WITH_VISUAL_INDENT = True
+
+# Allow dictionary keys to exist on multiple lines. For example:
+#
+# x = {
+#     ('this is the first element of a tuple',
+#      'this is the second element of a tuple'):
+#          value,
+# }
+ALLOW_MULTILINE_DICTIONARY_KEYS = True
+
+# Allow splits before the dictionary value.
+ALLOW_SPLIT_BEFORE_DICT_VALUE = True
+
+# Allow splitting before a default / named assignment in an argument list.
+ALLOW_SPLIT_BEFORE_DEFAULT_OR_NAMED_ASSIGNS = True
+
+# Let spacing indicate operator precedence. For example:
+# a = 1 * 2 + 3 / 4
+# b = 1 / 2 - 3 * 4
+# c = (1 + 2) * (3 - 4)
+# d = (1 - 2) / (3 + 4)
+# e = 1 * 2 - 3
+# f = 1 + 2 + 3 + 4
+#
+# will be formatted as follows to indicate precedence:
+#
+# a = 1*2 + 3/4
+# b = 1/2 - 3*4
+# c = (1+2) * (3-4)
+# d = (1-2) / (3+4)
+# e = 1*2 - 3
+# f = 1 + 2 + 3 + 4
+# We should review this setting after flake8 or pycodestyle
+# is updated regarding issue with E226 (currently setting it
+# raises E226).
+ARITHMETIC_PRECEDENCE_INDICATION = False
+
+# Insert a blank line before a 'def' or 'class' immediately nested
+# within another 'def' or 'class'. For example:
+#
+#   class Foo:
+#                      # <------ this blank line
+#     def method():
+#       ...
+BLANK_LINE_BEFORE_NESTED_CLASS_OR_DEF = True
+
+# Insert a blank line before a module docstring.
+BLANK_LINE_BEFORE_MODULE_DOCSTRING = False
+
+# Do not split consecutive brackets. Only relevant when
+# dedent_closing_brackets is set. For example:
+#
+#    call_func_that_takes_a_dict(
+#        {
+#            'key1': 'value1',
+#            'key2': 'value2',
+#        }
+#    )
+#
+# would reformat to:
+#
+#    call_func_that_takes_a_dict({
+#        'key1': 'value1',
+#        'key2': 'value2',
+#    })
+COALESCE_BRACKETS = True
+
+# The column limit.
+COLUMN_LIMIT = 89
+
+# Put closing brackets on a separate line, dedented, if the bracketed
+# expression can't fit in a single line. Applies to all kinds of
+# brackets, including function definitions and calls. For example:
+#
+#   config = {
+#       'key1': 'value1',
+#       'key2': 'value2',
+#   }        # <--- this bracket is dedented and on a separate line
+#
+#   time_series = self.remote_client.query_entity_counters(
+#       entity='dev3246.region1',
+#       key='dns.query_latency_tcp',
+#       transform=Transformation.AVERAGE(window=timedelta(seconds=60)),
+#       start_ts=now()-timedelta(days=3),
+#       end_ts=now(),
+#   )        # <--- this bracket is dedented and on a separate line
+DEDENT_CLOSING_BRACKETS = True
+
+# Place each dictionary entry onto its own line.
+EACH_DICT_ENTRY_ON_SEPARATE_LINE = True
+
+# Respect EACH_DICT_ENTRY_ON_SEPARATE_LINE even if the line is shorter
+# than COLUMN_LIMIT.
+FORCE_MULTILINE_DICT=True
+
+# The i18n function call names. The presence of this function stops
+# reformattting on that line, because the string it has cannot be moved
+# away from the i18n comment.
+I18N_FUNCTION_CALL = ["_", "ugettext", "gettext"]
+
+# Indent the dictionary value if it cannot fit on the same line as the
+# dictionary key. For example:
+#
+#   config = {
+#       'key1':
+#           'value1',
+#       'key2': value1 +
+#               value2,
+#   }
+INDENT_DICTIONARY_VALUE = True
+
+# Insert a space between the ending comma and closing bracket of a list,
+# etc.
+SPACE_BETWEEN_ENDING_COMMA_AND_CLOSING_BRACKET = False
+
+# Set to True to prefer spaces around the assignment operator for
+# default or keyword arguments
+SPACES_AROUND_DEFAULT_OR_NAMED_ASSIGN = False
+
+# The number of spaces required before a trailing comment.
+SPACES_BEFORE_COMMENT = 2
+
+# Split before arguments if the argument list is terminated by a
+# comma
+SPLIT_ARGUMENTS_WHEN_COMMA_TERMINATED = True
+
+# If a comma separated list (dict, list, tuple, or function def) is on
+# a line that is too long, split such that all elements are on a
+# single line.
+SPLIT_ALL_COMMA_SEPARATED_VALUES = False
+
+# Variation on SPLIT_ALL_COMMA_SEPARATED_VALUES in which, if a subexpression
+# with a comma fits in its starting line, then the subexpression is not split.
+# This avoids splits like the one for b in this code:
+#
+# abcdef(
+#     aReallyLongThing: int,
+#     b: [Int,
+#         Int])
+#
+# With the new knob this is split as:
+#
+# abcdef(
+#     aReallyLongThing: int,
+#     b: [Int, Int])
+SPLIT_ALL_TOP_LEVEL_COMMA_SEPARATED_VALUES = False
+
+# Set to True to prefer splitting before +, -, *, /, //, or @
+# rather than after.
+SPLIT_BEFORE_ARITHMETIC_OPERATOR = True
+
+# Set to True to prefer splitting before '&', '|' or '^' rather than
+# after.
+SPLIT_BEFORE_BITWISE_OPERATOR = True
+
+# Split before the closing bracket if a list or dict literal doesn't fit
+# on a single line.
+SPLIT_BEFORE_CLOSING_BRACKET = True
+
+# Split before the '.' if we need to split a longer expression:
+# foo = ('This is a really long string: {}, {}, {}, {}'.format(a, b, c, d))
+# would reformat to something like:
+#  foo = ('This is a really long string: {}, {}, {}, {}'
+#         .format(a, b, c, d))
+SPLIT_BEFORE_DOT = True
+
+# Split after the opening paren which surrounds an expression if it doesn't fit
+# on a single line.
+SPLIT_BEFORE_EXPRESSION_AFTER_OPENING_PAREN = True
+
+# If an argument / parameter list is going to be split, then split
+# before the first argument.
+SPLIT_BEFORE_FIRST_ARGUMENT = True
+
+# For list comprehensions and generator expressions with multiple clauses.
+# For example:
+#
+# result = [
+#     a_var + b_var for a_var in xrange(1000) for b_var in xrange(1000)
+#     if a_var % b_var]
+#
+# would reformat to something like:
+#
+# result = [
+#     a_var + b_var
+#     for a_var in xrange(1000)
+#     for b_var in xrange(1000)
+#     if a_var % b_var]
+SPLIT_COMPLEX_COMPREHENSION = True
