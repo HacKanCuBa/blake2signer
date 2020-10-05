@@ -51,6 +51,8 @@ You can alternatively run `inv commit` to run all of the above and commit afterw
 
 If the linter complains about *code too complex*, run `inv cc -c` (or the long expression `inv cyclomatic-complexity --complex`) for more information.
 
+Create a changelog fragment using `scriv create` and write a short description of your changes in the correct category (added, changed, fixed, etc.).
+
 Your PR must include the necessary docstrings and unit tests so that coverage remains 100%.
 
 ### Releasing new versions
@@ -62,6 +64,8 @@ Once everything is ready for release, follow these steps:
 1. Create a new release branch from `develop`: `git flow release start <M.m.p>`
 1. Edit `pyproject.toml` and change `version` (you can use `poetry major|minor|patch` accordingly to one-up said version part).
 1. Edit `blake2signer/__init__.py` and change `__version__`: `__version__ = '<M.m.p>'`.
+1. Collect changelog fragments: `scriv collect`.
+1. Edit the changelog to properly indicate the version.
 1. Commit and push, create MR to `main`.
 1. Merge into `main`, create MR to `develop`.
 1. Merge into `develop`, create and push signed tag: `git tag -s <M.m.p>`.
