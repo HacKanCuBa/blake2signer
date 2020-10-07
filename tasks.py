@@ -129,7 +129,7 @@ def cyclomatic_complexity(ctx, complex_=False):
     ctx.run(f'{cmd} blake2signer', pty=True)
 
 
-@task(reformat, lint, tests, safety)
+@task(reformat, lint, tests, safety, aliases=['ci'])
 def commit(ctx, amend=False):
     """Run all pre-commit commands and then commit staged changes."""
     cmd = ['git', 'commit']

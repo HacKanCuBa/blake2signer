@@ -20,7 +20,7 @@ from .utils import b64encode
 from .utils import force_bytes
 
 
-class Blake2Serializer:
+class Blake2SerializerSigner:
     """Blake2 in keyed hashing mode for signing (optionally timestamped) data.
 
     It can handle data serialization, compression and encoding.
@@ -31,7 +31,7 @@ class Blake2Serializer:
     MIN_SECRET_SIZE: int = Blake2SignerBase.MIN_KEY_SIZE
     DEFAULT_DIGEST_SIZE: int = 16  # 16 bytes is good security/size tradeoff
 
-    COMPRESSION_FLAG: bytes = b'!'  # non-base64 symbol! (none of these [a-zA-Z0-9-_=])
+    COMPRESSION_FLAG: bytes = b'!'  # ascii non-base64 ([a-zA-Z0-9-_=]) symbol!
 
     __slots__ = (
         '_encoder',
@@ -174,17 +174,17 @@ class Blake2Serializer:
             raise DecodeError('data can not be decompressed')
 
     @staticmethod
-    def _encode(data: bytes) -> str:
+    def _encode(data: bytes) -> bytes:
         try:
-            return b64encode(data).decode()
+            return b64encode(data)
         except (ValueError, TypeError) as exc:
             raise EncodeError(exc) from exc
 
     @staticmethod
-    def _decode(data: str) -> bytes:
+    def _decode(data: typing.AnyStr) -> bytes:
         try:
             return b64decode(data)
-        except Exception:  # Expected excs are ValueError and TypeError
+        except (ValueError, TypeError):
             raise DecodeError('invalid base64 data')
 
     def _add_compression_flag(self, data: bytes) -> bytes:
@@ -193,19 +193,30 @@ class Blake2Serializer:
 
     def _is_compressed(self, data: bytes) -> bool:
         """Return True if given data is compressed, checking the compression flag."""
-        return data.startswith(self.COMPRESSION_FLAG, 0, 1)
+        return data.startswith(self.COMPRESSION_FLAG, 0, len(self.COMPRESSION_FLAG))
 
     def _remove_compression_flag(self, data: bytes) -> bytes:
         """Remove the compression flag from given data."""
         return data[len(self.COMPRESSION_FLAG):]
 
+    @staticmethod
+    def _signed_data_bytes(signed_data: typing.AnyStr) -> bytes:
+        """Force given signed data into bytes.
+
+        :raise DecodeError: Can't convert to bytes.
+        """
+        try:
+            return force_bytes(signed_data)
+        except Exception:
+            raise DecodeError('signed data can not be encoded to bytes')
+
     def dumps(self, data: typing.Any, *, use_compression: bool = False) -> str:
-        """Produce a string of signed serialized data.
+        """Serialize and sign data, optionally compressing and/or timestamping it.
 
         Data will be serialized to JSON and optionally compressed before being
-        signed. This means that the original data type may not be recoverable so
-        if you are using some custom class you will need to load it from basic
-        types.
+        signed. This means that data must be of any JSON serializable type: str,
+        int, list or dict, or a composition of those (tuples are unserialized as
+        lists).
 
         If `max_age` was specified then the stream will be timestamped.
         The stream is also salted by a cryptographically secure pseudorandom
@@ -241,13 +252,13 @@ class Blake2Serializer:
         else:
             compressed = serialized
 
-        signed = self._signer.sign(compressed)
+        encoded = self._encode(compressed)
 
-        encoded = self._encode(signed)
+        signed = self._signer.sign(encoded)
 
-        return encoded
+        return signed.decode()  # since everything is ascii chars this operation is safe
 
-    def loads(self, signed_data: str) -> typing.Any:
+    def loads(self, signed_data: typing.AnyStr) -> typing.Any:
         """Recover original data from a signed serialized string from :meth:`dumps`.
 
         If the data was compressed it will be decompressed before unserializing it.
@@ -261,7 +272,7 @@ class Blake2Serializer:
         know these parameters from beforehand: they won't live in the signed stream!
 
         The full flow is as follows, where optional actions are marked between brackets:
-        data -> decode -> check sig -> [check timestamp] -> [decompress] -> unserialize
+        data -> check sig -> [check timestamp] -> decode -> [decompress] -> unserialize
 
         :param signed_data: Signed data to unsign.
 
@@ -271,20 +282,22 @@ class Blake2Serializer:
 
         :return: Unserialized data.
         """
-        # Decoding before checking sig is not ideal but i.e. itsdangerous decodes
-        # the signature to verify it; OTOH Django does check before decoding.
-        # ToDo: check sig before decoding (requires some refactor)
-        decoded = self._decode(signed_data)
+        # Unfortunately I have to do this operation before checking the signature
+        # and there's no other way around it since the hashers only support
+        # bytes-like objects. Both itsdangerous and Django do this too.
+        signed_data_bytes = self._signed_data_bytes(signed_data)
 
         if isinstance(self._signer, Blake2Signer):
-            unsigned = self._signer.unsign(decoded)
+            unsigned = self._signer.unsign(signed_data_bytes)
         else:
-            unsigned = self._signer.unsign(decoded, max_age=self._max_age)
+            unsigned = self._signer.unsign(signed_data_bytes, max_age=self._max_age)
 
-        if self._is_compressed(unsigned):
-            decompressed = self._decompress(self._remove_compression_flag(unsigned))
+        decoded = self._decode(unsigned)
+
+        if self._is_compressed(decoded):
+            decompressed = self._decompress(self._remove_compression_flag(decoded))
         else:
-            decompressed = unsigned
+            decompressed = decoded
 
         unserizalized = self._unserialize(decompressed)
 

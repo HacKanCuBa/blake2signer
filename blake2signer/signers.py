@@ -2,21 +2,21 @@
 
 import typing
 from abc import ABC
-from abc import abstractmethod
 from dataclasses import dataclass
 from datetime import timedelta
 from enum import Enum
 from hashlib import blake2b
 from hashlib import blake2s
 from secrets import compare_digest
-from secrets import token_bytes
+from secrets import token_urlsafe
 from time import time
 
 from .errors import DecodeError
 from .errors import ExpiredSignatureError
 from .errors import InvalidOptionError
 from .errors import InvalidSignatureError
-from .utils import force_bytes
+from .utils import b64decode
+from .utils import b64encode
 
 
 @dataclass(frozen=True)
@@ -64,6 +64,8 @@ class Blake2SignerBase(ABC):
     MIN_KEY_SIZE: int = 16
     MIN_DIGEST_SIZE: int = 8
 
+    SEPARATOR: bytes = b'.'  # ascii non-base64 ([a-zA-Z0-9-_=]) symbol!
+
     def __init__(
         self,
         key: bytes,
@@ -92,12 +94,7 @@ class Blake2SignerBase(ABC):
         :raise InvalidOptionError: A parameter is out of bounds.
         """
         self._hasher: typing.Union[typing.Type[blake2b], typing.Type[blake2s]]
-        if hasher is self.Hashers.blake2b:
-            self._hasher = blake2b
-        else:
-            self._hasher = blake2s
-
-        key, person = force_bytes(key), force_bytes(person)
+        self._hasher = blake2b if hasher is self.Hashers.blake2b else blake2s
 
         if not (self.MIN_KEY_SIZE <= len(key) <= self._hasher.MAX_KEY_SIZE):
             raise InvalidOptionError(
@@ -133,52 +130,64 @@ class Blake2SignerBase(ABC):
         """Get the salt size."""
         return self._hasher.SALT_SIZE
 
-    @property
-    def signature_size(self) -> int:
-        """Get the signature size/length."""
-        return self._hasher_options['digest_size']
-
     def _generate_salt(self) -> bytes:
         """Generate a cryptographically secure pseudorandom salt."""
-        return token_bytes(self.salt_size)
+        # Generate an encoded salt to use it as is so we don't have to deal with
+        # decoding it when unsigning. The only downside is that we loose a few
+        # bits but it's OK since we are using the maximum allowed size..
+        return token_urlsafe(self.salt_size).encode()[:self.salt_size]  # Trim excess
 
-    @staticmethod
-    def _compose(*, salt: bytes, signature: bytes, data: bytes) -> bytes:
+    def _compose(self, parts: SignedDataParts) -> bytes:
         """Compose signed data parts into a single stream."""
-        return salt + signature + data
+        return parts.salt + parts.signature + self.SEPARATOR + parts.data
 
     def _decompose(self, signed_data: bytes) -> SignedDataParts:
         """Decompose a signed data stream into its parts.
 
         :raise DecodeError: Invalid signed data.
         """
-        if len(signed_data) < (self.salt_size + self.signature_size):
-            raise DecodeError('signed data is too short')
+        if self.SEPARATOR not in signed_data:
+            raise DecodeError('separator not found in signed data')
 
-        salt = signed_data[:self.salt_size]
-        signature = signed_data[self.salt_size:self.salt_size + self.signature_size]
-        data = signed_data[self.salt_size + self.signature_size:]
+        composite_signature, data = signed_data.split(self.SEPARATOR, 1)
+
+        if len(composite_signature) < (self.salt_size + self.MIN_DIGEST_SIZE):
+            raise DecodeError('signature is too short')
+
+        salt = composite_signature[:self.salt_size]
+        signature = composite_signature[self.salt_size:]
 
         return SignedDataParts(data=data, salt=salt, signature=signature)
 
-    def _sign(self, *, salt: bytes, data: bytes) -> bytes:
-        """Sign given data using salt and all of the hasher options."""
-        signed_data = self._hasher(
+    def _signify(self, *, salt: bytes, data: bytes) -> bytes:
+        """Return signature for given data using salt and all of the hasher options.
+
+        The signature is base64 URL safe encoded.
+        """
+        signature = self._hasher(
             data,
             salt=salt,
             **self._hasher_options,
         ).digest()
 
-        return signed_data
+        return b64encode(signature)
 
     def _verify(self, parts: SignedDataParts) -> bool:
-        """Verify a signature.
+        """Verify a signature for given data and salt.
 
         :return: True if the signature is correct, False otherwise.
         """
-        good_signature = self._sign(salt=parts.salt, data=parts.data)
+        good_signature = self._signify(salt=parts.salt, data=parts.data)
 
         return compare_digest(good_signature, parts.signature)
+
+    def _sign(self, data: bytes) -> bytes:
+        """Sign given data and produce a stream composed of it, salt and signature."""
+        salt = self._generate_salt()
+        signature = self._signify(salt=salt, data=data)
+        parts = SignedDataParts(salt=salt, signature=signature, data=data)
+
+        return self._compose(parts)
 
     def _unsign(self, signed_data: bytes) -> bytes:
         """Verify a signed stream and recover original data.
@@ -196,10 +205,6 @@ class Blake2SignerBase(ABC):
 
         raise InvalidSignatureError('signature is not valid')
 
-    @abstractmethod
-    def sign(self, data: bytes) -> bytes:
-        """Sign given data and produce a stream."""
-
 
 class Blake2Signer(Blake2SignerBase):
     """Blake2 in keyed hashing mode for signing data."""
@@ -208,24 +213,20 @@ class Blake2Signer(Blake2SignerBase):
         """Sign given data and produce a stream composed of it, salt and signature.
 
         Note that given data is _not_ encrypted, only signed. To recover data from
-        it, while validating the signature, use `unsign`.
+        it, while validating the signature, use :meth:`unsign`.
+
+        The signature and salt are base64 URL safe encoded without padding.
+        Data is left as-is.
 
         The salt is a cryptographically secure pseudorandom string generated for
         this signature only.
 
-        The total length of the resulting stream can be calculated as:
-        len(data) + salt_size + signature_size.
-
-        :return: A signed stream composed of data + salt + signature.
+        :return: A signed stream composed of salt, signature and data.
         """
-        salt = self._generate_salt()
-        data = force_bytes(data)
-        signature = self._sign(salt=salt, data=data)
-
-        return self._compose(salt=salt, signature=signature, data=data)
+        return self._sign(data)
 
     def unsign(self, signed_data: bytes) -> bytes:
-        """Verify a signed stream and recover original data.
+        """Verify a stream signed by :meth:`sign` and recover original data.
 
         :param signed_data: Signed data to unsign.
 
@@ -234,8 +235,6 @@ class Blake2Signer(Blake2SignerBase):
 
         :return: Original data.
         """
-        signed_data = force_bytes(signed_data)
-
         return self._unsign(signed_data)
 
 
@@ -243,43 +242,43 @@ class Blake2TimestampSigner(Blake2SignerBase):
     """Blake2 in keyed hashing mode for signing data with timestamp."""
 
     @property
-    def timestamp_size(self) -> int:
-        """Get the timestamp value size in bytes."""
-        return 4  # Good enough until year 2106
-
-    @property
     def timestamp(self) -> bytes:
         """Get the encoded timestamp value."""
-        timestamp = int(time())  # its easier to encode an integer
+        timestamp = int(time())  # its easier to encode and decode an integer
         try:
-            return timestamp.to_bytes(self.timestamp_size, 'big', signed=False)
+            timestamp_b = timestamp.to_bytes(4, 'big', signed=False)
         except OverflowError:  # This will happen in ~2106-02-07
-            raise NotImplementedError(
+            raise RuntimeError(
                 'can not represent this timestamp in bytes: this library is '
                 'too old and needs to be updated!',
             )
 
+        return b64encode(timestamp_b)
+
     @staticmethod
     def _decode_timestamp(encoded_timestamp: bytes) -> int:
-        """Decode an encoded timestamp which should have been validated."""
-        timestamp = int.from_bytes(encoded_timestamp, 'big', signed=False)
-
-        return timestamp
+        """Decode an encoded timestamp whose signature should have been validated."""
+        try:
+            return int.from_bytes(b64decode(encoded_timestamp), 'big', signed=False)
+        except Exception:
+            raise DecodeError('encoded timestamp is not valid')
 
     def _add_timestamp(self, data: bytes) -> bytes:
         """Add timestamp value to given data."""
-        return self.timestamp + data
+        return self.timestamp + self.SEPARATOR + data
 
     def _split_timestamp(self, timestamped_data: bytes) -> TimestampedDataParts:
         """Split data + timestamp value.
 
         :raise DecodeError: Invalid timestamped data.
         """
-        if len(timestamped_data) < self.timestamp_size:
-            raise DecodeError('timestamped data is too short')
+        if self.SEPARATOR not in timestamped_data:
+            raise DecodeError('separator not found in timestamped data')
 
-        timestamp = timestamped_data[:self.timestamp_size]
-        data = timestamped_data[self.timestamp_size:]
+        timestamp, data = timestamped_data.split(self.SEPARATOR, 1)
+
+        if not timestamp:
+            raise DecodeError('timestamp information is missing')
 
         return TimestampedDataParts(data=data, timestamp=timestamp)
 
@@ -287,21 +286,19 @@ class Blake2TimestampSigner(Blake2SignerBase):
         """Sign given data and produce a stream of it, timestamp, salt and signature.
 
         Note that given data is _not_ encrypted, only signed. To recover data from
-        it, while validating the signature, use `unsign`.
+        it, while validating the signature, use :meth:`unsign`.
+
+        The signature, salt and timestamp are base64 URL safe encoded without
+        padding. Data is left as-is.
 
         The salt is a cryptographically secure pseudorandom string generated for
         this signature only.
 
-        The total length of the resulting stream can be calculated as:
-        len(data) + timestamp_size + salt_size + signature_size.
-
-        :return: A signed stream composed of data + timestamp + salt + signature.
+        :return: A signed stream composed of salt, signature, timestamp and data.
         """
-        salt = self._generate_salt()
-        data = force_bytes(data)
-        data_to_sign = self._add_timestamp(data)
-        signature = self._sign(salt=salt, data=data_to_sign)
-        return self._compose(salt=salt, signature=signature, data=data_to_sign)
+        timestamped_data = self._add_timestamp(data)
+
+        return self._sign(timestamped_data)
 
     def unsign(
         self,
@@ -309,7 +306,7 @@ class Blake2TimestampSigner(Blake2SignerBase):
         *,
         max_age: typing.Union[int, float, timedelta],
     ) -> bytes:
-        """Verify a signed stream with timestamp and recover original data.
+        """Verify a stream signed and timestamped by :meth:`sign` and recover data.
 
         :param signed_data: Signed data to unsign.
         :param max_age: Ensure the signature is not older than this time in seconds.
@@ -320,8 +317,6 @@ class Blake2TimestampSigner(Blake2SignerBase):
 
         :return: Original data.
         """
-        signed_data = force_bytes(signed_data)
-
         data = self._unsign(signed_data)
 
         data_parts = self._split_timestamp(data)
@@ -333,8 +328,8 @@ class Blake2TimestampSigner(Blake2SignerBase):
 
         now = time()
         timestamp = self._decode_timestamp(data_parts.timestamp)
-        age = timestamp + ttl
-        if age < now:
+        age = now - timestamp
+        if age > ttl:
             raise ExpiredSignatureError('signed data has expired')
 
         return data_parts.data
