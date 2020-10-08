@@ -12,11 +12,13 @@ from secrets import token_urlsafe
 from time import time
 
 from .errors import DecodeError
+from .errors import EncodeError
 from .errors import ExpiredSignatureError
 from .errors import InvalidOptionError
 from .errors import InvalidSignatureError
 from .utils import b64decode
 from .utils import b64encode
+from .utils import force_bytes
 
 
 @dataclass(frozen=True)
@@ -61,24 +63,25 @@ class Blake2SignerBase(ABC):
 
     Hashers = Hashers_
 
-    MIN_KEY_SIZE: int = 16
-    MIN_DIGEST_SIZE: int = 8
+    MIN_SECRET_SIZE: int = 16
+    MIN_DIGEST_SIZE: int = 16
 
     SEPARATOR: bytes = b'.'  # ascii non-base64 ([a-zA-Z0-9-_=]) symbol!
 
     def __init__(
         self,
-        key: bytes,
+        secret: bytes,
         *,
         hasher: Hashers_ = Hashers.blake2b,
         digest_size: typing.Optional[int] = None,
-        person: bytes = b'',
+        personalisation: bytes = b'',
     ) -> None:
         """Sign and verify signed data using Blake2 in keyed hashing mode.
 
-        :param key: Secret key for signing and verifying signed data. The minimum
-                    key size is enforced to 16 bytes, and the maximum depends on
-                    the chosen hasher.
+        :param secret: Secret value which will be derived using blake2 to
+                       produce the signing key. The minimum secret size is
+                       enforced to 16 bytes and there is no maximum since the key
+                       will be derived to the maximum supported size.
         :param hasher: [optional] Hash function to use: blake2b (default) or blake2s.
         :param digest_size: [optional] Size of output signature (digest) in bytes
                             (defaults to maximum digest size of chosen function).
@@ -87,19 +90,22 @@ class Blake2SignerBase(ABC):
                             an attacker would be able to correctly sign any payload
                             in around ~128 attempts or less without needing to
                             know the secret key. For this reason the minimum size
-                            is enforced to 8 bytes.
-        :param person: [optional] personalisation string to force the hash function
-                       to produce different digests for the same input.
+                            is enforced to 16 bytes.
+        :param personalisation: [optional] personalisation string to force the
+                                hash function to produce different digests for
+                                the same input.
 
         :raise InvalidOptionError: A parameter is out of bounds.
         """
         self._hasher: typing.Union[typing.Type[blake2b], typing.Type[blake2s]]
         self._hasher = blake2b if hasher is self.Hashers.blake2b else blake2s
 
-        if not (self.MIN_KEY_SIZE <= len(key) <= self._hasher.MAX_KEY_SIZE):
+        secret = self._force_bytes(secret)
+        person = self._force_bytes(personalisation)
+
+        if len(secret) < self.MIN_SECRET_SIZE:
             raise InvalidOptionError(
-                f'key length should be between {self.MIN_KEY_SIZE} and '
-                f'{self._hasher.MAX_KEY_SIZE}',
+                f'secret should be longer than {self.MIN_SECRET_SIZE} bytes',
             )
 
         if digest_size is None:
@@ -110,23 +116,30 @@ class Blake2SignerBase(ABC):
                 f'{self._hasher.MAX_DIGEST_SIZE}',
             )
 
+        # read more about personalisation in the hashlib docs:
+        # https://docs.python.org/3/library/hashlib.html#personalisation
+        person = self._derive_person(person + self.__class__.__name__.encode())
+
         self._hasher_options: Blake2Options = Blake2Options(
-            key=key,
+            key=self._derive_key(secret, person=person),
             person=person,
             digest_size=digest_size,
         )
 
-        self._check_hasher_options()
+    def _derive_person(self, person: bytes) -> bytes:
+        """Derive given personalisation value to ensure it fits the hasher correctly."""
+        return self._hasher(person, digest_size=self._hasher.PERSON_SIZE).digest()
 
-    def _check_hasher_options(self) -> None:
-        """Check hasher options to be valid."""
-        try:
-            self._hasher(**self._hasher_options)
-        except ValueError as exc:
-            raise InvalidOptionError(exc) from exc
+    def _derive_key(self, secret: bytes, *, person: bytes = b'') -> bytes:
+        """Derive given secret to ensure it fits correctly as the hasher key."""
+        return self._hasher(
+            secret,
+            person=person,
+            digest_size=self._hasher.MAX_KEY_SIZE,
+        ).digest()
 
     @property
-    def salt_size(self) -> int:
+    def _salt_size(self) -> int:
         """Get the salt size."""
         return self._hasher.SALT_SIZE
 
@@ -135,7 +148,18 @@ class Blake2SignerBase(ABC):
         # Generate an encoded salt to use it as is so we don't have to deal with
         # decoding it when unsigning. The only downside is that we loose a few
         # bits but it's OK since we are using the maximum allowed size..
-        return token_urlsafe(self.salt_size).encode()[:self.salt_size]  # Trim excess
+        return token_urlsafe(self._salt_size).encode()[:self._salt_size]  # Trim excess
+
+    @staticmethod
+    def _force_bytes(value: typing.AnyStr) -> bytes:
+        """Force given value into bytes.
+
+        :raise EncodeError: Can't force value into bytes.
+        """
+        try:
+            return force_bytes(value)
+        except Exception as exc:
+            raise EncodeError(exc) from exc
 
     def _compose(self, parts: SignedDataParts) -> bytes:
         """Compose signed data parts into a single stream."""
@@ -151,11 +175,11 @@ class Blake2SignerBase(ABC):
 
         composite_signature, data = signed_data.split(self.SEPARATOR, 1)
 
-        if len(composite_signature) < (self.salt_size + self.MIN_DIGEST_SIZE):
+        if len(composite_signature) < (self._salt_size + self.MIN_DIGEST_SIZE):
             raise DecodeError('signature is too short')
 
-        salt = composite_signature[:self.salt_size]
-        signature = composite_signature[self.salt_size:]
+        salt = composite_signature[:self._salt_size]
+        signature = composite_signature[self._salt_size:]
 
         return SignedDataParts(data=data, salt=salt, signature=signature)
 
@@ -223,7 +247,7 @@ class Blake2Signer(Blake2SignerBase):
 
         :return: A signed stream composed of salt, signature and data.
         """
-        return self._sign(data)
+        return self._sign(self._force_bytes(data))
 
     def unsign(self, signed_data: bytes) -> bytes:
         """Verify a stream signed by :meth:`sign` and recover original data.
@@ -235,14 +259,14 @@ class Blake2Signer(Blake2SignerBase):
 
         :return: Original data.
         """
-        return self._unsign(signed_data)
+        return self._unsign(self._force_bytes(signed_data))
 
 
 class Blake2TimestampSigner(Blake2SignerBase):
     """Blake2 in keyed hashing mode for signing data with timestamp."""
 
-    @property
-    def timestamp(self) -> bytes:
+    @staticmethod
+    def _get_timestamp() -> bytes:
         """Get the encoded timestamp value."""
         timestamp = int(time())  # its easier to encode and decode an integer
         try:
@@ -265,7 +289,7 @@ class Blake2TimestampSigner(Blake2SignerBase):
 
     def _add_timestamp(self, data: bytes) -> bytes:
         """Add timestamp value to given data."""
-        return self.timestamp + self.SEPARATOR + data
+        return self._get_timestamp() + self.SEPARATOR + data
 
     def _split_timestamp(self, timestamped_data: bytes) -> TimestampedDataParts:
         """Split data + timestamp value.
@@ -296,7 +320,7 @@ class Blake2TimestampSigner(Blake2SignerBase):
 
         :return: A signed stream composed of salt, signature, timestamp and data.
         """
-        timestamped_data = self._add_timestamp(data)
+        timestamped_data = self._add_timestamp(self._force_bytes(data))
 
         return self._sign(timestamped_data)
 
@@ -317,7 +341,7 @@ class Blake2TimestampSigner(Blake2SignerBase):
 
         :return: Original data.
         """
-        data = self._unsign(signed_data)
+        data = self._unsign(self._force_bytes(signed_data))
 
         data_parts = self._split_timestamp(data)
 

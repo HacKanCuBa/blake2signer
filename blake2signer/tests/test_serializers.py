@@ -78,9 +78,9 @@ class Blake2SerializerSignerTests(TestCase):
         signer = Blake2SerializerSigner(
             self.secret,
             max_age=1,
-            person=b'acab',
+            personalisation=b'acab',
             hasher=Blake2SerializerSigner.Hashers.blake2s,
-            digest_size=10,
+            digest_size=24,
         )
         self.assertIsInstance(signer, Blake2SerializerSigner)
 
@@ -141,7 +141,7 @@ class Blake2SerializerSignerErrorTests(TestCase):
         signer = Blake2SerializerSigner(self.secret, max_age=1)
 
         with self.assertRaises(ExpiredSignatureError):
-            signer.loads('K9dfaXoh592XX7IzPt6Dh_Bh2ZKEhFONHR8pDg.X35Nmw.ZGF0YWRhdGE')
+            signer.loads('xA57I-SgCaGMB8wZT6K9VUjQo1RMlECd_PEavQ.X36RVw.ImRhdGFkYXRhIg')
 
     def test_dumps_wrong_data(self) -> None:
         """Test dumps wrong data."""

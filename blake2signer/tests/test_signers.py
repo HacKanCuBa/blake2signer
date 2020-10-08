@@ -6,6 +6,7 @@ from unittest import TestCase
 from unittest import mock
 
 from ..errors import DecodeError
+from ..errors import EncodeError
 from ..errors import ExpiredSignatureError
 from ..errors import InvalidOptionError
 from ..errors import InvalidSignatureError
@@ -19,29 +20,29 @@ class Blake2SignerTests(TestCase):
 
     def setUp(self) -> None:
         """Set up test cases."""
-        self.key = b'0123456789012345'
+        self.secret = b'0123456789012345'
         self.data = b'datadata'
         self.signed = (
-            b'pJn2ZVHShFshyqaP96VtfoDV3T80VhPMb3z1XoY7165SegBY3UZSs0djHbSuNRhhZP'
-            b'ixDgVPd32_AEOMgU9Dkn4epDiKEqrcPP_IDg.datadata'
+            b'r2wBlTL7ogt4SfyxBeJ3gqdAs9CR8UfIWakJcyqMPdQBcb-S0LTDRoTDR7i-DypyN'
+            b'KWUVU96eUb8o-PlsT50DGOfeWLJcurMUtJcPg.datadata'
         )
         self.person = b'acab'
 
     def test_initialisation_defaults(self) -> None:
         """Test correct class defaults initialisation."""
-        signer = Blake2Signer(self.key)
+        signer = Blake2Signer(self.secret)
         self.assertIsInstance(signer, Blake2Signer)
 
-        signer = Blake2Signer(self.key, hasher=Hashers_.blake2s)
+        signer = Blake2Signer(self.secret, hasher=Hashers_.blake2s)
         self.assertIsInstance(signer, Blake2Signer)
 
     def test_sign_unsign_all_options(self) -> None:
         """Test correct signing and unsigning using all options."""
         signer = Blake2Signer(
-            self.key,
-            person=self.person,
+            self.secret,
+            personalisation=self.person,
             hasher=Blake2Signer.Hashers.blake2s,
-            digest_size=10,
+            digest_size=32,
         )
         self.assertIsInstance(signer, Blake2Signer)
 
@@ -51,23 +52,50 @@ class Blake2SignerTests(TestCase):
 
     def test_sign(self) -> None:
         """Test signing is correct."""
-        signer = Blake2Signer(self.key)
+        signer = Blake2Signer(self.secret)
         signed = signer.sign(self.data)
         self.assertIsInstance(signed, bytes)
         self.assertEqual(len(signed), 111)
 
     def test_unsign(self) -> None:
         """Test unsigning is correct."""
-        signer = Blake2Signer(self.key)
+        signer = Blake2Signer(self.secret)
         unsigned = signer.unsign(self.signed)
         self.assertEqual(unsigned, self.data)
 
     def test_sign_unsign_with_person(self) -> None:
         """Test signing and unsigning using person is correct."""
-        signer = Blake2Signer(self.key, person=self.person)
+        signer = Blake2Signer(self.secret, personalisation=self.person)
         signed = signer.sign(self.data)
         unsigned = signer.unsign(signed)
         self.assertEqual(unsigned, self.data)
+
+    def test_nonbytes_inputs(self) -> None:
+        """Test non-bytes values for parameters such as secret, person, data, etc."""
+        secret = self.secret.decode()
+        # noinspection PyTypeChecker
+        signer = Blake2Signer(secret)  # type: ignore
+        self.assertIsInstance(signer, Blake2Signer)
+
+        string = self.data.decode()
+        # noinspection PyTypeChecker
+        signed = signer.sign(string)  # type: ignore
+        self.assertIsInstance(signed, bytes)
+
+        # noinspection PyTypeChecker
+        unsigned = signer.unsign(signed.decode())  # type: ignore
+        self.assertIsInstance(unsigned, bytes)
+        self.assertEqual(unsigned, self.data)
+
+    def test_sign_is_unique(self) -> None:
+        """Test that each signing is unique because of salt."""
+        signer = Blake2Signer(self.secret)
+
+        signed1 = signer.sign(self.data)
+        signed2 = signer.sign(self.data)
+
+        self.assertEqual(len(signed1), len(signed2))
+        self.assertNotEqual(signed1, signed2)
 
 
 class Blake2SignerErrorTests(TestCase):
@@ -75,47 +103,34 @@ class Blake2SignerErrorTests(TestCase):
 
     def setUp(self) -> None:
         """Set up test cases."""
-        self.key = b'0123456789012345'
+        self.secret = b'0123456789012345'
         self.data = b'datadata'
         self.person = b'acab'
 
-    def test_key_too_short(self) -> None:
-        """Test key too short."""
+    def test_secret_too_short(self) -> None:
+        """Test secret too short."""
         with self.assertRaises(InvalidOptionError):
             Blake2Signer(b'12345678')
-
-    def test_key_too_long(self) -> None:
-        """Test key too long."""
-        with self.assertRaises(InvalidOptionError):
-            Blake2Signer(b'0' * 65)
-
-        with self.assertRaises(InvalidOptionError):
-            Blake2Signer(b'0' * 33, hasher=Hashers_.blake2s)
 
     def test_digest_too_small(self) -> None:
         """Test digest too small."""
         with self.assertRaises(InvalidOptionError):
-            Blake2Signer(self.key, digest_size=4)
+            Blake2Signer(self.secret, digest_size=4)
 
         with self.assertRaises(InvalidOptionError):
-            Blake2Signer(self.key, digest_size=4, hasher=Hashers_.blake2s)
+            Blake2Signer(self.secret, digest_size=4, hasher=Hashers_.blake2s)
 
     def test_digest_too_large(self) -> None:
         """Test digest too large."""
         with self.assertRaises(InvalidOptionError):
-            Blake2Signer(self.key, digest_size=65)
+            Blake2Signer(self.secret, digest_size=65)
 
         with self.assertRaises(InvalidOptionError):
-            Blake2Signer(self.key, digest_size=33, hasher=Hashers_.blake2s)
-
-    def test_wrong_options(self) -> None:
-        """Test parameters out of bounds."""
-        with self.assertRaises(InvalidOptionError):
-            Blake2Signer(self.key, person=b'0' * 17)
+            Blake2Signer(self.secret, digest_size=33, hasher=Hashers_.blake2s)
 
     def test_unsign_wrong_data(self) -> None:
         """Test unsign with wrong data."""
-        signer = Blake2Signer(self.key)
+        signer = Blake2Signer(self.secret)
 
         with self.assertRaises(DecodeError) as cm:  # using `msg` doesn't seem to work
             signer.unsign(b'12345678')
@@ -127,17 +142,35 @@ class Blake2SignerErrorTests(TestCase):
 
     def test_unsign_invalid_signature(self) -> None:
         """Test unsign with invalid signature."""
-        signer = Blake2Signer(self.key)
+        signer = Blake2Signer(self.secret)
         with self.assertRaises(InvalidSignatureError):
-            signer.unsign(b'0' * (signer.salt_size + signer.MIN_DIGEST_SIZE) + b'.')
+            signer.unsign(b'0' * (signer._salt_size + signer.MIN_DIGEST_SIZE) + b'.')
 
     def test_sign_unsign_wrong_person_same_key(self) -> None:
-        """Test signing and unsigning using wrong person fails despite same key."""
-        signed = Blake2Signer(self.key, person=self.person).sign(self.data)
-        signer = Blake2Signer(self.key)
+        """Test signing and unsigning using wrong person fails despite same secret."""
+        signed = Blake2Signer(self.secret, personalisation=self.person).sign(self.data)
+        signer = Blake2Signer(self.secret)
 
         with self.assertRaises(InvalidSignatureError):
             signer.unsign(signed)
+
+    def test_wrong_nonbytes_inputs(self) -> None:
+        """Test wrong non-bytes values for parameters such as secret, person, etc."""
+        with self.assertRaises(EncodeError):
+            # noinspection PyTypeChecker
+            Blake2Signer(secret=1.0)  # type: ignore
+
+        with self.assertRaises(EncodeError):
+            # noinspection PyTypeChecker
+            Blake2Signer(self.secret, personalisation=1.0)  # type: ignore
+
+        with self.assertRaises(EncodeError):
+            # noinspection PyTypeChecker
+            Blake2Signer(self.secret).sign(1.0)  # type: ignore
+
+        with self.assertRaises(EncodeError):
+            # noinspection PyTypeChecker
+            Blake2Signer(self.secret).unsign(1.0)  # type: ignore
 
 
 class Blake2TimestampSignerTests(TestCase):
@@ -176,45 +209,38 @@ class Blake2TimestampSignerErrorTests(TestCase):
 
     def setUp(self) -> None:
         """Set up test cases."""
-        self.key = b'0123456789012345'
+        self.secret = b'0123456789012345'
         self.data = b'datadata'
         self.signed = (
-            b'qxF4PE-7fkpLBW3kJXWQFzRD0eDIOAvjU0eQwWbhegEV4tN-e8a4VQs2eSx_gQJRfX'
-            b'TtTJcqBVMRJ02W0OJGqFWnx82SvsWjoMucOg.X31T8w.datadata'
+            b'bbc3JgXUWr3oDNh4Z50OVUjxZ_Mtkdz-zi30vq4gHjN5R97NLuLd4gacIxer4fpPl'
+            b'cBgo_hjhHbs0AgATFlcoUP5sKpuPiHqcqFFSw.X35cyA.datadata'
         )
 
     def test_unsign_timestamp_expired(self) -> None:
         """Test unsigning with timestamp is correct."""
-        signer = Blake2TimestampSigner(self.key)
+        signer = Blake2TimestampSigner(self.secret)
         with self.assertRaises(ExpiredSignatureError):
             signer.unsign(self.signed, max_age=1)
 
     def test_unsign_wrong_data(self) -> None:
         """Test unsign wrong data."""
-        signer = Blake2TimestampSigner(self.key)
+        signer = Blake2TimestampSigner(self.secret)
+        trick_signer = Blake2Signer(self.secret)
+        trick_signer._hasher_options = signer._hasher_options.copy()
 
+        trick_signed = trick_signer.sign(self.data)
         with self.assertRaises(DecodeError) as cm:
-            signer.unsign(
-                b'pJn2ZVHShFshyqaP96VtfoDV3T80VhPMb3z1XoY7165SegBY3UZSs0djHbSuNRhhZP'
-                b'ixDgVPd32_AEOMgU9Dkn4epDiKEqrcPP_IDg.datadata',
-                max_age=1,
-            )
+            signer.unsign(trick_signed, max_age=1)
         self.assertEqual(str(cm.exception), 'separator not found in timestamped data')
 
+        trick_signed = trick_signer.sign(b'.' + self.data)
         with self.assertRaises(DecodeError) as cm:
-            signer.unsign(
-                b'ZMtxZo7crIb3R-S-dijfaITH484PdbsnJ0RgDUd7DWzu8JyR-3USae3yBR1_dX'
-                b'REyiOHBuMFqFTQlbP3Jo0Ihkfma6ZOwsmnt-03GA..datadata',
-                max_age=1,
-            )
+            signer.unsign(trick_signed, max_age=1)
         self.assertEqual(str(cm.exception), 'timestamp information is missing')
 
+        trick_signed = trick_signer.sign(b'-.' + self.data)
         with self.assertRaises(DecodeError) as cm:
-            signer.unsign(
-                b'9FsZKp46TyH98l0YWuBqJtnAaXUP0x-CO37h9SGWVKi3ywg85zkkvUrKipGjRV'
-                b'BSARC2BG32aq5P7zH_uTSM0By5SykYq5ileXgm4g.-.datadata',
-                max_age=1,
-            )
+            signer.unsign(trick_signed, max_age=1)
         self.assertEqual(str(cm.exception), 'encoded timestamp is not valid')
 
     @mock.patch('blake2signer.signers.time')
@@ -226,7 +252,7 @@ class Blake2TimestampSignerErrorTests(TestCase):
         # The max date w/ 4 bytes is obtained as datetime.fromtimestamp()
         # with the input being int.from_bytes(b'\xff' * 4, 'big', signed=False)
         mock_time.return_value = datetime(year=2106, month=2, day=8).timestamp()
-        signer = Blake2TimestampSigner(self.key)
+        signer = Blake2TimestampSigner(self.secret)
 
         with self.assertRaises(RuntimeError):
             signer.sign(self.data)

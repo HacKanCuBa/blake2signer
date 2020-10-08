@@ -1,13 +1,14 @@
 # Blake2Signer
 
 The goal of this module is to provide a simple way to securely sign data using Blake2 in keyed hashing mode (read more about that in the [hashlib docs](https://docs.python.org/3/library/hashlib.html#blake2)).
- 
+
  The main use case is to sign cookies or similar data. There are much better packages for other use cases or more general use cases so if you feel this module doesn't satisfy your needs consider using "itsdangerous", Django's signer, "pypaseto", "pyjwt" or others like those. My idea is to keep this module as simple as possible without much room to become a *footgun*.
 
-This project began initially as a Gist but I decided to create a package because I think it can be useful as a small (~500 LoC counting tests), simple (quite straightforward) and fast data signer (see more below).
+This project began initially as a Gist but I decided to create a package because I think it can be useful as a small (~600 LoC counting tests), simple (quite straightforward) and fast data signer (see more below).
 
 ## Goals
 
+* Be safe and secure.
 * Be simple and straightforward.
 * Follow [semver](https://semver.org/).
 * Be always typed.
@@ -26,15 +27,14 @@ This project began initially as a Gist but I decided to create a package because
 
 This module provides three classes:
 
-* `Blake2SerializerSigner`: a high-level signer class that handles data serialization, compression and encoding along with signing and timestamped signing (using internally the low-level ones).
-* `Blake2Signer`: a low-level signer class that simply salts, signs and verifies signed data as bytes.
-* `Blake2TimestampSigner`: a low-level signer class that simply salts, signs and verifies signed timestamped data as bytes.
+* `Blake2SerializerSigner`: a signer class that handles data serialization, compression and encoding along with signing and timestamped signing (using internally the other ones).
+* `Blake2Signer`: a signer class that simply salts, signs and verifies signed data as bytes.
+* `Blake2TimestampSigner`: a signer class that simply salts, signs and verifies signed timestamped data as bytes.
 
-**You should generally go for the high-level signer class.**
+**You should generally go for Blake2SerializerSigner**, given that it's the most versatile of the three.
 
-In all classes you can choose between blake2b (default) or blake2s as hasher and change the digest size with a secure minimum enforced (defaults to the maximum size for the hasher in the low-level classes and to 16 bytes for the high-level ones). The secret/key is enforced to be of a secure minimum size, where high-level classes have no size limit but low-level ones do (depending on the hasher). Additionally a salt is internally generated for every signature providing non-deterministic signatures.
-
-You can't mix and match signers, and that's on purpose. This means that unsigning a stream signed by Blake2Signer using Blake2TimestampSigner may result in corrupt data and/or an error checking the timestamp or the data structure (considering that the `key` and `person` is the same for both), and the same goes for the other way around. To prevent this situation it is always recommended to use the `person` parameter differently on each class instantiation (simply use a fixed string); see more about this in the examples below.
+In all classes you can choose between **blake2b** (default) or **blake2s** as hasher: the first one is optimized for 64b platforms and the second, for 8-32b platforms (read more about them in their [official site](https://blake2.net/)).  
+The digest size is configurable with a secure minimum of 16 bytes enforced. The secret is enforced to be of a secure minimum size of 16 bytes with no size limit since it's derived to produce the key. Additionally a salt is internally generated for every signature providing non-deterministic signatures.
 
 ### Examples
 
@@ -48,6 +48,7 @@ The following examples are working code and should run as-is.
 from datetime import timedelta
 
 from blake2signer import Blake2SerializerSigner
+from blake2signer import errors
 
 secret = b'secure-secret-that-nobody-knows!'
 # some arbitrary data to sign
@@ -57,40 +58,50 @@ data = {'message': 'attack at dawn', 'extra': [1, 2, 3, 4]}
 signer = Blake2SerializerSigner(
     secret,
     max_age=timedelta(days=1),
-    person=b'message-cookie-signer',  # Define personalisation for this instance
+    personalisation=b'the-cookie-signer',  # Always set it different per instance
 )
 
 # Sign and i.e. store the data in a cookie
 signed = signer.dumps(data, use_compression=True)
 cookie = {'data': signed}
 
-# To verify simply use loads: you will either get the data or a
-# `SignerError` subclass exception.
-unsigned = signer.loads(cookie.get('data', ''))
-print(unsigned['message'], unsigned['extra'])  # attack at dawn [1, 2, 3, 4]
+# To verify and recover data simply use loads: you will either get the data or
+# a `SignerError` subclass exception.
+try:
+    unsigned = signer.loads(cookie.get('data', ''))
+except errors.SignedDataError:
+    # Can't trust on given data
+    unsigned = {}
+
+print(unsigned)  # {'message': 'attack at dawn', 'extra': [1, 2, 3, 4]}
 ```
 
-It is always a good idea to set the *personalisation* string which can be any arbitrarily long string for this class.  
-For example if you use a signer for cookies set something like `b'cookies-signer'` or if you use it for some user-related data signing it could be `b'user-data-signer'`, or when used for signing a special value it could be `b'the-special-value-signer`, etc.  
-This personalisation string helps defeating the abuse of using a signed stream for different signers that share the same key. See examples of this below and read more about it in the [hashlib docs](https://docs.python.org/3/library/hashlib.html#personalization).
+It is always a good idea to set the `personalisation` parameter which can be any arbitrarily long bytes (it defaults to the class name).  
+For example if you use a signer for cookies set something like `b'cookies-signer'` or if you use it for some user-related data signing it could be `b'user-data-signer'`, or when used for signing a special value it could be `b'the-special-value-signer`, etc.
 
-#### High level classes
+#### More Examples
 
-This is probably what you want to use :)
+Both the `secret` and `personalisation` parameters are derived so they have no size limit. This *personalisation* parameter helps defeating the abuse of using a signed stream for different signers that share the same key by changing the digest computation result. See examples of this below and read more about it in the [hashlib docs](https://docs.python.org/3/library/hashlib.html#personalization).  
+Input data can always be arbitrarily long.
 
-Both the *secret* and *personalisation* parameters are derived so they have no length limit. Input data can always be arbitrarily long.
+A secure pseudorandom salt of the maximum allowed size for the hasher is generated for each signature internally and can't be manually set. Other packages usually refer to salt as something to add to the secret to prevent signer misuse, but here we have the *personalisation* parameter for that.
 
 As a general rule of thumb if you have highly compressible data such as human readable text, then you should enable compression. Otherwise when dealing with somewhat random data compression won't help much (but probably won't hurt either unless you're dealing with a huge amount of random data).
 
 ```python
-"""High-level classes usage examples."""
+"""Many usage examples."""
 
 from datetime import timedelta
+from time import sleep
 
 from blake2signer import Blake2SerializerSigner
+from blake2signer import Blake2Signer
+from blake2signer import Blake2TimestampSigner
 from blake2signer import errors
 
 secret = b'ZnVja3RoZXBvbGljZQ'
+
+# Serializing some data structure
 data = [{'a': 'b'}, 1] * 10000  # some big data structure
 print(len(data))  # 20000
 
@@ -114,7 +125,7 @@ print(data == unsigned)  # True
 signer = Blake2SerializerSigner(  # with timestamp and personalisation
     secret,
     max_age=timedelta(weeks=1),
-    person=b'my-cookie-signer',
+    personalisation=b'my-cookie-signer',
 )
 try:
     signer.loads(signed)
@@ -123,54 +134,29 @@ except errors.InvalidSignatureError as exc:
 # Using the `person` parameter made the sig to fail, thus protecting signed
 # data to be loaded incorrectly.
 
-signed = signer.dumps(data, use_compression=True)  # with compression
-print(len(signed))  # 412  # compression helped reducing size heavily
-
-unsigned = signer.loads(signed)
-print(data == unsigned)  # True
-```
-
-#### Low level classes
-
-You probably don't want to use these ones unless you are quite sure you do.
-
-Note that *key* and *personalisation* parameters are NOT derived and are used as-is, so algorithm size limits apply. Input data can always be arbitrarily long.
-
-A secure pseudorandom salt is generated for each signature internally and can't be set. Other packages usually refer to salt as something to add to the secret/key to prevent signer misuse, but here we have the *personalisation* parameter for that.
-
-```python
-"""Low-level classes usage examples."""
-
-from datetime import timedelta
-from time import sleep
-
-from blake2signer import Blake2Signer
-from blake2signer import Blake2TimestampSigner
-from blake2signer import errors
-
-key = b'ZnVja3RoZXBvbGljZQ'
+# Signing some bytes value
 data = b'facundo castro presente'
 
-signer = Blake2Signer(key)  # without timestamp
-signed = signer.sign(data)
-print(len(signed))  # 126
-
-unsigned = signer.unsign(signed)
-print(data == unsigned)  # True
-
-signer = Blake2TimestampSigner(key)  # with timestamp
-signed = signer.sign(data)
-print(len(signed))  # 133
-
-unsigned = signer.unsign(signed, max_age=10)
-print(data == unsigned)  # True
-
-# Using Blake2s instead of Blake2b
-signer = Blake2Signer(key, hasher=Blake2Signer.Hashers.blake2s)
+signer = Blake2Signer(  # without timestamp
+    secret,
+    hasher=Blake2Signer.Hashers.blake2s,  # Using Blake2s instead of Blake2b
+)
 signed = signer.sign(data)
 print(len(signed))  # 75
-
 unsigned = signer.unsign(signed)
+print(data == unsigned)  # True
+
+signer = Blake2Signer(secret)
+signed = signer.sign(data)
+print(len(signed))  # 126
+unsigned = signer.unsign(signed)
+print(data == unsigned)  # True
+
+t_signer = Blake2TimestampSigner(secret)  # with timestamp
+signed = t_signer.sign(data)
+print(len(signed))  # 133
+unsigned = t_signer.unsign(signed, max_age=10)  # signature is valid if its not
+# older than this many seconds (10)
 print(data == unsigned)  # True
 
 # The timestamp is checked when unsigning so that if that many seconds
@@ -179,72 +165,28 @@ print(data == unsigned)  # True
 # must be valid too.
 # You can use both an integer or a float to represent seconds or a
 # timedelta with the time value you want.
-signer = Blake2TimestampSigner(key)
-signed = signer.sign(data)
+signed = t_signer.sign(data)
 sleep(2)
 try:
-    signer.unsign(signed, max_age=timedelta(seconds=2))
+    t_signer.unsign(signed, max_age=timedelta(seconds=2))
 except errors.ExpiredSignatureError as exc:
     print(repr(exc))  # ExpiredSignatureError('signed data has expired')
-```
 
-#### Wrong usage examples
-
-This section is meant to describe how signers can be misused so you can avoid the mistakes described here.
-
-```python
-"""Wrong usage examples."""
-
-from blake2signer import Blake2Signer
-from blake2signer import Blake2TimestampSigner
-from blake2signer.errors import ExpiredSignatureError
-from blake2signer.errors import InvalidSignatureError
-
-# Let's mix and match, what could go wrong? spoiler: everything!
-key = b'ZnVja3RoZXBvbGljZQ'
-data = b'ACAB.#ACAB'  # specially crafted payload
-
-signer = Blake2Signer(key)
-t_signer = Blake2TimestampSigner(key)
-
+# Preventing misuse of signed data
 try:
-    t_signer.unsign(signer.sign(data), max_age=1)
-except ExpiredSignatureError as exc:
-    print(repr(exc))  # ExpiredSignatureError('signed data has expired')
-# We see an exception because since the signature is OK the timestamped signer
-# is considering the 4 bytes `b'ACAB'` as a timestamp which gives us
-# a date way in the past. Is this an issue with the signer? NO.
-# As stated before, one must be careful of NOT mixing and matching things.
-# Additionally the payload was crafted on purpose to include the timestamp
-# separator symbol `.`, without which would cause a DecodeError.
-# This means that accidental mixing and matching is partially prevented
-# thanks to this mechanism, but only partially because as we proved here if the
-# payload happens to have the separator symbol in it, it will be considered
-# as the timestamp data.
-
-print(signer.unsign(t_signer.sign(data)))  # b'....ACAB.#ACAB'
-# This time we don't even get an exception because all is OK for the signer,
-# but the recovered data is wrong! It contains the timestamp from the timestamp
-# signer.
-
-# When using different signers for different things, its a good idea to use
-# the personalisation parameter which prevents these situations:
-signer = Blake2Signer(key, person=b'1234')
-print(signer.unsign(signer.sign(data)))  # b'ACAB.#ACAB'
-
+    t_signer.unsign(signer.sign(data), max_age=5.5)
+except errors.InvalidSignatureError as exc:
+    print(repr(exc))  # InvalidSignatureError('signature is not valid')
 try:
     signer.unsign(t_signer.sign(data))
-except InvalidSignatureError as exc:
+except errors.InvalidSignatureError as exc:
     print(repr(exc))  # InvalidSignatureError('signature is not valid')
-# Even though the key/secret is the same, the personalisation parameter changes
-# the hashing output thus changing the signature. This is very useful to
-# prevent these situations and should be implemented whenever used. It doesn't
-# have to be random nor secret nor too long, it just needs to be unique for
-# the usage. There's a limit to its size in the low level classes but the high
-# level ones have no practical limit.
+# You can't mix and match signers, and that's on purpose. This is because
+# internally the personalisation parameter, which changes the computed
+# digest, is set to the class name. However you could find your way to
+# trick one class into accepting data generated by the other but you
+# really shouldn't!.
 ```
-
-The moral of the story is: always sign and unsign using the exact same signer with the exact same parameters (there aren't many anyway), and use the personalisation parameter whenever you can.
 
 #### Real use case example
 
@@ -261,17 +203,17 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.middleware.base import RequestResponseEndpoint
 
 from blake2signer import Blake2SerializerSigner
-from blake2signer.errors import DecodeError
+from blake2signer.errors import SignerError
 
 # from .messages import Messages  # Some class that has the data we want to sign
 class Messages:
-    
+
     def to_dict(self) -> dict:
-        pass
+        return self.__dict__
 
     @classmethod
     def from_dict(cls, data: dict) -> 'Messages':
-        pass
+        return cls(**data)
 
 # In this example, that class can be converted to/read from dict.
 # It doesn't need to be exactly a dict but any Python type that
@@ -279,7 +221,7 @@ class Messages:
 
 SECRET_KEY: bytes = b'myverysecretsecret'
 COOKIE_TTL: timedelta = timedelta(days=5)
-COOKIE_NAME: str = 'my_cookie'
+COOKIE_NAME: str = 'data_cookie'
 
 
 class CookieHTTPMiddleware(BaseHTTPMiddleware):
@@ -289,12 +231,12 @@ class CookieHTTPMiddleware(BaseHTTPMiddleware):
         return Blake2SerializerSigner(
             SECRET_KEY,
             max_age=COOKIE_TTL,
-            person=b'cookie_http_middleware',
+            personalisation=b'cookie_http_middleware',
         )
-    
+
     def get_cookie_data(self, request: Request) -> Messages:
         signed_data = request.cookies.get(COOKIE_NAME, '')
-        messages_data = self._signer.loads(signed_data)  # may raise DecodeError
+        messages_data = self._signer.loads(signed_data)  # may raise SignedDataError
         messages = Messages.from_dict(messages_data)
         return messages
 
@@ -317,7 +259,7 @@ class CookieHTTPMiddleware(BaseHTTPMiddleware):
     ) -> Response:
         try:
             request.state.messages = self.get_cookie_data(request)
-        except DecodeError:  # some tampering, maybe we changed the secret...
+        except SignerError:  # some tampering, maybe we changed the secret...
             request.state.messages = Messages()
 
         response = await call_next(request)
@@ -415,7 +357,7 @@ I'm not a cryptoexpert, so there are some things that remain to be confirmed:
 
 ## License
 
-**Blake2Signer** is made by [HacKan](https://hackan.net) under MPL v2.0. You are free to use, share, modify and share modifications under the terms of that [license](LICENSE).  Derived works may link back to the canonical repository: https://gitlab.com/hackancuba/blake2signer.  
+**Blake2Signer** is made by [HacKan](https://hackan.net) under MPL v2.0. You are free to use, share, modify and share modifications under the terms of that [license](LICENSE).  Derived works may link back to the canonical repository: https://gitlab.com/hackancuba/blake2signer.
 
     Copyright (C) 2020 HacKan (https://hackan.net)
     This Source Code Form is subject to the terms of the Mozilla Public

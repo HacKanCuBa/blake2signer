@@ -9,15 +9,21 @@ from hashlib import blake2s
 
 from .errors import DecodeError
 from .errors import EncodeError
-from .errors import InvalidOptionError
-from .signers import Blake2Options
 from .signers import Blake2Signer
-from .signers import Blake2SignerBase
 from .signers import Blake2TimestampSigner
 from .signers import Hashers_
 from .utils import b64decode
 from .utils import b64encode
 from .utils import force_bytes
+
+
+class SignerOptions(typing.TypedDict):
+    """Signer options."""
+
+    secret: bytes
+    personalisation: bytes
+    hasher: Hashers_
+    digest_size: int
 
 
 class Blake2SerializerSigner:
@@ -28,7 +34,6 @@ class Blake2SerializerSigner:
 
     Hashers = Hashers_
 
-    MIN_SECRET_SIZE: int = Blake2SignerBase.MIN_KEY_SIZE
     DEFAULT_DIGEST_SIZE: int = 16  # 16 bytes is good security/size tradeoff
 
     COMPRESSION_FLAG: bytes = b'!'  # ascii non-base64 ([a-zA-Z0-9-_=]) symbol!
@@ -45,7 +50,7 @@ class Blake2SerializerSigner:
         secret: bytes,
         *,
         max_age: typing.Union[None, int, float, timedelta] = None,
-        person: bytes = b'',
+        personalisation: bytes = b'',
         hasher: Hashers_ = Hashers_.blake2b,
         digest_size: int = DEFAULT_DIGEST_SIZE,
         json_encoder: typing.Optional[typing.Type[json.JSONEncoder]] = None,
@@ -54,21 +59,11 @@ class Blake2SerializerSigner:
 
         It uses Blake2 in keyed hashing mode.
 
-        Setting `max_age` will produce a timestamped signed stream. Using
-        compression with `use_compression` may help reducing the size of
-        resulting stream.
-
-        Important note: configuration parameters like max_age and use_compression
-        are NOT saved in the signed stream so you need to specify them to sign
-        and unsign.
+        Setting `max_age` will produce a timestamped signed stream.
 
         This class is intended to be used to sign and verify cookies or similar.
         It sets sane defaults such as a signature size of 16 bytes, key derivation
         from given secret and the use of a personalisation string.
-
-        It is not supposed to cover all corner cases and be ultimately flexible
-        so if you are in need of that please consider using "itsdangerous",
-        Django's signer, "pypaseto", "pyjwt" or others like those.
 
         :param secret: Secret value which will be derived using blake2 to
                        produce the signing key. The minimum secret size is
@@ -77,11 +72,11 @@ class Blake2SerializerSigner:
         :param max_age: [optional] Use a timestamp signer instead of a regular
                         one to ensure that the signature is not older than this
                         time in seconds.
-        :param person: [optional] Set the personalisation string to force the hash
-                       function to produce different digests for the same input.
-                       It is derived using blake2 to ensure it fits the hasher
-                       limits, so it has no practical size limit. It defaults
-                       to the class name.
+        :param personalisation: [optional] Set the personalisation string to force
+                                the hash function to produce different digests for
+                                the same input. It is derived using blake2 to ensure
+                                it fits the hasher limits, so it has no practical
+                                size limit. It defaults to the class name.
         :param hasher: [optional] Hash function to use: blake2b (default) or blake2s.
         :param digest_size: [optional] Size of output signature (digest) in bytes
                             (defaults to 16 bytes).
@@ -98,47 +93,23 @@ class Blake2SerializerSigner:
         else:
             self._hasher = blake2s
 
-        secret, person = force_bytes(secret), force_bytes(person)
+        personalisation += self.__class__.__name__.encode()
 
-        if len(secret) < self.MIN_SECRET_SIZE:
-            raise InvalidOptionError(
-                f'secret should be longer than {self.MIN_SECRET_SIZE} bytes',
-            )
-
-        # read more about personalisation in the hashlib docs:
-        # https://docs.python.org/3/library/hashlib.html#personalisation
-        if not person:
-            person = self.__class__.__name__.encode()
-
-        person = self.derive_person(person)
-
-        # mypy issue: https://github.com/python/mypy/issues/8890
-        signer_options: Blake2Options = Blake2Options(
-            key=self.derive_key(secret, person=person),
+        signer_options: SignerOptions = SignerOptions(
+            secret=secret,
             digest_size=digest_size,
-            person=person,
+            personalisation=personalisation,
+            hasher=hasher,
         )
 
         self._max_age: typing.Union[int, float, timedelta]
         self._signer: typing.Union[Blake2Signer, Blake2TimestampSigner]
         if max_age is None:
-            self._signer = Blake2Signer(hasher=hasher, **signer_options)
+            self._signer = Blake2Signer(**signer_options)
             self._max_age = 0
         else:
-            self._signer = Blake2TimestampSigner(hasher=hasher, **signer_options)
+            self._signer = Blake2TimestampSigner(**signer_options)
             self._max_age = max_age
-
-    def derive_person(self, person: bytes) -> bytes:
-        """Derive given personalisation value to ensure it fits the hasher correctly."""
-        return self._hasher(person, digest_size=self._hasher.PERSON_SIZE).digest()
-
-    def derive_key(self, secret: bytes, *, person: bytes = b'') -> bytes:
-        """Derive given secret to ensure it fits correctly as the hasher key."""
-        return self._hasher(
-            secret,
-            person=person,
-            digest_size=self._hasher.MAX_KEY_SIZE,
-        ).digest()
 
     def _serialize(self, data: typing.Any) -> bytes:
         """Serialize given data to JSON."""
