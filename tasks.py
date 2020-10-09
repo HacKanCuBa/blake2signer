@@ -80,6 +80,8 @@ def clean(ctx):
         '.coverage',
         'cover',
         'htmlcov',
+        '.mypy_cache',
+        '.pytest_cache',
     )
     ctx.run(f'rm -vrf {" ".join(remove)}', echo=True)
     ctx.run('find . -type d -name "__pycache__" -exec rm -rf "{}" \\+', echo=True)

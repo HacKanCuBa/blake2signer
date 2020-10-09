@@ -1,13 +1,16 @@
 """Serializers module tests."""
 
 import json
+import typing
 import zlib
 from datetime import timedelta
+from secrets import token_bytes
 from unittest import TestCase
 from unittest import mock
 
 from .. import errors
 from ..serializers import Blake2SerializerSigner
+from ..serializers import JSONSerializer
 from ..utils import b64encode
 
 
@@ -67,8 +70,24 @@ class Blake2SerializerSignerTests(TestCase):
         signed_compressed = signer.dumps(data, use_compression=True)
         self.assertLessEqual(len(signed_compressed), len(signed))
 
+        signed_compressed = signer.dumps(
+            data,
+            use_compression=True,
+            compression_level=9,
+        )
+        self.assertLessEqual(len(signed_compressed), len(signed))
+
         unsigned = signer.loads(signed_compressed)
         self.assertEqual(data, unsigned)
+
+    def test_dumps_loads_auto_compression(self) -> None:
+        """Test dumping and loading with auto compression is correct."""
+        signer = Blake2SerializerSigner(self.secret)
+        data = token_bytes(10).hex()  # so it can't be compressed
+
+        signed = signer.dumps(data, use_compression=False)
+        signed_not_compressed = signer.dumps(data, use_compression=True)
+        self.assertEqual(len(signed_not_compressed), len(signed))
 
     def test_dumps_loads_other_options(self) -> None:
         """Test dumping with other options is correct."""
@@ -87,7 +106,7 @@ class Blake2SerializerSignerTests(TestCase):
         unsigned = signer.loads(signer.dumps(self.data, use_compression=True))
         self.assertEqual(self.data, unsigned)
 
-    def test_dumps_loads_with_custom_encoder(self) -> None:
+    def test_dumps_loads_with_custom_encoder(self) -> None:  # noqa: C901
         """Test dumping using a custom encoder."""
 
         class MyObject:
@@ -106,10 +125,15 @@ class Blake2SerializerSignerTests(TestCase):
 
                 return super().default(o)  # pragma: no cover
 
+        class MyJSONSerializer(JSONSerializer):
+
+            def serialize(self, data: typing.Any, **kwargs: typing.Any) -> bytes:
+                return super().serialize(data, cls=CustomJSONEncoder, **kwargs)
+
         obj = MyObject()
         obj.a = 'acab'
 
-        signer = Blake2SerializerSigner(self.secret, json_encoder=CustomJSONEncoder)
+        signer = Blake2SerializerSigner(self.secret, serializer=MyJSONSerializer)
 
         unsigned = signer.loads(signer.dumps(obj))
         self.assertEqual(obj.a, unsigned)
@@ -122,6 +146,7 @@ class Blake2SerializerSignerErrorTests(TestCase):
         """Set up test cases."""
         self.secret = b'0123456789012345'
         self.data = 'datadata'
+        self.dumped = 'AuPHEW7PazR4UB7jmt20GvhunB6KNVXbEzUaOA.X4OovQ.ImRhdGFkYXRhIg'
 
     def test_secret_too_short(self) -> None:
         """Test parameters out of bounds."""
@@ -138,7 +163,7 @@ class Blake2SerializerSignerErrorTests(TestCase):
         signer = Blake2SerializerSigner(self.secret, max_age=1)
 
         with self.assertRaises(errors.ExpiredSignatureError):
-            signer.loads('xA57I-SgCaGMB8wZT6K9VUjQo1RMlECd_PEavQ.X36RVw.ImRhdGFkYXRhIg')
+            signer.loads(self.dumped)
 
     def test_dumps_wrong_data(self) -> None:
         """Test dumps wrong data."""
@@ -162,7 +187,7 @@ class Blake2SerializerSignerErrorTests(TestCase):
     def test_loads_b64decode_error(self) -> None:
         """Test loads wrong data causing base64 decoding error."""
         signer = Blake2SerializerSigner(self.secret)
-        trick_signed = signer._signer.sign(b'-')  # some non-base64 char
+        trick_signed = signer._sign(b'-')  # some non-base64 char
 
         with self.assertRaises(errors.DecodeError) as cm:
             signer.loads(trick_signed)
@@ -171,7 +196,7 @@ class Blake2SerializerSignerErrorTests(TestCase):
     def test_loads_decompression_error(self) -> None:
         """Test loads wrong data causing decompression error."""
         signer = Blake2SerializerSigner(self.secret)
-        trick_signed = signer._signer.sign(
+        trick_signed = signer._sign(
             b64encode(signer.COMPRESSION_FLAG + b'a'),  # trick into decompression
         )
 
@@ -182,7 +207,7 @@ class Blake2SerializerSignerErrorTests(TestCase):
     def test_loads_unserialization_error(self) -> None:
         """Test loads wrong data causing unserialization error."""
         signer = Blake2SerializerSigner(self.secret)
-        trick_signed = signer._signer.sign(b'data')  # non-serializable data
+        trick_signed = signer._sign(b'data')  # non-serializable data
 
         with self.assertRaises(errors.UnserializationError) as cm:
             signer.loads(trick_signed)
@@ -207,3 +232,10 @@ class Blake2SerializerSignerErrorTests(TestCase):
 
         with self.assertRaises(errors.EncodeError):
             signer.dumps(self.data)
+
+    def test_dumps_invalid_compression_level(self) -> None:
+        """Test invalid compression level for dumps."""
+        signer = Blake2SerializerSigner(self.secret)
+
+        with self.assertRaises(errors.CompressionError):
+            signer.dumps(self.data, use_compression=True, compression_level=10)

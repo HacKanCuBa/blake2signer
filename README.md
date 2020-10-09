@@ -27,7 +27,7 @@ This project began initially as a Gist but I decided to create a package because
 
 This module provides three classes:
 
-* `Blake2SerializerSigner`: a signer class that handles data serialization, compression and encoding along with signing and timestamped signing (using internally the other ones).
+* `Blake2SerializerSigner`: a signer class that handles data serialization, compression and encoding along with signing and timestamped signing.
 * `Blake2Signer`: a signer class that simply salts, signs and verifies signed data as bytes or string.
 * `Blake2TimestampSigner`: a signer class that simply salts, signs and verifies signed timestamped data as bytes or string.
 
@@ -62,7 +62,11 @@ signer = Blake2SerializerSigner(
 )
 
 # Sign and i.e. store the data in a cookie
-signed = signer.dumps(data, use_compression=True)
+signed = signer.dumps(data)  # Compression is enabled by default
+# If compressing data turns out to be detrimental then data won't be
+# compressed. If you know that from beforehand and don't need compression, you
+# can disable it:
+# signed = signer.dumps(data, use_compression=False)
 cookie = {'data': signed}
 
 # To verify and recover data simply use loads: you will either get the data or
@@ -105,9 +109,9 @@ secret = b'ZnVja3RoZXBvbGljZQ'
 data = [{'a': 'b'}, 1] * 10000  # some big data structure
 print(len(data))  # 20000
 
-signer = Blake2SerializerSigner(secret)  # without timestamp nor compression
+signer = Blake2SerializerSigner(secret)  # without timestamp (compression by default)
 signed = signer.dumps(data)
-print(len(signed))  # 160041
+print(len(signed))  # 405  # compression helped reducing size heavily
 
 unsigned = signer.loads(signed)
 print(data == unsigned)  # True
@@ -116,8 +120,16 @@ signer = Blake2SerializerSigner(  # with timestamp
     secret,
     max_age=timedelta(weeks=1),
 )
-signed = signer.dumps(data, use_compression=True)  # with compression
-print(len(signed))  # 412  # compression helped reducing size heavily
+signed = signer.dumps(data, use_compression=False)  # without compression
+print(len(signed))  # 160048
+
+# You can also set the desired compression level where 1 is the fastest
+# and least compressed and 9 the slowest and most compressed.
+signed = signer.dumps(data, compression_level=1)
+print(len(signed))  # 880  # less size reduction
+# Since sample data is the same structure repeated many times it's highly
+# compressible so even the lowest compression level works excellent here.
+# That won't always be the case; the default value is a good balance.
 
 unsigned = signer.loads(signed)
 print(data == unsigned)  # True
@@ -131,8 +143,8 @@ try:
     signer.loads(signed)
 except errors.InvalidSignatureError as exc:
     print(repr(exc))  # InvalidSignatureError('signature is not valid')
-# Using the `person` parameter made the sig to fail, thus protecting signed
-# data to be loaded incorrectly.
+# Using the `personalisation` parameter made the sig to fail, thus protecting
+# signed data to be loaded incorrectly.
 
 # Signing some bytes value
 data = b'facundo castro presente'
@@ -190,6 +202,172 @@ except errors.InvalidSignatureError as exc:
 
 Even though both `Blake2Signer` and `Blake2TimestampSigner` accept data as string you should use bytes instead: both classes will try to convert any given string to bytes **assuming it's UTF-8 encoded** which might not be correct; if you are certain that the string given is UTF-8 then it's OK, otherwise ensure encoding the string correctly and using bytes instead.
 
+#### Using a custom JSON encoder or custom serializer
+
+You can use a custom JSON encoder or even a custom serializer such as [msgpack](https://pypi.org/project/msgpack/) which is very efficient in size and performance, much better than JSON (half resulting size and more than twice as fast) so it is an excellent choice for a serializer. For keeping JSON as serializer a better choice than the standard library is [orjson](https://github.com/ijl/orjson) which is faster.
+
+```python
+"""Sample of custom JSON encoder and custom serializer."""
+
+import typing
+from decimal import Decimal
+from json import JSONEncoder
+
+import msgpack
+
+from blake2signer import Blake2SerializerSigner
+from blake2signer.serializers import JSONSerializer
+from blake2signer.serializers import SerializerInterface
+
+# Custom JSON encoder
+class DecimalJSONEncoder(JSONEncoder):
+
+    def default(self, o):
+        if isinstance(o, Decimal):
+            return str(o)
+
+        return super().default(o)
+
+class MyJSONSerializer(JSONSerializer):
+
+    def serialize(self, data: typing.Any, **kwargs: typing.Any) -> bytes:
+        return super().serialize(data, cls=DecimalJSONEncoder, **kwargs)
+
+secret = b'super-secret-value'
+signer = Blake2SerializerSigner(secret, serializer=MyJSONSerializer)
+
+data = {'points': [1, 2, Decimal('3.4')]}
+unsigned = signer.loads(signer.dumps(data))
+print(unsigned)  # {'points': [1, 2, '3.4']}
+
+# Custom serializer with msgpack (same idea would be for orjson)
+class MsgpackSerializer(SerializerInterface):
+
+    def serialize(self, data: typing.Any, **kwargs: typing.Any) -> bytes:
+        """Serialize given data as msgpack."""
+        return msgpack.packb(data)
+
+    def unserialize(self, data: bytes, **kwargs: typing.Any) -> typing.Any:
+        """Unserialize given msgpack data."""
+        return msgpack.unpackb(data)
+
+signer = Blake2SerializerSigner(secret, serializer=MsgpackSerializer)
+data = {'points': [1, 2, 3.4]}
+signed = signer.dumps(data)
+print(signed)  # ....gaZwb2ludHOTAQLLQAszMzMzMzM
+unsigned = signer.loads(signed)
+print(unsigned)  # {'points': [1, 2, 3.4]}
+```
+
+`Blake2SerializerSigner` is quite flexible and can receive custom serializer, compressor or encoder. You could i.e. create a custom base62 encoder simply inheriting from `EncoderInterface`, or a custom bzip compressor inheriting from `CompressorInterface`. You don't need to handle or worry about exceptions: those are caught by the caller class.
+
+On the other hand you can create your own *SerializerSigner* using provided `Blake2SerializerSignerBase` and/or any of the mixins: `SerializerMixin`, `CompressorMixin`, `EncoderMixin` or even creating your own mixin inheriting from `Mixin`.
+
+```python
+"""Custom serializer signer class example."""
+
+import typing
+
+from blake2signer.serializers import EncoderMixin
+
+
+class MySerializerSigner(EncoderMixin):
+
+    def dumps(self, data: typing.Any) -> str:
+        encoded = self._encode(self._force_bytes(data))
+
+        return self._dumps(encoded).decode()
+
+    def loads(self, signed_data: typing.AnyStr) -> typing.Any:
+        unsigned = self._loads(self._force_bytes(signed_data))
+
+        decoded = self._decode(unsigned)
+
+        return decoded.decode()
+
+secret = b'super-secret-value'
+signer = MySerializerSigner(secret)
+data = 'memoria y justicia'
+signed = signer.dumps(data)
+print(signed)  # ....bWVtb3JpYSB5IGp1c3RpY2lh
+print(signer.loads(signed) == data)  # True
+```
+
+##### I need to work with raw bytes but I want compression and encoding
+
+Usually to work with bytes one can choose to use either `Blake2Signer` or `Blake2TimestampSigner`. However, if you also want to have compression and encoding, you need `Blake2SerializerSigner`. The problem now is that JSON doesn't support bytes so the class as-is won't work. There are two solutions:
+
+1. Use the `MsgpackSerializer` created above given that *msgpack* does handle bytes serialization.
+1. Create your custom serializer that doesn't actually serializes to use it with `Blake2SerializerSigner`.
+1. Create your custom class inheriting from `EncoderMixin` and `CompressorMixin`.
+
+Here are those examples:
+
+```python
+"""Sample of a custom encoder compressor signer class."""
+
+import typing
+
+from blake2signer.serializers import CompressorMixin
+from blake2signer.serializers import EncoderMixin
+
+
+class MyEncoderCompressorSigner(EncoderMixin, CompressorMixin):
+ 
+    def dumps(self, data: typing.AnyStr) -> str:
+        data_bytes = self._force_bytes(data)
+        compressed, _ = self._compress(data_bytes, level=6)
+        encoded = self._encode(compressed)
+        signed = self._dumps(encoded).decode()
+
+        return signed
+ 
+    def loads(self, signed_data: typing.AnyStr) -> bytes:
+        signed_bytes = self._force_bytes(signed_data)
+        unsigned = self._loads(signed_bytes)
+        decoded = self._decode(unsigned)
+        decompressed = self._decompress(decoded)
+ 
+        return decompressed
+
+
+secret = b'super-secret-value'
+signer = MyEncoderCompressorSigner(secret)
+data = b'acab' * 100
+signed = signer.dumps(data)
+print(len(signed) < len(data))  # True
+print(signer.loads(signed) == data)  # True
+```
+
+```python
+"""Sample of a custom serializer that doesn't serializes."""
+
+import typing
+
+from blake2signer import Blake2SerializerSigner
+from blake2signer.serializers import SerializerInterface
+from blake2signer.utils import force_bytes
+
+
+class MySerializer(SerializerInterface):
+
+    def serialize(self, data: typing.Any, **kwargs: typing.Any) -> bytes:
+        """Convert given data to bytes."""
+        return force_bytes(data)
+
+    def unserialize(self, data: bytes, **kwargs: typing.Any) -> typing.Any:
+        """Unserialize given serialized data."""
+        return data
+
+
+secret = b'super-secret-value'
+signer = Blake2SerializerSigner(secret, serializer=MySerializer)
+data = b'acab' * 100
+signed = signer.dumps(data)
+print(len(signed) < len(data))  # True
+print(signer.loads(signed) == data)  # True
+```
+
 #### Real use case example
 
 Sign cookies in a FastAPI/Starlette middleware.
@@ -244,7 +422,7 @@ class CookieHTTPMiddleware(BaseHTTPMiddleware):
 
     def set_cookie_data(self, messages: Messages, response: Response) -> None:
         data = messages.to_dict()
-        signed_data = self._signer.dumps(data, use_compression=True)
+        signed_data = self._signer.dumps(data)
         response.set_cookie(
             COOKIE_NAME,
             value=signed_data,
@@ -342,7 +520,7 @@ print('djs_s384')
 print('djs_s512')
 %timeit djs_s512.unsign(djs_s512.sign(datas))
 print('b2ss')
-%timeit b2ss.loads(b2ss.dumps(data, use_compression=True))
+%timeit b2ss.loads(b2ss.dumps(data))
 print('id_b2s')
 %timeit id_b2s.loads(id_b2s.dumps(data))
 ```

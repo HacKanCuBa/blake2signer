@@ -1,0 +1,4 @@
+Changed
+-------
+
+- Refactor classes into abstracts and mixins so that end users can create their own implementations easily.

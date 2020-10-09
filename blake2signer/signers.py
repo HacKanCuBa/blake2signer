@@ -216,7 +216,7 @@ class Blake2SignerBase(ABC):
         :param signed_data: Signed data to unsign.
 
         :raise SignatureError: Signed data structure is not valid.
-        :raise InvalidSignatureError: Signed data has an invalid signature.
+        :raise InvalidSignatureError: Signed data signature is invalid.
 
         :return: Original data.
         """
@@ -306,8 +306,8 @@ class Blake2TimestampSignerBase(Blake2SignerBase, ABC):
         :param max_age: Ensure the signature is not older than this time in seconds.
 
         :raise SignatureError: Signed data structure is not valid.
-        :raise InvalidSignatureError: Signed data has an invalid signature.
-        :raise ExpiredSignatureError: Signed data has expired.
+        :raise InvalidSignatureError: Signed data signature is invalid.
+        :raise ExpiredSignatureError: Signed data signature has expired.
 
         :return: Original data.
         """
@@ -361,7 +361,7 @@ class Blake2Signer(Blake2SignerBase):
 
         :raise ConversionError: Signed data can't be converted to bytes.
         :raise SignatureError: Signed data structure is not valid.
-        :raise InvalidSignatureError: Signed data has an invalid signature.
+        :raise InvalidSignatureError: Signed data signature is invalid.
 
         :return: Original data.
         """
@@ -413,8 +413,8 @@ class Blake2TimestampSigner(Blake2TimestampSignerBase):
 
         :raise ConversionError: Signed data can't be converted to bytes.
         :raise SignatureError: Signed data structure is not valid.
-        :raise InvalidSignatureError: Signed data has an invalid signature.
-        :raise ExpiredSignatureError: Signed data has expired.
+        :raise InvalidSignatureError: Signed data signature is invalid.
+        :raise ExpiredSignatureError: Signed data signature has expired.
 
         :return: Original data.
         """
