@@ -11,11 +11,7 @@ from secrets import compare_digest
 from secrets import token_urlsafe
 from time import time
 
-from .errors import DecodeError
-from .errors import EncodeError
-from .errors import ExpiredSignatureError
-from .errors import InvalidOptionError
-from .errors import InvalidSignatureError
+from . import errors
 from .utils import b64decode
 from .utils import b64encode
 from .utils import force_bytes
@@ -72,9 +68,9 @@ class Blake2SignerBase(ABC):
         self,
         secret: bytes,
         *,
-        hasher: Hashers_ = Hashers.blake2b,
-        digest_size: typing.Optional[int] = None,
         personalisation: bytes = b'',
+        digest_size: typing.Optional[int] = None,
+        hasher: Hashers_ = Hashers.blake2b,
     ) -> None:
         """Sign and verify signed data using Blake2 in keyed hashing mode.
 
@@ -82,19 +78,18 @@ class Blake2SignerBase(ABC):
                        produce the signing key. The minimum secret size is
                        enforced to 16 bytes and there is no maximum since the key
                        will be derived to the maximum supported size.
-        :param hasher: [optional] Hash function to use: blake2b (default) or blake2s.
         :param digest_size: [optional] Size of output signature (digest) in bytes
                             (defaults to maximum digest size of chosen function).
-                            Bear in mind that a small digest size increases the
-                            risk collision. I.e. if we used 1 byte as digest size,
-                            an attacker would be able to correctly sign any payload
-                            in around ~128 attempts or less without needing to
-                            know the secret key. For this reason the minimum size
-                            is enforced to 16 bytes.
-        :param personalisation: [optional] personalisation string to force the
+                            The minimum size is enforced to 16 bytes.
+        :param personalisation: [optional] Personalisation string to force the
                                 hash function to produce different digests for
-                                the same input.
+                                the same input. It is derived using blake2 to ensure
+                                it fits the hasher limits, so it has no practical
+                                size limit. It defaults to the class name.
+        :param hasher: [optional] Hash function to use: blake2b (default) or blake2s.
 
+        :raise ConversionError: A parameter is not bytes and can't be converted
+                                to bytes.
         :raise InvalidOptionError: A parameter is out of bounds.
         """
         self._hasher: typing.Union[typing.Type[blake2b], typing.Type[blake2s]]
@@ -104,14 +99,14 @@ class Blake2SignerBase(ABC):
         person = self._force_bytes(personalisation)
 
         if len(secret) < self.MIN_SECRET_SIZE:
-            raise InvalidOptionError(
+            raise errors.InvalidOptionError(
                 f'secret should be longer than {self.MIN_SECRET_SIZE} bytes',
             )
 
         if digest_size is None:
             digest_size = self._hasher.MAX_DIGEST_SIZE
         elif not (self.MIN_DIGEST_SIZE <= digest_size <= self._hasher.MAX_DIGEST_SIZE):
-            raise InvalidOptionError(
+            raise errors.InvalidOptionError(
                 f'digest_size should be between {self.MIN_DIGEST_SIZE} and '
                 f'{self._hasher.MAX_DIGEST_SIZE}',
             )
@@ -154,12 +149,12 @@ class Blake2SignerBase(ABC):
     def _force_bytes(value: typing.AnyStr) -> bytes:
         """Force given value into bytes.
 
-        :raise EncodeError: Can't force value into bytes.
+        :raise ConversionError: Can't force value into bytes.
         """
         try:
             return force_bytes(value)
-        except Exception as exc:
-            raise EncodeError(exc) from exc
+        except Exception:
+            raise errors.ConversionError('value can not be converted to bytes')
 
     def _compose(self, parts: SignedDataParts) -> bytes:
         """Compose signed data parts into a single stream."""
@@ -168,15 +163,15 @@ class Blake2SignerBase(ABC):
     def _decompose(self, signed_data: bytes) -> SignedDataParts:
         """Decompose a signed data stream into its parts.
 
-        :raise DecodeError: Invalid signed data.
+        :raise SignatureError: Invalid signed data.
         """
         if self.SEPARATOR not in signed_data:
-            raise DecodeError('separator not found in signed data')
+            raise errors.SignatureError('separator not found in signed data')
 
         composite_signature, data = signed_data.split(self.SEPARATOR, 1)
 
         if len(composite_signature) < (self._salt_size + self.MIN_DIGEST_SIZE):
-            raise DecodeError('signature is too short')
+            raise errors.SignatureError('signature is too short')
 
         salt = composite_signature[:self._salt_size]
         signature = composite_signature[self._salt_size:]
@@ -218,8 +213,8 @@ class Blake2SignerBase(ABC):
 
         :param signed_data: Signed data to unsign.
 
-        :raise DecodeError: Signed data is not valid or it can't be decoded.
-        :raise InvalidSignatureError: Signed data has invalid signature.
+        :raise SignatureError: Signed data structure is not valid.
+        :raise InvalidSignatureError: Signed data has an invalid signature.
 
         :return: Original data.
         """
@@ -227,13 +222,13 @@ class Blake2SignerBase(ABC):
         if self._verify(parts):
             return parts.data
 
-        raise InvalidSignatureError('signature is not valid')
+        raise errors.InvalidSignatureError('signature is not valid')
 
 
 class Blake2Signer(Blake2SignerBase):
     """Blake2 in keyed hashing mode for signing data."""
 
-    def sign(self, data: bytes) -> bytes:
+    def sign(self, data: typing.AnyStr) -> bytes:
         """Sign given data and produce a stream composed of it, salt and signature.
 
         Note that given data is _not_ encrypted, only signed. To recover data from
@@ -245,20 +240,34 @@ class Blake2Signer(Blake2SignerBase):
         The salt is a cryptographically secure pseudorandom string generated for
         this signature only.
 
+        If given data is not bytes a conversion will be applied assuming it's
+        UTF-8 encoded. You should prefer to properly encode strings and passing
+        bytes to this function.
+
+        :raise ConversionError: Data can't be converted to bytes.
+
         :return: A signed stream composed of salt, signature and data.
         """
         return self._sign(self._force_bytes(data))
 
-    def unsign(self, signed_data: bytes) -> bytes:
+    def unsign(self, signed_data: typing.AnyStr) -> bytes:
         """Verify a stream signed by :meth:`sign` and recover original data.
+
+        If given data is not bytes a conversion will be applied assuming it's
+        UTF-8 encoded. You should prefer to properly encode strings and passing
+        bytes to this function.
 
         :param signed_data: Signed data to unsign.
 
-        :raise DecodeError: Signed data is not valid or it can't be decoded.
-        :raise InvalidSignatureError: Signed data has invalid signature.
+        :raise ConversionError: Signed data can't be converted to bytes.
+        :raise SignatureError: Signed data structure is not valid.
+        :raise InvalidSignatureError: Signed data has an invalid signature.
 
         :return: Original data.
         """
+        # Unfortunately I have to do this operation before checking the signature
+        # and there's no other way around it since the hashers only support
+        # bytes-like objects. Both itsdangerous and Django do this too.
         return self._unsign(self._force_bytes(signed_data))
 
 
@@ -281,11 +290,14 @@ class Blake2TimestampSigner(Blake2SignerBase):
 
     @staticmethod
     def _decode_timestamp(encoded_timestamp: bytes) -> int:
-        """Decode an encoded timestamp whose signature should have been validated."""
+        """Decode an encoded timestamp whose signature should have been validated.
+
+        :raise DecodeError: timestamp can't be decoded.
+        """
         try:
             return int.from_bytes(b64decode(encoded_timestamp), 'big', signed=False)
         except Exception:
-            raise DecodeError('encoded timestamp is not valid')
+            raise errors.SignatureError('timestamp can not be decoded')
 
     def _add_timestamp(self, data: bytes) -> bytes:
         """Add timestamp value to given data."""
@@ -294,29 +306,35 @@ class Blake2TimestampSigner(Blake2SignerBase):
     def _split_timestamp(self, timestamped_data: bytes) -> TimestampedDataParts:
         """Split data + timestamp value.
 
-        :raise DecodeError: Invalid timestamped data.
+        :raise SignatureError: Invalid timestamped data.
         """
         if self.SEPARATOR not in timestamped_data:
-            raise DecodeError('separator not found in timestamped data')
+            raise errors.SignatureError('separator not found in timestamped data')
 
         timestamp, data = timestamped_data.split(self.SEPARATOR, 1)
 
         if not timestamp:
-            raise DecodeError('timestamp information is missing')
+            raise errors.SignatureError('timestamp information is missing')
 
         return TimestampedDataParts(data=data, timestamp=timestamp)
 
-    def sign(self, data: bytes) -> bytes:
+    def sign(self, data: typing.AnyStr) -> bytes:
         """Sign given data and produce a stream of it, timestamp, salt and signature.
 
         Note that given data is _not_ encrypted, only signed. To recover data from
-        it, while validating the signature, use :meth:`unsign`.
+        it, while validating the signature and timestamp, use :meth:`unsign`.
 
         The signature, salt and timestamp are base64 URL safe encoded without
         padding. Data is left as-is.
 
         The salt is a cryptographically secure pseudorandom string generated for
         this signature only.
+
+        If given data is not bytes a conversion will be applied assuming it's
+        UTF-8 encoded. You should prefer to properly encode strings and passing
+        bytes to this function.
+
+        :raise ConversionError: Data can't be converted to bytes.
 
         :return: A signed stream composed of salt, signature, timestamp and data.
         """
@@ -326,21 +344,29 @@ class Blake2TimestampSigner(Blake2SignerBase):
 
     def unsign(
         self,
-        signed_data: bytes,
+        signed_data: typing.AnyStr,
         *,
         max_age: typing.Union[int, float, timedelta],
     ) -> bytes:
         """Verify a stream signed and timestamped by :meth:`sign` and recover data.
 
+        If given data is not bytes a conversion will be applied assuming it's
+        UTF-8 encoded. You should prefer to properly encode strings and passing
+        bytes to this function.
+
         :param signed_data: Signed data to unsign.
         :param max_age: Ensure the signature is not older than this time in seconds.
 
-        :raise DecodeError: Signed data is not valid or it can't be decoded.
-        :raise InvalidSignatureError: Signed data has invalid signature.
+        :raise ConversionError: Signed data can't be converted to bytes.
+        :raise SignatureError: Signed data structure is not valid.
+        :raise InvalidSignatureError: Signed data has an invalid signature.
         :raise ExpiredSignatureError: Signed data has expired.
 
         :return: Original data.
         """
+        # Unfortunately I have to do this operation before checking the signature
+        # and there's no other way around it since the hashers only support
+        # bytes-like objects. Both itsdangerous and Django do this too.
         data = self._unsign(self._force_bytes(signed_data))
 
         data_parts = self._split_timestamp(data)
@@ -354,6 +380,6 @@ class Blake2TimestampSigner(Blake2SignerBase):
         timestamp = self._decode_timestamp(data_parts.timestamp)
         age = now - timestamp
         if age > ttl:
-            raise ExpiredSignatureError('signed data has expired')
+            raise errors.ExpiredSignatureError('signature has expired')
 
         return data_parts.data

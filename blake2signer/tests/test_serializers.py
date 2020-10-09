@@ -6,10 +6,7 @@ from datetime import timedelta
 from unittest import TestCase
 from unittest import mock
 
-from ..errors import DecodeError
-from ..errors import EncodeError
-from ..errors import ExpiredSignatureError
-from ..errors import InvalidOptionError
+from .. import errors
 from ..serializers import Blake2SerializerSigner
 from ..utils import b64encode
 
@@ -128,26 +125,26 @@ class Blake2SerializerSignerErrorTests(TestCase):
 
     def test_secret_too_short(self) -> None:
         """Test parameters out of bounds."""
-        with self.assertRaises(InvalidOptionError):
+        with self.assertRaises(errors.InvalidOptionError):
             Blake2SerializerSigner(b'12345678')
 
     def test_signature_too_short(self) -> None:
         """Test parameters out of bounds."""
-        with self.assertRaises(InvalidOptionError):
-            Blake2SerializerSigner(b'01234567890123456789', digest_size=4)
+        with self.assertRaises(errors.InvalidOptionError):
+            Blake2SerializerSigner(self.secret, digest_size=4)
 
     def test_loads_timestamp_expired(self) -> None:
         """Test loading with timestamp is correct."""
         signer = Blake2SerializerSigner(self.secret, max_age=1)
 
-        with self.assertRaises(ExpiredSignatureError):
+        with self.assertRaises(errors.ExpiredSignatureError):
             signer.loads('xA57I-SgCaGMB8wZT6K9VUjQo1RMlECd_PEavQ.X36RVw.ImRhdGFkYXRhIg')
 
     def test_dumps_wrong_data(self) -> None:
         """Test dumps wrong data."""
         signer = Blake2SerializerSigner(self.secret)
 
-        with self.assertRaises(EncodeError) as cm:  # using `msg` doesn't seem to work
+        with self.assertRaises(errors.SerializationError) as cm:  # `msg` doesn't work
             signer.dumps(b'datadata')  # any non JSON encodable type
         self.assertEqual(
             str(cm.exception),
@@ -157,19 +154,19 @@ class Blake2SerializerSignerErrorTests(TestCase):
     def test_loads_wrong_data(self) -> None:
         """Test loads wrong data."""
         signer = Blake2SerializerSigner(self.secret)
-        with self.assertRaises(DecodeError) as cm:
+        with self.assertRaises(errors.ConversionError) as cm:
             # noinspection PyTypeChecker
             signer.loads(1.0)  # type: ignore
-        self.assertEqual(str(cm.exception), 'signed data can not be encoded to bytes')
+        self.assertEqual(str(cm.exception), 'value can not be converted to bytes')
 
     def test_loads_b64decode_error(self) -> None:
         """Test loads wrong data causing base64 decoding error."""
         signer = Blake2SerializerSigner(self.secret)
         trick_signed = signer._signer.sign(b'-')  # some non-base64 char
 
-        with self.assertRaises(DecodeError) as cm:
+        with self.assertRaises(errors.DecodeError) as cm:
             signer.loads(trick_signed)
-        self.assertEqual(str(cm.exception), 'invalid base64 data')
+        self.assertEqual(str(cm.exception), 'data can not be decoded')
 
     def test_loads_decompression_error(self) -> None:
         """Test loads wrong data causing decompression error."""
@@ -178,7 +175,7 @@ class Blake2SerializerSignerErrorTests(TestCase):
             b64encode(signer.COMPRESSION_FLAG + b'a'),  # trick into decompression
         )
 
-        with self.assertRaises(DecodeError) as cm:
+        with self.assertRaises(errors.DecompressionError) as cm:
             signer.loads(trick_signed)
         self.assertEqual(str(cm.exception), 'data can not be decompressed')
 
@@ -187,7 +184,7 @@ class Blake2SerializerSignerErrorTests(TestCase):
         signer = Blake2SerializerSigner(self.secret)
         trick_signed = signer._signer.sign(b'data')  # non-serializable data
 
-        with self.assertRaises(DecodeError) as cm:
+        with self.assertRaises(errors.UnserializationError) as cm:
             signer.loads(trick_signed)
         self.assertEqual(str(cm.exception), 'data can not be unserialized')
 
@@ -198,7 +195,7 @@ class Blake2SerializerSignerErrorTests(TestCase):
 
         signer = Blake2SerializerSigner(self.secret)
 
-        with self.assertRaises(EncodeError):
+        with self.assertRaises(errors.CompressionError):
             signer.dumps(self.data, use_compression=True)
 
     @mock.patch('blake2signer.serializers.b64encode')
@@ -208,5 +205,5 @@ class Blake2SerializerSignerErrorTests(TestCase):
 
         signer = Blake2SerializerSigner(self.secret)
 
-        with self.assertRaises(EncodeError):
+        with self.assertRaises(errors.EncodeError):
             signer.dumps(self.data)

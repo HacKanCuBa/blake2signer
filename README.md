@@ -28,8 +28,8 @@ This project began initially as a Gist but I decided to create a package because
 This module provides three classes:
 
 * `Blake2SerializerSigner`: a signer class that handles data serialization, compression and encoding along with signing and timestamped signing (using internally the other ones).
-* `Blake2Signer`: a signer class that simply salts, signs and verifies signed data as bytes.
-* `Blake2TimestampSigner`: a signer class that simply salts, signs and verifies signed timestamped data as bytes.
+* `Blake2Signer`: a signer class that simply salts, signs and verifies signed data as bytes or string.
+* `Blake2TimestampSigner`: a signer class that simply salts, signs and verifies signed timestamped data as bytes or string.
 
 **You should generally go for Blake2SerializerSigner**, given that it's the most versatile of the three.
 
@@ -188,6 +188,8 @@ except errors.InvalidSignatureError as exc:
 # really shouldn't!.
 ```
 
+Even though both `Blake2Signer` and `Blake2TimestampSigner` accept data as string you should use bytes instead: both classes will try to convert any given string to bytes **assuming it's UTF-8 encoded** which might not be correct; if you are certain that the string given is UTF-8 then it's OK, otherwise ensure encoding the string correctly and using bytes instead.
+
 #### Real use case example
 
 Sign cookies in a FastAPI/Starlette middleware.
@@ -203,7 +205,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.middleware.base import RequestResponseEndpoint
 
 from blake2signer import Blake2SerializerSigner
-from blake2signer.errors import SignerError
+from blake2signer.errors import SignedDataError
 
 # from .messages import Messages  # Some class that has the data we want to sign
 class Messages:
@@ -259,7 +261,7 @@ class CookieHTTPMiddleware(BaseHTTPMiddleware):
     ) -> Response:
         try:
             request.state.messages = self.get_cookie_data(request)
-        except SignerError:  # some tampering, maybe we changed the secret...
+        except SignedDataError:  # some tampering, maybe we changed the secret...
             request.state.messages = Messages()
 
         response = await call_next(request)

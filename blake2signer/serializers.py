@@ -7,14 +7,12 @@ from datetime import timedelta
 from hashlib import blake2b
 from hashlib import blake2s
 
-from .errors import DecodeError
-from .errors import EncodeError
+from . import errors
 from .signers import Blake2Signer
 from .signers import Blake2TimestampSigner
 from .signers import Hashers_
 from .utils import b64decode
 from .utils import b64encode
-from .utils import force_bytes
 
 
 class SignerOptions(typing.TypedDict):
@@ -51,8 +49,8 @@ class Blake2SerializerSigner:
         *,
         max_age: typing.Union[None, int, float, timedelta] = None,
         personalisation: bytes = b'',
-        hasher: Hashers_ = Hashers_.blake2b,
         digest_size: int = DEFAULT_DIGEST_SIZE,
+        hasher: Hashers_ = Hashers_.blake2b,
         json_encoder: typing.Optional[typing.Type[json.JSONEncoder]] = None,
     ) -> None:
         """Serialize, sign and verify serialized signed data using Blake2.
@@ -61,10 +59,6 @@ class Blake2SerializerSigner:
 
         Setting `max_age` will produce a timestamped signed stream.
 
-        This class is intended to be used to sign and verify cookies or similar.
-        It sets sane defaults such as a signature size of 16 bytes, key derivation
-        from given secret and the use of a personalisation string.
-
         :param secret: Secret value which will be derived using blake2 to
                        produce the signing key. The minimum secret size is
                        enforced to 16 bytes and there is no maximum since the key
@@ -72,17 +66,19 @@ class Blake2SerializerSigner:
         :param max_age: [optional] Use a timestamp signer instead of a regular
                         one to ensure that the signature is not older than this
                         time in seconds.
-        :param personalisation: [optional] Set the personalisation string to force
-                                the hash function to produce different digests for
+        :param personalisation: [optional] Personalisation string to force the
+                                hash function to produce different digests for
                                 the same input. It is derived using blake2 to ensure
                                 it fits the hasher limits, so it has no practical
                                 size limit. It defaults to the class name.
-        :param hasher: [optional] Hash function to use: blake2b (default) or blake2s.
         :param digest_size: [optional] Size of output signature (digest) in bytes
-                            (defaults to 16 bytes).
+                            (defaults to the minimum size of 16 bytes).
+        :param hasher: [optional] Hash function to use: blake2b (default) or blake2s.
         :param json_encoder: [optional] A custom JSON encoder class that extends
                              default encoder functionality.
 
+        :raise ConversionError: A parameter is not bytes and can't be converted
+                                to bytes.
         :raise InvalidOptionError: A parameter is out of bounds.
         """
         self._encoder: typing.Optional[typing.Type[json.JSONEncoder]] = json_encoder
@@ -112,51 +108,74 @@ class Blake2SerializerSigner:
             self._max_age = max_age
 
     def _serialize(self, data: typing.Any) -> bytes:
-        """Serialize given data to JSON."""
+        """Serialize given data to JSON.
+
+        :raise SerializationError: Data can't be serialized.
+        """
         # Other serializers can be used here such as msgpack: msgpack.packb(data)
         try:
             # Use JSON compact encoding
             return json.dumps(data, separators=(',', ':'), cls=self._encoder).encode()
         except TypeError as exc:
-            raise EncodeError(exc) from exc
+            raise errors.SerializationError(exc) from exc
 
     @staticmethod
     def _unserialize(data: bytes) -> typing.Any:
+        """Unserialize given JSON data.
+
+        :raise UnserializationError: Data can't be unserialized.
+        """
         # Other serializers can be used here such as msgpack: msgpack.unpackb(data)
         try:
             return json.loads(data)
         except ValueError:
-            raise DecodeError('data can not be unserialized')
+            raise errors.UnserializationError('data can not be unserialized')
 
     @staticmethod
     def _compress(data: bytes) -> bytes:
+        """Compress given data.
+
+        :raise CompressionError: Data can't be compressed.
+        """
         # Default level is 6 currently but 5 usually performs better with
         # little compression tradeoff.
         try:
             return zlib.compress(data, level=5)
         except zlib.error as exc:
-            raise EncodeError(exc) from exc
+            raise errors.CompressionError(exc) from exc
 
     @staticmethod
     def _decompress(data: bytes) -> bytes:
+        """Decompress given compressed data.
+
+        :raise DecompressionError: Data can't be decompressed.
+        """
         try:
             return zlib.decompress(data)
         except zlib.error:
-            raise DecodeError('data can not be decompressed')
+            raise errors.DecompressionError('data can not be decompressed')
 
     @staticmethod
     def _encode(data: bytes) -> bytes:
+        """Encode given data to base64 URL safe.
+
+        :raise EncodeError: Data can't be encoded.
+        """
         try:
             return b64encode(data)
         except (ValueError, TypeError) as exc:
-            raise EncodeError(exc) from exc
+            raise errors.EncodeError(exc) from exc
 
     @staticmethod
     def _decode(data: typing.AnyStr) -> bytes:
+        """Decode given encoded data from base64 URL safe.
+
+        :raise DecodeError: Data can't be decoded.
+        """
         try:
             return b64decode(data)
         except (ValueError, TypeError):
-            raise DecodeError('invalid base64 data')
+            raise errors.DecodeError('data can not be decoded')
 
     def _add_compression_flag(self, data: bytes) -> bytes:
         """Add the compression flag to given data."""
@@ -170,33 +189,22 @@ class Blake2SerializerSigner:
         """Remove the compression flag from given data."""
         return data[len(self.COMPRESSION_FLAG):]
 
-    @staticmethod
-    def _signed_data_bytes(signed_data: typing.AnyStr) -> bytes:
-        """Force given signed data into bytes.
-
-        :raise DecodeError: Can't convert to bytes.
-        """
-        try:
-            return force_bytes(signed_data)
-        except Exception:
-            raise DecodeError('signed data can not be encoded to bytes')
-
     def dumps(self, data: typing.Any, *, use_compression: bool = False) -> str:
         """Serialize and sign data, optionally compressing and/or timestamping it.
 
-        Data will be serialized to JSON and optionally compressed before being
-        signed. This means that data must be of any JSON serializable type: str,
-        int, list or dict, or a composition of those (tuples are unserialized as
-        lists).
+        Note that given data is _not_ encrypted, only signed. To recover data from
+        the produced string, while validating the signature (and timestamp if any),
+        use :meth:`loads`.
+
+        Data will be serialized to JSON and optionally compressed and base64 URL
+        safe encoded before being signed. This means that data must be of any
+        JSON serializable type: str, int, float, list, tuple, bool, None or dict,
+        or a composition of those (tuples are unserialized as lists).
 
         If `max_age` was specified then the stream will be timestamped.
-        The stream is also salted by a cryptographically secure pseudorandom
-        string generated for this signature only.
 
-        The resulting stream is base64 encoded.
-
-        Note that given data is _not_ encrypted, only signed. To recover data from
-        it, while validating the signature (and timestamp if any), use :meth:`loads`.
+        A cryptographically secure pseudorandom salt is generated and applied to
+        this signature.
 
         The full flow is as follows, where optional actions are marked between brackets:
         data -> serialize -> [compress] -> [timestamp] -> sign -> encode
@@ -212,9 +220,14 @@ class Blake2SerializerSigner:
                                 it based on your knowledge of the average payload
                                 size and type.
 
-        :raise EncodeError: Data could not be encoded.
+        :raise SerializationError: Data can't be serialized.
+        :raise CompressionError: Data can't be compressed.
+        :raise EncodeError: Data can't be encoded.
 
-        :return: A base64 encoded, signed and optionally timestamped stream of data.
+        :return: A base64 URL safe encoded, signed and optionally timestamped
+                 string of serialized and optionally compressed data. This value
+                 is safe for printing or transmitting as it only contains the
+                 following characters: a-z, A-Z, -, _ and .
         """
         serialized = self._serialize(data)
 
@@ -232,36 +245,33 @@ class Blake2SerializerSigner:
     def loads(self, signed_data: typing.AnyStr) -> typing.Any:
         """Recover original data from a signed serialized string from :meth:`dumps`.
 
-        If the data was compressed it will be decompressed before unserializing it.
-
         If `max_age` was specified then it will be ensured that the signature is
         not older than this time in seconds.
 
+        If the data was compressed it will be decompressed before unserializing it.
+
         Important note: if signed data was timestamped but `max_age` was not
-        specified then an error will occur. The same goes for the other way
-        around: if it wasn't timestamped but `max_age` is now set. So you need to
-        know these parameters from beforehand: they won't live in the signed stream!
+        specified or vice versa then the signature validation will fail.
 
         The full flow is as follows, where optional actions are marked between brackets:
         data -> check sig -> [check timestamp] -> decode -> [decompress] -> unserialize
 
         :param signed_data: Signed data to unsign.
 
-        :raise DecodeError: Signed data is not valid or it can't be decoded.
-        :raise InvalidSignatureError: Signed data has invalid signature.
+        :raise ConversionError: Signed data can't be converted to bytes.
+        :raise SignatureError: Signed data structure is not valid.
+        :raise InvalidSignatureError: Signed data has an invalid signature.
         :raise ExpiredSignatureError: Signed data has expired.
+        :raise DecodeError: Signed data can't be decoded.
+        :raise DecompressionError: Signed data can't be decompressed.
+        :raise UnserializationError: Signed data can't be unserialized.
 
         :return: Unserialized data.
         """
-        # Unfortunately I have to do this operation before checking the signature
-        # and there's no other way around it since the hashers only support
-        # bytes-like objects. Both itsdangerous and Django do this too.
-        signed_data_bytes = self._signed_data_bytes(signed_data)
-
         if isinstance(self._signer, Blake2Signer):
-            unsigned = self._signer.unsign(signed_data_bytes)
+            unsigned = self._signer.unsign(signed_data)
         else:
-            unsigned = self._signer.unsign(signed_data_bytes, max_age=self._max_age)
+            unsigned = self._signer.unsign(signed_data, max_age=self._max_age)
 
         decoded = self._decode(unsigned)
 
