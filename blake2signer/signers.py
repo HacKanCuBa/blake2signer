@@ -52,11 +52,6 @@ class Hashers_(Enum):
 class Blake2SignerBase(ABC):
     """Base class for a signer based on Blake2 in keyed hashing mode."""
 
-    __slots__ = (
-        '_hasher',
-        '_hasher_options',
-    )
-
     Hashers = Hashers_
 
     MIN_SECRET_SIZE: int = 16
@@ -111,14 +106,22 @@ class Blake2SignerBase(ABC):
                 f'{self._hasher.MAX_DIGEST_SIZE}',
             )
 
-        # read more about personalisation in the hashlib docs:
-        # https://docs.python.org/3/library/hashlib.html#personalisation
-        person = self._derive_person(person + self.__class__.__name__.encode())
+        self._digest_size = digest_size
+        self._person = self._derive_person(person + self.__class__.__name__.encode())
+        self._key = self._derive_key(secret, person=self._person)  # forget secret :)
 
-        self._hasher_options: Blake2Options = Blake2Options(
-            key=self._derive_key(secret, person=person),
-            person=person,
-            digest_size=digest_size,
+    @property
+    def _salt_size(self) -> int:
+        """Get the salt size."""
+        return self._hasher.SALT_SIZE
+
+    @property
+    def _hasher_options(self) -> Blake2Options:
+        """Get the required options for the hasher."""
+        return Blake2Options(
+            key=self._key,
+            person=self._person,
+            digest_size=self._digest_size,
         )
 
     def _derive_person(self, person: bytes) -> bytes:
@@ -132,11 +135,6 @@ class Blake2SignerBase(ABC):
             person=person,
             digest_size=self._hasher.MAX_KEY_SIZE,
         ).digest()
-
-    @property
-    def _salt_size(self) -> int:
-        """Get the salt size."""
-        return self._hasher.SALT_SIZE
 
     def _generate_salt(self) -> bytes:
         """Generate a cryptographically secure pseudorandom salt."""
@@ -201,7 +199,11 @@ class Blake2SignerBase(ABC):
         return compare_digest(good_signature, parts.signature)
 
     def _sign(self, data: bytes) -> bytes:
-        """Sign given data and produce a stream composed of it, salt and signature."""
+        """Sign given data and produce a stream composed of it, salt and signature.
+
+        The signature and salt are base64 URL safe encoded without padding.
+        Data is left as-is.
+        """
         salt = self._generate_salt()
         signature = self._signify(salt=salt, data=data)
         parts = SignedDataParts(salt=salt, signature=signature, data=data)
@@ -223,6 +225,104 @@ class Blake2SignerBase(ABC):
             return parts.data
 
         raise errors.InvalidSignatureError('signature is not valid')
+
+
+class Blake2TimestampSignerBase(Blake2SignerBase, ABC):
+    """Base class for a timestamp signer based on Blake2 in keyed hashing mode."""
+
+    @staticmethod
+    def _get_timestamp() -> bytes:
+        """Get the encoded timestamp value."""
+        timestamp = int(time())  # its easier to encode and decode an integer
+        try:
+            timestamp_b = timestamp.to_bytes(4, 'big', signed=False)
+        except OverflowError:  # This will happen in ~2106-02-07
+            raise RuntimeError(
+                'can not represent this timestamp in bytes: this library is '
+                'too old and needs to be updated!',
+            )
+
+        return b64encode(timestamp_b)
+
+    @staticmethod
+    def _decode_timestamp(encoded_timestamp: bytes) -> int:
+        """Decode an encoded timestamp whose signature should have been validated.
+
+        :raise DecodeError: timestamp can't be decoded.
+        """
+        try:
+            return int.from_bytes(b64decode(encoded_timestamp), 'big', signed=False)
+        except Exception:
+            raise errors.SignatureError('timestamp can not be decoded')
+
+    def _add_timestamp(self, data: bytes) -> bytes:
+        """Add timestamp value to given data."""
+        return self._get_timestamp() + self.SEPARATOR + data
+
+    def _split_timestamp(self, timestamped_data: bytes) -> TimestampedDataParts:
+        """Split data + timestamp value.
+
+        :raise SignatureError: Invalid timestamped data.
+        """
+        if self.SEPARATOR not in timestamped_data:
+            raise errors.SignatureError('separator not found in timestamped data')
+
+        timestamp, data = timestamped_data.split(self.SEPARATOR, 1)
+
+        if not timestamp:
+            raise errors.SignatureError('timestamp information is missing')
+
+        return TimestampedDataParts(data=data, timestamp=timestamp)
+
+    @staticmethod
+    def _get_ttl_from_max_age(max_age: typing.Union[int, float, timedelta]) -> float:
+        """Get the time-to-live value in seconds."""
+        if isinstance(max_age, timedelta):
+            return max_age.total_seconds()
+
+        return float(max_age)
+
+    def _sign_with_timestamp(self, data: bytes) -> bytes:
+        """Sign given data and produce a stream of it, timestamp, salt and signature.
+
+        The signature, salt and timestamp are base64 URL safe encoded without
+        padding. Data is left as-is.
+
+        :return: A signed stream composed of salt, signature, timestamp and data.
+        """
+        timestamped_data = self._add_timestamp(self._force_bytes(data))
+
+        return self._sign(timestamped_data)
+
+    def _unsign_with_timestamp(
+        self,
+        signed_data: bytes,
+        *,
+        max_age: typing.Union[int, float, timedelta],
+    ) -> bytes:
+        """Verify a stream signed and timestamped and recover data.
+
+        :param signed_data: Signed data to unsign.
+        :param max_age: Ensure the signature is not older than this time in seconds.
+
+        :raise SignatureError: Signed data structure is not valid.
+        :raise InvalidSignatureError: Signed data has an invalid signature.
+        :raise ExpiredSignatureError: Signed data has expired.
+
+        :return: Original data.
+        """
+        data = self._unsign(signed_data)
+
+        data_parts = self._split_timestamp(data)
+
+        now = time()
+        timestamp = self._decode_timestamp(data_parts.timestamp)
+        age = now - timestamp
+        ttl = self._get_ttl_from_max_age(max_age)
+        if age > ttl:
+            raise errors.ExpiredSignatureError('signature has expired')
+
+        return data_parts.data
 
 
 class Blake2Signer(Blake2SignerBase):
@@ -271,52 +371,8 @@ class Blake2Signer(Blake2SignerBase):
         return self._unsign(self._force_bytes(signed_data))
 
 
-class Blake2TimestampSigner(Blake2SignerBase):
+class Blake2TimestampSigner(Blake2TimestampSignerBase):
     """Blake2 in keyed hashing mode for signing data with timestamp."""
-
-    @staticmethod
-    def _get_timestamp() -> bytes:
-        """Get the encoded timestamp value."""
-        timestamp = int(time())  # its easier to encode and decode an integer
-        try:
-            timestamp_b = timestamp.to_bytes(4, 'big', signed=False)
-        except OverflowError:  # This will happen in ~2106-02-07
-            raise RuntimeError(
-                'can not represent this timestamp in bytes: this library is '
-                'too old and needs to be updated!',
-            )
-
-        return b64encode(timestamp_b)
-
-    @staticmethod
-    def _decode_timestamp(encoded_timestamp: bytes) -> int:
-        """Decode an encoded timestamp whose signature should have been validated.
-
-        :raise DecodeError: timestamp can't be decoded.
-        """
-        try:
-            return int.from_bytes(b64decode(encoded_timestamp), 'big', signed=False)
-        except Exception:
-            raise errors.SignatureError('timestamp can not be decoded')
-
-    def _add_timestamp(self, data: bytes) -> bytes:
-        """Add timestamp value to given data."""
-        return self._get_timestamp() + self.SEPARATOR + data
-
-    def _split_timestamp(self, timestamped_data: bytes) -> TimestampedDataParts:
-        """Split data + timestamp value.
-
-        :raise SignatureError: Invalid timestamped data.
-        """
-        if self.SEPARATOR not in timestamped_data:
-            raise errors.SignatureError('separator not found in timestamped data')
-
-        timestamp, data = timestamped_data.split(self.SEPARATOR, 1)
-
-        if not timestamp:
-            raise errors.SignatureError('timestamp information is missing')
-
-        return TimestampedDataParts(data=data, timestamp=timestamp)
 
     def sign(self, data: typing.AnyStr) -> bytes:
         """Sign given data and produce a stream of it, timestamp, salt and signature.
@@ -338,9 +394,7 @@ class Blake2TimestampSigner(Blake2SignerBase):
 
         :return: A signed stream composed of salt, signature, timestamp and data.
         """
-        timestamped_data = self._add_timestamp(self._force_bytes(data))
-
-        return self._sign(timestamped_data)
+        return self._sign_with_timestamp(self._force_bytes(data))
 
     def unsign(
         self,
@@ -367,19 +421,7 @@ class Blake2TimestampSigner(Blake2SignerBase):
         # Unfortunately I have to do this operation before checking the signature
         # and there's no other way around it since the hashers only support
         # bytes-like objects. Both itsdangerous and Django do this too.
-        data = self._unsign(self._force_bytes(signed_data))
-
-        data_parts = self._split_timestamp(data)
-
-        if isinstance(max_age, timedelta):
-            ttl = max_age.total_seconds()
-        else:
-            ttl = float(max_age)
-
-        now = time()
-        timestamp = self._decode_timestamp(data_parts.timestamp)
-        age = now - timestamp
-        if age > ttl:
-            raise errors.ExpiredSignatureError('signature has expired')
-
-        return data_parts.data
+        return self._unsign_with_timestamp(
+            self._force_bytes(signed_data),
+            max_age=max_age,
+        )

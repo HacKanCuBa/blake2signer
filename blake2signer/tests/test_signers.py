@@ -223,7 +223,8 @@ class Blake2TimestampSignerErrorTests(TestCase):
         """Test unsign wrong data."""
         signer = Blake2TimestampSigner(self.secret)
         trick_signer = Blake2Signer(self.secret)
-        trick_signer._hasher_options = signer._hasher_options.copy()
+        trick_signer._key = signer._key
+        trick_signer._person = signer._person
 
         trick_signed = trick_signer.sign(self.data)
         with self.assertRaises(errors.SignatureError) as cm:
