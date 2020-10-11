@@ -1,3 +1,34 @@
+
+0.4.0 - 2020-10-11
+==================
+
+Added
+-----
+
+- Create new parameter to set compression level in `dumps` for `Blake2SerializerSigner`.
+- When compressing check if there's a benefit to it and if not skip it in `dumps` for `Blake2SerializerSigner`.
+
+Changed
+-------
+
+- The signature is base64 encoded.
+- The timestamp is base64 encoded.
+- The salt is generated and used as base64 data to avoid needing to decode it when checking the signature.
+- Use a symbol to separate composite signature from timestamp and data.
+- Verify the signature before decoding.
+- Blake2Serializer was renamed to Blake2SerializerSigner because of reasons.
+- Derive key from `secret` and `person` in all classes.
+- Force bytes in all inputs.
+- Set minimum digest size of 16 (was 8).
+- Always concatenate personalisation value with the class name to prevent signed data misuse.
+- Rename `person` parameter to `personalisation`.
+- Rename `key` parameter to `secret`.
+- Some other minor changes regarding public/private API so that the only public methods are `sign`/`unsign` and `loads`/`dumps`.
+- Refactor exceptions to make them make sense and be more usable.
+- Improve docstrings descriptions and properly document exceptions.
+- Refactor classes into abstracts and mixins so that end users can create their own implementations easily.
+- Change compression flag to a dot.
+
 0.3.0 - 2020-10-05
 ==================
 
