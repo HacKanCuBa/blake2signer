@@ -359,6 +359,34 @@ class Blake2SerializerSigner(
 
     It uses Blake2 in keyed hashing mode and it can handle data serialization,
     compression and encoding.
+
+    :Example:
+
+    >>> data = {'message': 'attack at dawn', 'extra': [1, 2, 3, 4]}
+    >>> secret_key = b'a very secret string'
+    >>> signer = Blake2SerializerSigner(
+    >>>     secret_key,
+    >>>     max_age=timedelta(days=1),
+    >>>     personalisation=b'the-cookie-signer',  # Make it unique per instance
+    >>> )
+    >>> # Sign and i.e. store the data in a cookie
+    >>> signed: str = signer.dumps(data)  # Compression is enabled by default
+    >>> cookie = {'data': signed}
+    >>> # To verify and recover data simply use loads: you will either get the
+    >>> # data or a `SignerError` subclass exception (it is recommended to use
+    >>> # `SignedDataError` given it is more specific and prevents masking other
+    >>> # unrelated errors).
+    >>> try:
+    >>>     unsigned = signer.loads(cookie.get('data', ''))
+    >>> except errors.SignedDataError:
+    >>>     # Can't trust given data so set a default, break current process, etc.
+    >>>     unsigned = {'message': '', 'extra': []}
+
+    .. note:: If compressing data turns out to be detrimental then data won't be
+              compressed. If you know that from beforehand and don't need
+              compression, you can disable it:
+              `signed = signer.dumps(data, use_compression=False)`.
+
     """
 
     def __init__(

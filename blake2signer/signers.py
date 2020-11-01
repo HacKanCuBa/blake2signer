@@ -326,7 +326,30 @@ class Blake2TimestampSignerBase(Blake2SignerBase, ABC):
 
 
 class Blake2Signer(Blake2SignerBase):
-    """Blake2 in keyed hashing mode for signing data."""
+    """Blake2 in keyed hashing mode for signing data.
+
+    :Example:
+
+    >>> data = b'facundo castro presente'
+    >>> secret_key = b'a very secret string'
+    >>> signer = Blake2Signer(
+    >>>     secret_key,
+    >>>     personalisation=b'the-data-signer',  # Make it unique per instance
+    >>> )
+    >>> # Sign and i.e. store the data in a cookie
+    >>> signed: bytes = signer.sign(data)
+    >>> cookie = {'data': signed}
+    >>> # To verify and recover data simply use unsign: you will either get the
+    >>> # data or a `SignerError` subclass exception (it is recommended to use
+    >>> # `SignedDataError` given it is more specific and prevents masking other
+    >>> # unrelated errors).
+    >>> try:
+    >>>     unsigned = signer.unsign(cookie.get('data', ''))
+    >>> except errors.SignedDataError:
+    >>>     # Can't trust given data so set a default, break current process, etc.
+    >>>     unsigned = b''
+
+    """
 
     def sign(self, data: typing.AnyStr) -> bytes:
         """Sign given data and produce a stream composed of it, salt and signature.
@@ -372,7 +395,31 @@ class Blake2Signer(Blake2SignerBase):
 
 
 class Blake2TimestampSigner(Blake2TimestampSignerBase):
-    """Blake2 in keyed hashing mode for signing data with timestamp."""
+    """Blake2 in keyed hashing mode for signing data with timestamp.
+
+    :Example:
+
+    >>> data = b'facundo castro presente'
+    >>> secret_key = b'a very secret string'
+    >>> signer = Blake2TimestampSigner(
+    >>>     secret_key,
+    >>>     personalisation=b'the-data-time-signer',  # Make it unique per instance
+    >>> )
+    >>> # Sign and i.e. store the data in a cookie
+    >>> signed: bytes = signer.sign(data)
+    >>> cookie = {'data': signed}
+    >>> # To verify and recover data simply use unsign: you will either get the
+    >>> # data or a `SignerError` subclass exception (it is recommended to use
+    >>> # `SignedDataError` given it is more specific and prevents masking other
+    >>> # unrelated errors). You need to specify the signature age in seconds
+    >>> # (or a timedelta instance).
+    >>> try:
+    >>>     unsigned = signer.unsign(cookie.get('data', ''), max_age=10)
+    >>> except errors.SignedDataError:
+    >>>     # Can't trust given data so set a default, break current process, etc.
+    >>>     unsigned = b''
+
+    """
 
     def sign(self, data: typing.AnyStr) -> bytes:
         """Sign given data and produce a stream of it, timestamp, salt and signature.
