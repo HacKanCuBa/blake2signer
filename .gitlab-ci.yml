@@ -10,7 +10,7 @@ stages:
 
 python lint:
   stage: static_analysis
-  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.0.10"
+  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.4"
   variables:
     INVOKE_RUN_SHELL: /bin/ash
     POETRY_VIRTUALENVS_CREATE: 0
@@ -28,7 +28,7 @@ python lint:
 
 packages security:
   stage: static_analysis
-  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.0.10"
+  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.4"
   before_script:
     - pip install safety
   script:
@@ -41,7 +41,7 @@ packages security:
 
 tests:
   stage: test
-  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.0.10"
+  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.4"
   variables:
     INVOKE_RUN_SHELL: /bin/ash
     POETRY_VIRTUALENVS_CREATE: 0
