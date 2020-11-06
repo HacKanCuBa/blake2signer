@@ -19,6 +19,7 @@ import-order-style=pycharm
 
 # Maximum Cyclomatic Complexity allowed
 max-complexity = 5
+radon-max-cc = 5
 
 # Set the application name
 application-import-names=blake2signer
