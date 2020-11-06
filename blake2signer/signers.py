@@ -34,14 +34,6 @@ class TimestampedDataParts:
     timestamp: bytes
 
 
-class Blake2Options(typing.TypedDict):
-    """Blake2 options."""
-
-    key: bytes
-    digest_size: int
-    person: bytes
-
-
 class Hashers_(Enum):
     """Hasher selection options."""
 
@@ -115,15 +107,6 @@ class Blake2SignerBase(ABC):
         """Get the salt size."""
         return self._hasher.SALT_SIZE
 
-    @property
-    def _hasher_options(self) -> Blake2Options:
-        """Get the required options for the hasher."""
-        return Blake2Options(
-            key=self._key,
-            person=self._person,
-            digest_size=self._digest_size,
-        )
-
     def _derive_person(self, person: bytes) -> bytes:
         """Derive given personalisation value to ensure it fits the hasher correctly."""
         return self._hasher(person, digest_size=self._hasher.PERSON_SIZE).digest()
@@ -184,7 +167,9 @@ class Blake2SignerBase(ABC):
         signature = self._hasher(
             data,
             salt=salt,
-            **self._hasher_options,
+            key=self._key,
+            person=self._person,
+            digest_size=self._digest_size,
         ).digest()
 
         return b64encode(signature)
