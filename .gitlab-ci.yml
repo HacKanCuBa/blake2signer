@@ -39,13 +39,49 @@ packages security:
     - tags
     - feature/deploy
 
-tests:
+tests py3.9:
   stage: test
   image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.4"
   variables:
     INVOKE_RUN_SHELL: /bin/ash
     POETRY_VIRTUALENVS_CREATE: 0
   before_script:
+    - poetry install
+  script:
+    - inv tests
+  except:
+    - main
+    - tags
+    - feature/deploy
+
+tests py3.8:
+  stage: test
+  image: "python:3.8-alpine"
+  variables:
+    INVOKE_RUN_SHELL: /bin/ash
+    POETRY_VIRTUALENVS_CREATE: 0
+  before_script:
+    - apk update
+    - apk add --no-cache build-base libffi-dev openssl-dev git
+    - pip install poetry
+    - poetry install
+  script:
+    - inv tests
+  except:
+    - main
+    - tags
+    - feature/deploy
+
+tests py3.7:
+  stage: test
+  image: "python:3.7-alpine"
+  variables:
+    INVOKE_RUN_SHELL: /bin/ash
+    POETRY_VIRTUALENVS_CREATE: 0
+  before_script:
+    - apk update
+    - apk add --no-cache build-base libffi-dev openssl-dev git
+    - pip install poetry
     - poetry install
   script:
     - inv tests
