@@ -23,11 +23,12 @@ This project began initially as a Gist but I decided to create a package because
 
 * Python 3.7+
 
-Currently tested versions:
+Currently tested versions (check the [pipelines](https://gitlab.com/hackancuba/blake2signer/-/pipelines)):
 
 * Python 3.7
 * Python 3.8
 * Python 3.9
+* Python 3.10rc
 
 ## Usage
 

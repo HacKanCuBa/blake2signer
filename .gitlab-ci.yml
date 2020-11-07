@@ -89,3 +89,22 @@ tests py3.7:
     - main
     - tags
     - feature/deploy
+
+tests py3.10:
+  stage: test
+  image: "python:3.10-rc-slim"  # python bug can't build wheel so alpine doesn't work
+  variables:
+    INVOKE_RUN_SHELL: /bin/bash
+    POETRY_VIRTUALENVS_CREATE: 0
+  allow_failure: true
+  before_script:
+    - apt update
+    - apt install -qy git build-essential libffi-dev
+    - pip install poetry
+    - poetry install
+  script:
+    - inv tests
+  except:
+    - main
+    - tags
+    - feature/deploy
