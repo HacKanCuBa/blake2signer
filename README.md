@@ -97,12 +97,21 @@ Input data can always be arbitrarily long.
 
 A secure pseudorandom salt of the maximum allowed size for the hasher is generated for each signature internally and can't be manually set. Other packages usually refer to salt as something to add to the secret to prevent signer misuse, but here we have the *personalisation* parameter for that.
 
-As a general rule of thumb if you have highly compressible data such as human readable text, then you should enable compression. Otherwise when dealing with somewhat random data compression won't help much (but probably won't hurt either unless you're dealing with a huge amount of random data).
+All classes share the following initialisation parameters:
+
+* `secret`: Secret value which will be derived using blake2 to produce the signing key.
+* `digest_size`: Size of output signature (digest) in bytes.
+* `personalisation`: Personalisation string (which will be derived using blake2) to force the hash function to produce different digests for the same input.
+* `hasher`: Hash function to use, either `blake2b` (default) or `blake2s`.
+
+When using `unsign` or `loads` always wrap them in a `try ... except errors.SignedDataError` block to catch all exceptions raised by those methods. Alternatively you can check their docs and catch specific exceptions.  
+In any case, all exceptions raised by this lib are subclassed from `SignerError` (unless something very unexpected happens, meaning that you should [fill a bug report](https://gitlab.com/hackancuba/blake2signer/-/issues/new)).
 
 ```python
 """Many usage examples."""
 
 from datetime import timedelta
+from secrets import token_hex
 from time import sleep
 
 from blake2signer import Blake2SerializerSigner
@@ -116,7 +125,7 @@ secret = b'ZnVja3RoZXBvbGljZQ'
 data = [{'a': 'b'}, 1] * 10000  # some big data structure
 print(len(data))  # 20000
 
-signer = Blake2SerializerSigner(secret)  # without timestamp (compression by default)
+signer = Blake2SerializerSigner(secret)  # without timestamp
 signed = signer.dumps(data)
 print(len(signed))  # 405  # compression helped reducing size heavily
 
@@ -130,8 +139,19 @@ signer = Blake2SerializerSigner(  # with timestamp
 signed = signer.dumps(data, use_compression=False)  # without compression
 print(len(signed))  # 160048
 
+# As a general rule of thumb if you have highly compressible data such
+# as human readable text, then you should leave compression enabled.
+# Otherwise when dealing with somewhat random data compression won't
+# help much (but probably won't hurt either unless you're dealing with
+# a huge amount of random data). A check is done when compression is
+# enabled and if it turns out to be detrimental then data won't be
+# compressed, so you can leave it on as it is by default.
+# In this example dumping the output of `token_hex` won't be compressed
+# even though it is enabled.
+print(len(signer.dumps(token_hex(16))) > len(signer.dumps('a' * 16)))  # True
+
 # You can also set the desired compression level where 1 is the fastest
-# and least compressed and 9 the slowest and most compressed.
+# and least compressed and 9 the slowest and most compressed (defaults to 6).
 signed = signer.dumps(data, compression_level=1)
 print(len(signed))  # 880  # less size reduction
 # Since sample data is the same structure repeated many times it's highly
