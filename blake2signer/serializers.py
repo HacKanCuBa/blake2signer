@@ -385,7 +385,7 @@ class Blake2SerializerSigner(
     .. note:: If compressing data turns out to be detrimental then data won't be
               compressed. If you know that from beforehand and don't need
               compression, you can disable it:
-              `signed = signer.dumps(data, use_compression=False)`.
+              `signed: str = signer.dumps(data, use_compression=False)`.
 
     """
 
@@ -468,7 +468,7 @@ class Blake2SerializerSigner(
         this signature.
 
         The full flow is as follows, where optional actions are marked between brackets:
-        data -> serialize -> [compress] -> [timestamp] -> sign -> encode
+        data -> serialize -> [compress] -> [timestamp] -> encode -> sign
 
         :param data: Any JSON encodable object.
         :param use_compression: [optional] Compress data after serializing it and
