@@ -111,7 +111,7 @@ class Blake2SerializerSignerBase(Blake2TimestampSignerBase, ABC):
         max_age: typing.Union[None, int, float, timedelta] = None,
         personalisation: bytes = b'',
         digest_size: typing.Optional[int] = None,
-        hasher: HasherChoice = HasherChoice.blake2b,
+        hasher: typing.Union[HasherChoice, str] = HasherChoice.blake2b,
     ) -> None:
         """Serialize, sign and verify serialized signed data using Blake2.
 
@@ -396,7 +396,7 @@ class Blake2SerializerSigner(
         max_age: typing.Union[None, int, float, timedelta] = None,
         personalisation: bytes = b'',
         digest_size: typing.Optional[int] = None,
-        hasher: HasherChoice = HasherChoice.blake2b,
+        hasher: typing.Union[HasherChoice, str] = HasherChoice.blake2b,
         serializer: typing.Type[SerializerInterface] = JSONSerializer,
         compressor: typing.Type[CompressorInterface] = ZlibCompressor,
         encoder: typing.Type[EncoderInterface] = B64URLEncoder,

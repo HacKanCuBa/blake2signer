@@ -1,12 +1,11 @@
 """Signers: low level classes to sign data."""
 
+import hashlib
 import typing
 from abc import ABC
 from dataclasses import dataclass
 from datetime import timedelta
 from enum import Enum
-from hashlib import blake2b
-from hashlib import blake2s
 from secrets import compare_digest
 from secrets import token_urlsafe
 from time import time
@@ -57,7 +56,7 @@ class Blake2SignerBase(ABC):
         *,
         personalisation: bytes = b'',
         digest_size: typing.Optional[int] = None,
-        hasher: HasherChoice = HasherChoice.blake2b,
+        hasher: typing.Union[HasherChoice, str] = Hashers.blake2b,
     ) -> None:
         """Sign and verify signed data using Blake2 in keyed hashing mode.
 
@@ -79,8 +78,11 @@ class Blake2SignerBase(ABC):
                                 to bytes.
         :raise InvalidOptionError: A parameter is out of bounds.
         """
-        self._hasher: typing.Union[typing.Type[blake2b], typing.Type[blake2s]]
-        self._hasher = blake2b if hasher is self.Hashers.blake2b else blake2s
+        self._hasher: typing.Union[
+            typing.Type[hashlib.blake2b],
+            typing.Type[hashlib.blake2s],
+        ]
+        self._hasher = self._choose_hasher(hasher)
 
         secret = self._force_bytes(secret)
         person = self._force_bytes(personalisation)
@@ -106,6 +108,21 @@ class Blake2SignerBase(ABC):
     def _salt_size(self) -> int:
         """Get the salt size."""
         return self._hasher.SALT_SIZE
+
+    def _choose_hasher(
+        self,
+        hasher: typing.Union[HasherChoice, str],
+    ) -> typing.Union[typing.Type[hashlib.blake2b], typing.Type[hashlib.blake2s]]:
+        """Choose hashing function."""
+        if hasher == self.Hashers.blake2b:
+            return hashlib.blake2b
+        elif hasher == self.Hashers.blake2s:
+            return hashlib.blake2s
+
+        raise errors.InvalidOptionError(
+            f'invalid hasher choice, must be one of: '
+            f'{", ".join(h for h in self.Hashers)}',
+        )
 
     def _derive_person(self, person: bytes) -> bytes:
         """Derive given personalisation value to ensure it fits the hasher correctly."""

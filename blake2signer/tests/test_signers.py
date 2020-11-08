@@ -1,5 +1,6 @@
 """Signers module tests."""
 
+import hashlib
 from datetime import datetime
 from datetime import timedelta
 from unittest import TestCase
@@ -27,9 +28,11 @@ class Blake2SignerTests(TestCase):
         """Test correct class defaults initialisation."""
         signer = Blake2Signer(self.secret)
         self.assertIsInstance(signer, Blake2Signer)
+        self.assertIs(signer._hasher, hashlib.blake2b)
 
         signer = Blake2Signer(self.secret, hasher=Blake2Signer.Hashers.blake2s)
         self.assertIsInstance(signer, Blake2Signer)
+        self.assertIs(signer._hasher, hashlib.blake2s)
 
     def test_sign_unsign_all_options(self) -> None:
         """Test correct signing and unsigning using all options."""
@@ -92,6 +95,14 @@ class Blake2SignerTests(TestCase):
 
         self.assertEqual(len(signed1), len(signed2))
         self.assertNotEqual(signed1, signed2)
+
+    def test_initialisation_hasher_as_string(self) -> None:
+        """Test initialisation with hasher as string."""
+        signer = Blake2Signer(self.secret, hasher='blake2b')
+        self.assertIs(signer._hasher, hashlib.blake2b)
+
+        signer = Blake2Signer(self.secret, hasher='blake2s')
+        self.assertIs(signer._hasher, hashlib.blake2s)
 
 
 class Blake2SignerErrorTests(TestCase):
@@ -175,6 +186,11 @@ class Blake2SignerErrorTests(TestCase):
         with self.assertRaises(errors.ConversionError):
             # noinspection PyTypeChecker
             Blake2Signer(self.secret).unsign(1.0)  # type: ignore
+
+    def test_wrong_hasher_choice(self) -> None:
+        """Test wrong hasher choice."""
+        with self.assertRaises(errors.InvalidOptionError):
+            Blake2Signer(self.secret, hasher='blake2')
 
 
 class Blake2TimestampSignerTests(TestCase):

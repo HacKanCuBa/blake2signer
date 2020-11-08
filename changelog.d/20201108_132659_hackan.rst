@@ -1,0 +1,4 @@
+Fixed
+-----
+
+- The idea of `66ebeff` was to accept the `hasher` parameter also as string, but the implementation and type hints were wrong. Fixed it and added corresponding tests (mental note: avoid releasing new versions at Saturday midnight).
