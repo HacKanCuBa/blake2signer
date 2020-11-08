@@ -8,7 +8,6 @@ from unittest import mock
 from .. import errors
 from ..signers import Blake2Signer
 from ..signers import Blake2TimestampSigner
-from ..signers import Hashers_
 
 
 class Blake2SignerTests(TestCase):
@@ -29,7 +28,7 @@ class Blake2SignerTests(TestCase):
         signer = Blake2Signer(self.secret)
         self.assertIsInstance(signer, Blake2Signer)
 
-        signer = Blake2Signer(self.secret, hasher=Hashers_.blake2s)
+        signer = Blake2Signer(self.secret, hasher=Blake2Signer.Hashers.blake2s)
         self.assertIsInstance(signer, Blake2Signer)
 
     def test_sign_unsign_all_options(self) -> None:
@@ -115,7 +114,11 @@ class Blake2SignerErrorTests(TestCase):
             Blake2Signer(self.secret, digest_size=4)
 
         with self.assertRaises(errors.InvalidOptionError):
-            Blake2Signer(self.secret, digest_size=4, hasher=Hashers_.blake2s)
+            Blake2Signer(
+                self.secret,
+                digest_size=4,
+                hasher=Blake2Signer.Hashers.blake2s,
+            )
 
     def test_digest_too_large(self) -> None:
         """Test digest too large."""
@@ -123,7 +126,11 @@ class Blake2SignerErrorTests(TestCase):
             Blake2Signer(self.secret, digest_size=65)
 
         with self.assertRaises(errors.InvalidOptionError):
-            Blake2Signer(self.secret, digest_size=33, hasher=Hashers_.blake2s)
+            Blake2Signer(
+                self.secret,
+                digest_size=33,
+                hasher=Blake2Signer.Hashers.blake2s,
+            )
 
     def test_unsign_wrong_data(self) -> None:
         """Test unsign with wrong data."""
@@ -183,7 +190,10 @@ class Blake2TimestampSignerTests(TestCase):
         signer = Blake2TimestampSigner(self.key)
         self.assertIsInstance(signer, Blake2TimestampSigner)
 
-        signer = Blake2TimestampSigner(self.key, hasher=Hashers_.blake2s)
+        signer = Blake2TimestampSigner(
+            self.key,
+            hasher=Blake2TimestampSigner.Hashers.blake2s,
+        )
         self.assertIsInstance(signer, Blake2TimestampSigner)
 
     def test_sign(self) -> None:

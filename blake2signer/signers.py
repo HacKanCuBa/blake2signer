@@ -34,8 +34,8 @@ class TimestampedDataParts:
     timestamp: bytes
 
 
-class Hashers_(Enum):
-    """Hasher selection options."""
+class HasherChoice(str, Enum):
+    """Hasher selection choices."""
 
     blake2b = 'blake2b'
     blake2s = 'blake2s'
@@ -44,7 +44,7 @@ class Hashers_(Enum):
 class Blake2SignerBase(ABC):
     """Base class for a signer based on Blake2 in keyed hashing mode."""
 
-    Hashers = Hashers_
+    Hashers = HasherChoice
 
     MIN_SECRET_SIZE: int = 16
     MIN_DIGEST_SIZE: int = 16
@@ -57,7 +57,7 @@ class Blake2SignerBase(ABC):
         *,
         personalisation: bytes = b'',
         digest_size: typing.Optional[int] = None,
-        hasher: Hashers_ = Hashers.blake2b,
+        hasher: HasherChoice = HasherChoice.blake2b,
     ) -> None:
         """Sign and verify signed data using Blake2 in keyed hashing mode.
 
