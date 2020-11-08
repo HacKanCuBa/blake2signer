@@ -1,4 +1,12 @@
 
+0.5.1 - 2020-11-08
+==================
+
+Fixed
+-----
+
+- The idea of `66ebeff` was to accept the `hasher` parameter also as string, but the implementation and type hints were wrong. Fixed it and added corresponding tests (mental note: avoid releasing new versions at Saturday midnight).
+
 0.5.0 - 2020-11-07
 ==================
 
