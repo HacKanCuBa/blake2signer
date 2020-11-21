@@ -6,6 +6,22 @@ The goal of this module is to provide a simple way to securely sign data using B
 
 This project began initially as a Gist but I decided to create a package because I think it can be useful as a small (~600 LoC counting tests), simple (quite straightforward) and fast data signer (see more below).
 
+**Index**
+
+* [Goals](#goals)
+    * [Secondary goals](#secondary-goals)
+* [Requirements](#requirements)
+* [Usage](#usage)
+    * [Examples](#examples)
+        * [Tl; Dr](#tl-dr)
+        * [More examples](#more-examples)
+        * [Using a custom JSON encoder or custom serializer](#using-a-custom-json-encoder-or-custom-serializer)
+        * [Real use case example](#real-use-case-example)
+    * [The errors module](#the-errors-module)
+* [Comparison with other libs](#comparison-with-other-libs)
+* [Notice](#notice)
+* [License](#license)
+
 ## Goals
 
 * Be safe and secure.
@@ -63,10 +79,20 @@ data = {'message': 'attack at dawn', 'extra': [1, 2, 3, 4]}
 
 # Define same signer to `dumps` and `loads`.
 signer = Blake2SerializerSigner(
-    secret,
-    max_age=timedelta(days=1),
+    secret,  # This is required and should be bytes
+    max_age=timedelta(days=1),  # Alternatively use int or float to express seconds
     personalisation=b'the-cookie-signer',  # Always set it different per instance
 )
+# The optional parameter `max_age` allows you to set a timestamp in the signature
+# and verify it when checking the signature. If more than the given time has passed
+# since issuing the signature when checking, then an ExpiredSignatureError
+# exception is raised.
+# The optional parameter `personalisation` allows you to set a unique value that
+# alters the hash result, thus changing the signature. Think of it like a "salt"
+# for the secret: it helps defeating the abuse of using the same signed stream
+# with different signers that share the same key. It is always a good idea to set
+# it uniquely per usage (it doesn't have to be secret nor "random" nor anything
+# like that).
 
 # Sign and i.e. store the data in a cookie
 signed = signer.dumps(data)  # Compression is enabled by default
@@ -80,19 +106,19 @@ cookie = {'data': signed}
 # a `SignerError` subclass exception.
 try:
     unsigned = signer.loads(cookie.get('data', ''))
-except errors.SignedDataError:
+except errors.SignedDataError:  # See more about errors below
     # Can't trust on given data
     unsigned = {}
 
 print(unsigned)  # {'message': 'attack at dawn', 'extra': [1, 2, 3, 4]}
 ```
 
-It is always a good idea to set the `personalisation` parameter which can be any arbitrarily long bytes (it defaults to the class name).  
+It is always a good idea to set the `personalisation` parameter which can be any arbitrarily long bytes (it defaults to the class name plus some extra information). This helps defeating the abuse of using a signed stream for different signers that share the same key by changing the digest computation result. See examples of this below and read more about it in the [hashlib docs](https://docs.python.org/3/library/hashlib.html#personalization).  
 For example if you use a signer for cookies set something like `b'cookies-signer'` or if you use it for some user-related data signing it could be `b'user-data-signer'`, or when used for signing a special value it could be `b'the-special-value-signer`, etc.
 
 #### More Examples
 
-Both the `secret` and `personalisation` parameters are derived so they have no size limit. This *personalisation* parameter helps defeating the abuse of using a signed stream for different signers that share the same key by changing the digest computation result. See examples of this below and read more about it in the [hashlib docs](https://docs.python.org/3/library/hashlib.html#personalization).  
+Both the `secret` and `personalisation` parameters are derived so they have no size limit.  
 Input data can always be arbitrarily long.
 
 A secure pseudorandom salt of the maximum allowed size for the hasher is generated for each signature internally and can't be manually set. Other packages usually refer to salt as something to add to the secret to prevent signer misuse, but here we have the *personalisation* parameter for that.
@@ -105,7 +131,7 @@ All classes share the following initialisation parameters:
 * `hasher`: Hash function to use, either `blake2b` (default) or `blake2s`.
 
 When using `unsign` or `loads` always wrap them in a `try ... except errors.SignedDataError` block to catch all exceptions raised by those methods. Alternatively you can check their docs and catch specific exceptions.  
-In any case, all exceptions raised by this lib are subclassed from `SignerError` (unless something very unexpected happens, meaning that you should [fill a bug report](https://gitlab.com/hackancuba/blake2signer/-/issues/new)).
+In any case, all exceptions raised by this lib are subclassed from `SignerError` (unless something very unexpected happens, meaning that you should [fill a bug report](https://gitlab.com/hackancuba/blake2signer/-/issues/new)). Read more about exceptions and errors below.
 
 ```python
 """Many usage examples."""
@@ -320,7 +346,7 @@ print(signed)  # ....bWVtb3JpYSB5IGp1c3RpY2lh
 print(signer.loads(signed) == data)  # True
 ```
 
-##### I need to work with raw bytes but I want compression and encoding
+**I need to work with raw bytes but I want compression and encoding**
 
 Usually to work with bytes one can choose to use either `Blake2Signer` or `Blake2TimestampSigner`. However, if you also want to have compression and encoding, you need `Blake2SerializerSigner`. The problem now is that JSON doesn't support bytes so the class as-is won't work. There are two solutions:
 
@@ -340,7 +366,7 @@ from blake2signer.serializers import EncoderMixin
 
 
 class MyEncoderCompressorSigner(EncoderMixin, CompressorMixin):
- 
+
     def dumps(self, data: typing.AnyStr) -> str:
         data_bytes = self._force_bytes(data)
         compressed, _ = self._compress(data_bytes, level=6)
@@ -348,13 +374,13 @@ class MyEncoderCompressorSigner(EncoderMixin, CompressorMixin):
         signed = self._dumps(encoded).decode()
 
         return signed
- 
+
     def loads(self, signed_data: typing.AnyStr) -> bytes:
         signed_bytes = self._force_bytes(signed_data)
         unsigned = self._loads(signed_bytes)
         decoded = self._decode(unsigned)
         decompressed = self._decompress(decoded)
- 
+
         return decompressed
 
 
@@ -477,6 +503,44 @@ class CookieHTTPMiddleware(BaseHTTPMiddleware):
         self.set_cookie_data(request.state.messages, response)
 
         return response
+```
+
+### The errors module
+
+This module contains all errors and exceptions raised by this lib. Here's the hierarchy tree:
+
+```
+SignerError: base exception
+    |
+    |-- InvalidOptionError: given option value is out of bounds, has the wrong format or type
+    |
+    |-- DataError: generic data error
+            |
+            |-- SignedDataError: error that occurred for *signed data*
+            |       |
+            |       |-- SignatureError: error encountered while dealing with the signature
+            |       |       |
+            |       |       |-- InvalidSignatureError: the signature is not valid
+            |       |               |
+            |       |               |-- ExpiredSignatureError: the signature has expired
+            |       |
+            |       |-- UnserializationError: given data could not be unserialized
+            |       |
+            |       |-- DecompressionError: given data could not be decompressed
+            |       |
+            |       |-- DecodeError: given data could not be decoded from base64 URL safe
+            |       |
+            |       |-- ConversionError: given data could not be converted to bytes
+            |
+            |-- UnsignedDataError: error that occurred for *data to be signed*
+                    |
+                    |-- SerializationError: given data could not be serialized
+                    |
+                    |-- CompressionError: given data could not be compressed
+                    |
+                    |-- EncodeError: given data could not be encoded to base64 URL safe
+                    |
+                    |-- ConversionError: given data could not be converted to bytes
 ```
 
 ## Comparison with other libs
