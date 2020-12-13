@@ -1,4 +1,4 @@
-# ![Logo](https://assets.gitlab-static.net/uploads/-/system/project/avatar/21560006/logo.png?width=40) Blake2Signer
+# ![Logo](https://assets.gitlab-static.net/uploads/-/system/project/avatar/21560006/icon_d_dark.png?width=40) Blake2Signer
 
 The goal of this module is to provide a simple way to securely sign data using Blake2 in keyed hashing mode (read more about that in the [hashlib docs](https://docs.python.org/3/library/hashlib.html#blake2)).
 
@@ -637,7 +637,7 @@ I'm not a cryptoexpert, so there are some things that remain to be confirmed:
 
 ----
 
-[![CC BY-SA 4.0](https://i.creativecommons.org/l/by-sa/4.0/80x15.png)](https://creativecommons.org/licenses/by-sa/4.0/) *Blake2Signer logo* by [HacKan](https://hackan.net) is licensed under a [Creative Commons Attribution-ShareAlike 4.0 International License](https://creativecommons.org/licenses/by-sa/4.0/). You are free to use, share, modify and share modifications under the terms of that [license](https://creativecommons.org/licenses/by-sa/4.0/).
-It was based on [this sword](https://thenounproject.com/term/samurai-sword/2044449/) by *Hamza Wahbi* and [this signature](https://thenounproject.com/term/sign/184638/) by *Nick Bluth*, both licensed under [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/), and inspired by [It's dangerous logo](https://itsdangerous.palletsprojects.com/en/1.1.x/_images/itsdangerous-logo.png).
+[![CC BY-SA 4.0](https://i.creativecommons.org/l/by-sa/4.0/80x15.png)](https://creativecommons.org/licenses/by-sa/4.0/) *Blake2Signer icons* by [NoonSleeper](https://gitlab.com/noonsleeper) are licensed under a [Creative Commons Attribution-ShareAlike 4.0 International License](https://creativecommons.org/licenses/by-sa/4.0/). You are free to use, share, modify and share modifications under the terms of that [license](https://creativecommons.org/licenses/by-sa/4.0/). They were based on *Blake2Signer logo* by [HacKan](https://hackan.net) which was based on [this sword](https://thenounproject.com/term/samurai-sword/2044449/) by *Hamza Wahbi* and [this signature](https://thenounproject.com/term/sign/184638/) by *Nick Bluth*, both licensed under [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/), and inspired by [It's dangerous logo](https://itsdangerous.palletsprojects.com/en/1.1.x/_images/itsdangerous-logo.png).
 
-[![CC BY-SA 4.0](https://i.creativecommons.org/l/by-sa/4.0/80x15.png)](https://creativecommons.org/licenses/by-sa/4.0/) *Blake2Signer icons* by [NoonSleeper](https://gitlab.com/noonsleeper) are licensed under a [Creative Commons Attribution-ShareAlike 4.0 International License](https://creativecommons.org/licenses/by-sa/4.0/). You are free to use, share, modify and share modifications under the terms of that [license](https://creativecommons.org/licenses/by-sa/4.0/). Them were based on *Blake2Signer logo* by [HacKan](https://hackan.net)
+Check them out in the [icons](https://gitlab.com/hackancuba/blake2signer/-/blob/develop/icons) subdir.
+
