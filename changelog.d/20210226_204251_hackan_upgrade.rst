@@ -1,0 +1,10 @@
+Added
+-----
+
+- Add a logo and icons for the project (many thanks to NoonSleeper).
+- Add index to readme.
+
+Changed
+-------
+- Updated dependencies.
+
