@@ -1,4 +1,0 @@
-Added
------
-
-- Add again flake8-annotations-complexity since it now works in Python 3.9+.

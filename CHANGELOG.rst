@@ -1,4 +1,20 @@
 
+1.0.0 - 2021-02-26
+==================
+
+Added
+-----
+
+- Add a logo and icons for the project (many thanks to NoonSleeper).
+- Add index to readme.
+- Add again flake8-annotations-complexity since it now works in Python 3.9+.
+
+Changed
+-------
+
+- Updated dependencies.
+- Use debian-based images in CI to run tests, prventing package building wreckage and improving run time (there's no need to build given most packages publish a wheel artifact).
+
 0.5.1 - 2020-11-08
 ==================
 

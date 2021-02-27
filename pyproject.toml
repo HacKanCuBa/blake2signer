@@ -1,13 +1,13 @@
 [tool.poetry]
 name = "blake2signer"
-version = "0.5.1"
+version = "1.0.0"
 description = "A library to use Blake2 in keyed hashing mode to sign and verify signed data"
 authors = ["HacKan <hackan@gmail.com>"]
 license = "MPL-2.0"
 readme = "README.md"
 repository = "https://gitlab.com/hackancuba/blake2signer"
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)",
     "Natural Language :: English",
@@ -15,7 +15,10 @@ classifiers = [
     "Programming Language :: Python :: 3 :: Only",
     "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
     "Topic :: Security :: Cryptography",
+    "Topic :: Software Development :: Libraries :: Python Modules",
     "Typing :: Typed",
 ]
 
