@@ -2,7 +2,7 @@
 
 The goal of this module is to provide a simple way to securely sign data using Blake2 in keyed hashing mode (read more about that in the [hashlib docs](https://docs.python.org/3/library/hashlib.html#blake2)).
 
- The main use case is to sign cookies or similar data. There are much better packages for other use cases or more general use cases so if you feel this module doesn't satisfy your needs consider using "itsdangerous", Django's signer, "pypaseto", "pyjwt" or others like those. My idea is to keep this module as simple as possible without much room to become a *footgun*.
+ The main use case of Blake2Signer is to sign cookies or similar data, in a very straightforward way. My idea is to keep this module as simple as possible without much room to become a *footgun*. There are much better packages for other use cases or more general use cases so if you feel this module doesn't satisfy your needs please leave a [feature request](https://gitlab.com/hackancuba/blake2signer/-/issues) or consider using "itsdangerous", Django's signer, "pypaseto", "pyjwt" or others like those.
 
 This project began initially as a Gist but I decided to create a package because I think it can be useful as a small (~600 LoC counting tests), simple (quite straightforward) and fast data signer (see more below).
 
@@ -39,7 +39,7 @@ This project began initially as a Gist but I decided to create a package because
 
 * Python 3.7+
 
-Currently tested versions (check the [pipelines](https://gitlab.com/hackancuba/blake2signer/-/pipelines)):
+Versions currently tested (check the [pipelines](https://gitlab.com/hackancuba/blake2signer/-/pipelines)):
 
 * Python 3.7
 * Python 3.8
@@ -121,7 +121,7 @@ For example if you use a signer for cookies set something like `b'cookies-signer
 Both the `secret` and `personalisation` parameters are derived so they have no size limit.  
 Input data can always be arbitrarily long.
 
-A secure pseudorandom salt of the maximum allowed size for the hasher is generated for each signature internally and can't be manually set. Other packages usually refer to salt as something to add to the secret to prevent signer misuse, but here we have the *personalisation* parameter for that.
+A secure pseudorandom salt of the maximum allowed size for the hasher is generated for each signature internally and can't be manually set, meaning that every produced signature is non-deterministic so even if the payload doesn't change each signed payload will be different and unique. Other packages usually refer to salt as something to add to the secret to prevent signer misuse, but here we have the *personalisation* parameter for that.
 
 All classes share the following initialisation parameters:
 
@@ -286,7 +286,7 @@ class MyJSONSerializer(JSONSerializer):
     def serialize(self, data: typing.Any, **kwargs: typing.Any) -> bytes:
         return super().serialize(data, cls=DecimalJSONEncoder, **kwargs)
 
-secret = b'super-secret-value'
+secret = b'que-paso-con-Tehuel'
 signer = Blake2SerializerSigner(secret, serializer=MyJSONSerializer)
 
 data = {'points': [1, 2, Decimal('3.4')]}
@@ -312,9 +312,9 @@ unsigned = signer.loads(signed)
 print(unsigned)  # {'points': [1, 2, 3.4]}
 ```
 
-`Blake2SerializerSigner` is quite flexible and can receive custom serializer, compressor or encoder. You could i.e. create a custom base62 encoder simply inheriting from `EncoderInterface`, or a custom bzip compressor inheriting from `CompressorInterface`. You don't need to handle or worry about exceptions: those are caught by the caller class.
+`Blake2SerializerSigner` is quite flexible and can receive a custom serializer, compressor or encoder. You could i.e. create a custom base62 encoder simply inheriting from `EncoderInterface`, or a custom bzip compressor inheriting from `CompressorInterface`. You don't need to handle or worry about exceptions: those are caught by the caller class.
 
-On the other hand you can create your own *SerializerSigner* using provided `Blake2SerializerSignerBase` and/or any of the mixins: `SerializerMixin`, `CompressorMixin`, `EncoderMixin` or even creating your own mixin inheriting from `Mixin`.
+On the other hand you can create your own *SerializerSigner* using provided `Blake2SerializerSignerBase` and/or any of the mixins: `SerializerMixin`, `CompressorMixin`, `EncoderMixin` or even creating your own mixin inheriting from `Mixin`. Note that this would be rather advanced, and you should think if this is what you really need to do.
 
 ```python
 """Custom serializer signer class example."""
@@ -346,13 +346,13 @@ print(signed)  # ....bWVtb3JpYSB5IGp1c3RpY2lh
 print(signer.loads(signed) == data)  # True
 ```
 
-**I need to work with raw bytes but I want compression and encoding**
+**I need to work with raw bytes, but I want compression and encoding**
 
-Usually to work with bytes one can choose to use either `Blake2Signer` or `Blake2TimestampSigner`. However, if you also want to have compression and encoding, you need `Blake2SerializerSigner`. The problem now is that JSON doesn't support bytes so the class as-is won't work. There are two solutions:
+Usually to work with bytes one can choose to use either `Blake2Signer` or `Blake2TimestampSigner`. However, if you also want to have compression and encoding, you need `Blake2SerializerSigner`. The problem now is that JSON doesn't support bytes, so the class as-is won't work. There are two solutions:
 
 1. Use the `MsgpackSerializer` created above given that *msgpack* does handle bytes serialization.
 1. Create your custom serializer that doesn't actually serializes to use it with `Blake2SerializerSigner`.
-1. Create your custom class inheriting from `EncoderMixin` and `CompressorMixin`.
+1. Create your custom class inheriting from `EncoderMixin` and `CompressorMixin` (this should be a last resort kind of choice, given that it requires writing more code and uses internal API methods).
 
 Here are those examples:
 
@@ -549,7 +549,7 @@ It's easy to compare this lib to, say, [itsdangerous](https://itsdangerous.palle
 
 Regarding **itsdangerous** (1.1.0), I found this lib to be *marginally faster* (~3%) when compared to it using blake2b or blake2s, *quite faster* regarding sha256 (~55%), 384 (~15%) and 512 (~15%) and *slower* regarding sha1 (~15%) (this is most likely due to CPU instructions optimization).
 
-Regarding **django** (3.1.2), I found this lib to be *quite faster* (~17%) when compared to it using blake2b or blake2s, *incredibly faster* regarding sha256 (~92%), 384 (~55%) and 512 (~55%) and *marginally faster* regarding sha1 (~4%). I have no idea what's going on with Django! It seems its doing too many additional operations. Additionally its Signer doesn't handle arbitrary bytes well (it breaks raising `BadSignature` if you use `datab` below, so it needs `datas`).
+Regarding **django** (3.1.2), I found this lib to be *quite faster* (~17%) when compared to it using blake2b or blake2s, *incredibly faster* regarding sha256 (~92%), 384 (~55%) and 512 (~55%) and *marginally faster* regarding sha1 (~4%). I have no idea what's going on with Django! It seems its doing too many additional operations. Additionally, its Signer doesn't handle arbitrary bytes well (it breaks raising `BadSignature` if you use `data_b` below, so it needs `data_s`).
 
 ```python
 """Timing comparison."""
@@ -570,8 +570,8 @@ from blake2signer import Blake2Signer
 
 secret = b'1' * 16
 data = [{'a': 'b'}, 1] * 100000  # some big data structure
-datas = json.dumps(data)
-datab = datas.encode()
+data_s = json.dumps(data)
+data_b = data_s.encode()
 
 b2s = Blake2Signer(secret)
 b2ss = Blake2SerializerSigner(secret)
@@ -589,27 +589,27 @@ id_b2s = URLSafeSerializer(secret, signer_kwargs={'digest_method': blake2b})
 
 # Using ipython:
 print('b2s')
-%timeit b2s.unsign(b2s.sign(datab))
+%timeit b2s.unsign(b2s.sign(data_b))
 print('id_b2')
-%timeit id_b2.unsign(id_b2.sign(datab))
+%timeit id_b2.unsign(id_b2.sign(data_b))
 print('id_s1')
-%timeit id_s1.unsign(id_s1.sign(datab))
+%timeit id_s1.unsign(id_s1.sign(data_b))
 print('id_s256')
-%timeit id_s256.unsign(id_s256.sign(datab))
+%timeit id_s256.unsign(id_s256.sign(data_b))
 print('id_s384')
-%timeit id_s384.unsign(id_s384.sign(datab))
+%timeit id_s384.unsign(id_s384.sign(data_b))
 print('id_s512')
-%timeit id_s512.unsign(id_s512.sign(datab))
+%timeit id_s512.unsign(id_s512.sign(data_b))
 print('djs_b2')
-%timeit djs_b2.unsign(djs_b2.sign(datas))
+%timeit djs_b2.unsign(djs_b2.sign(data_s))
 print('djs_s1')
-%timeit djs_s1.unsign(djs_s1.sign(datas))
+%timeit djs_s1.unsign(djs_s1.sign(data_s))
 print('djs_s256')
-%timeit djs_s256.unsign(djs_s256.sign(datas))
+%timeit djs_s256.unsign(djs_s256.sign(data_s))
 print('djs_s384')
-%timeit djs_s384.unsign(djs_s384.sign(datas))
+%timeit djs_s384.unsign(djs_s384.sign(data_s))
 print('djs_s512')
-%timeit djs_s512.unsign(djs_s512.sign(datas))
+%timeit djs_s512.unsign(djs_s512.sign(data_s))
 print('b2ss')
 %timeit b2ss.loads(b2ss.dumps(data))
 print('id_b2s')
@@ -623,8 +623,8 @@ I'm not a cryptoexpert, so there are some things that remain to be confirmed:
 * If an attacker can control some part (or all) of the input data, is it possible for them to guess the secret key or provoke a DoS given a huge amount of attempts? (assuming the key is long enough to prevent bruteforcing in the first place, which it should since I set the minimum key size to 128b).
   > I think it is not possible but I would like an expert answer. I checked the code of different signers such as Itsdangerous, Django, etc. and they all do pretty much the same as I except they use the hmac lib.
 
-* I always assume that no attacker can influence the instantiation of the classes, thus they can't change any setting. If someone would break all of the given recommendations and somehow manage to get attacker-controlled data to class instantiation, which settings an attacker may change to break the security of this implementation and guess the secret key? This is more of an exercise but a fun one.
-  > I think that `Blake2SerializerSigner` class is the the best target that allows more room to play since it deals with many layers: serialization, compression, encoding...
+* I always assume that no attacker can influence the instantiation of the classes, thus they can't change any setting. If someone were to break all the given recommendations and somehow manage to get attacker-controlled data to class instantiation, which settings an attacker may change to break the security of this implementation and guess the secret key or compromise the scheme somehow? This is more of an exercise but a fun one.
+  > I think that `Blake2SerializerSigner` class is the best target that allows more room to play since it deals with many layers: serialization, compression, encoding...
 
 ## License
 
