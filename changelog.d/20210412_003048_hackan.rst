@@ -1,0 +1,4 @@
+Security
+--------
+
+- Update dev dependencies, one of which (*safety*) had a security vulnerability because of a dependency (urllib3).
