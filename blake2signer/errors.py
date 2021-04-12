@@ -98,14 +98,14 @@ class CompressionError(UnsignedDataError):
 class DecodeError(SignedDataError):
     """Decode error.
 
-    Means that given data could not be decoded from base64 URL safe.
+    Means that given data could not be decoded.
     """
 
 
 class EncodeError(UnsignedDataError):
     """Encode error.
 
-    Means that given data could not be encoded to base64 URL safe.
+    Means that given data could not be encoded.
     """
 
 

@@ -528,7 +528,7 @@ SignerError: base exception
             |       |
             |       |-- DecompressionError: given data could not be decompressed
             |       |
-            |       |-- DecodeError: given data could not be decoded from base64 URL safe
+            |       |-- DecodeError: given data could not be decoded
             |       |
             |       |-- ConversionError: given data could not be converted to bytes
             |
@@ -538,7 +538,7 @@ SignerError: base exception
                     |
                     |-- CompressionError: given data could not be compressed
                     |
-                    |-- EncodeError: given data could not be encoded to base64 URL safe
+                    |-- EncodeError: given data could not be encoded
                     |
                     |-- ConversionError: given data could not be converted to bytes
 ```
