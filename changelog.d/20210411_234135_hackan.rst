@@ -1,0 +1,4 @@
+Changed
+-------
+
+- Change execution order of steps to publish a package in Contrib, to allow room for fixes after publishing to testpypi.

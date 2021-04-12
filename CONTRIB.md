@@ -66,10 +66,11 @@ Once everything is ready for release, follow these steps:
 1. Edit `blake2signer/__init__.py` and change `__version__`: `__version__ = '<M.m.p>'`.
 1. Collect changelog fragments: `scriv collect`.
 1. Edit the changelog to properly indicate the version.
-1. Commit and push, create MR to `main`.
-1. Merge into `main`, create MR to `develop`.
-1. Merge into `develop`, create and push signed tag: `git tag -s <M.m.p>`.
+1. Commit.
 1. Build packages to publish: `poetry build`.
 1. Publish to testpypi: `poetry publish -r testpypi` or `twine upload -r testpypi dist/*`.
-1. Check published package and if all went well, publish: `poetry publish` or `twine upload dist/*`.
+1. Check published package and if all went well, push branch and create MR to `main`. Otherwise, fix and rebuild packages (note that to push to testpypi again you would need to change the version number, which you can temporarily do by editing pyproject.toml and then reverting the change without committing).
+1. Merge into `main` and create MR to `develop`.
+1. Merge into `develop`, create and push signed tag: `git tag -s <M.m.p>`.
+1. Publish: `poetry publish` or `twine upload dist/*`.
 1. Create release in Gitlab and [properly sign packages](https://gist.github.com/HacKanCuBa/6fabded3565853adebf3dd140e72d33e).
