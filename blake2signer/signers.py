@@ -30,7 +30,7 @@ class TimestampedDataParts:
     """Parts of a timestamped data container."""
 
     data: bytes
-    timestamp: bytes
+    timestamp: int
 
 
 class HasherChoice(str, Enum):
@@ -269,10 +269,12 @@ class Blake2TimestampSignerBase(Blake2SignerBase, ABC):
         if self.SEPARATOR not in timestamped_data:
             raise errors.SignatureError('separator not found in timestamped data')
 
-        timestamp, data = timestamped_data.split(self.SEPARATOR, 1)
+        encoded_timestamp, data = timestamped_data.split(self.SEPARATOR, 1)
 
-        if not timestamp:
+        if not encoded_timestamp:
             raise errors.SignatureError('timestamp information is missing')
+
+        timestamp = self._decode_timestamp(encoded_timestamp)
 
         return TimestampedDataParts(data=data, timestamp=timestamp)
 
@@ -315,16 +317,15 @@ class Blake2TimestampSignerBase(Blake2SignerBase, ABC):
         """
         data = self._unsign(signed_data)
 
-        data_parts = self._split_timestamp(data)
+        parts = self._split_timestamp(data)
 
         now = time()
-        timestamp = self._decode_timestamp(data_parts.timestamp)
-        age = now - timestamp
+        age = now - parts.timestamp
         ttl = self._get_ttl_from_max_age(max_age)
         if age > ttl:
             raise errors.ExpiredSignatureError('signature has expired')
 
-        return data_parts.data
+        return parts.data
 
 
 class Blake2Signer(Blake2SignerBase):
