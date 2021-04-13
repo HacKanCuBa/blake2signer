@@ -1,4 +1,4 @@
-"""Signers: low level classes to sign data."""
+"""Signers: base classes to sign data as bytes or string."""
 
 import hashlib
 import typing
@@ -43,10 +43,10 @@ class HasherChoice(str, Enum):
 class Blake2SignerBase(ABC):
     """Base class for a signer based on Blake2 in keyed hashing mode."""
 
-    Hashers = HasherChoice
+    Hashers = HasherChoice  # Sugar to avoid having to import the enum
 
-    MIN_SECRET_SIZE: int = 16
-    MIN_DIGEST_SIZE: int = 16
+    MIN_SECRET_SIZE: int = 16  # Minimum secret size allowed (during instantiation)
+    MIN_DIGEST_SIZE: int = 16  # Minimum digest size allowed (during instantiation)
 
     SEPARATOR: bytes = b'.'  # ascii non-base64 ([a-zA-Z0-9-_=]) symbol!
 
@@ -140,7 +140,7 @@ class Blake2SignerBase(ABC):
         """Generate a cryptographically secure pseudorandom salt."""
         # Generate an encoded salt to use it as is so we don't have to deal with
         # decoding it when unsigning. The only downside is that we loose a few
-        # bits but it's OK since we are using the maximum allowed size..
+        # bits but it's OK since we are using the maximum allowed size.
         return token_urlsafe(self._salt_size).encode()[:self._salt_size]  # Trim excess
 
     @staticmethod
@@ -364,7 +364,8 @@ class Blake2Signer(Blake2SignerBase):
         Data is left as-is.
 
         The salt is a cryptographically secure pseudorandom string generated for
-        this signature only.
+        this signature only making it non-deterministic (meaning that the signature
+        always changes even when the payload stays the same).
 
         If given data is not bytes a conversion will be applied assuming it's
         UTF-8 encoded. You should prefer to properly encode strings and passing
@@ -434,7 +435,8 @@ class Blake2TimestampSigner(Blake2TimestampSignerBase):
         padding. Data is left as-is.
 
         The salt is a cryptographically secure pseudorandom string generated for
-        this signature only.
+        this signature only making it non-deterministic (meaning that the signature
+        always changes even when the payload stays the same).
 
         If given data is not bytes a conversion will be applied assuming it's
         UTF-8 encoded. You should prefer to properly encode strings and passing

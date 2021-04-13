@@ -1,4 +1,4 @@
-"""Serializers: high level classes to serialize and sign data."""
+"""Serializers: base classes to sign any kind of data, serializing first."""
 
 import json
 import typing
@@ -48,6 +48,9 @@ class EncoderInterface(ABC):
     """Encoder interface.
 
     Implement your own encoder inheriting from this class.
+
+    Important note: verify that both the SEPARATOR and the COMPRESSION_FLAG are
+    out of the encoder alphabet, otherwise malfunctions will happen!.
     """
 
     @abstractmethod
@@ -91,11 +94,11 @@ class B64URLEncoder(EncoderInterface):
     """Base64 URL safe encoder."""
 
     def encode(self, data: bytes) -> bytes:
-        """Encode given data to base64 URL safe."""
+        """Encode given data to base64 URL safe without padding."""
         return b64encode(data)
 
     def decode(self, data: typing.AnyStr) -> bytes:
-        """Decode given encoded data from base64 URL safe."""
+        """Decode given encoded data from base64 URL safe without padding."""
         return b64decode(data)
 
 
@@ -167,7 +170,7 @@ class Blake2SerializerSignerBase(Blake2TimestampSignerBase, ABC):
 
 
 class Mixin(Blake2SerializerSignerBase, ABC):
-    """Base class for a Blake2DumperSigner mixin."""
+    """Base class for a Blake2SerializerSigner mixin."""
 
     def __init__(self, *args: typing.Any, **kwargs: typing.Any) -> None:
         """Connect mixins with parent."""
@@ -190,7 +193,7 @@ class SerializerMixin(Mixin, ABC):
         self._serializer = serializer()
 
         personalisation = self._force_bytes(kwargs.get('personalisation', b''))
-        personalisation += serializer.__name__.encode()
+        personalisation += self._serializer.__class__.__name__.encode()
         kwargs['personalisation'] = personalisation
 
         super().__init__(*args, **kwargs)
@@ -235,7 +238,7 @@ class CompressorMixin(Mixin, ABC):
         self._compressor = compressor()
 
         personalisation = self._force_bytes(kwargs.get('personalisation', b''))
-        personalisation += compressor.__name__.encode()
+        personalisation += self._compressor.__class__.__name__.encode()
         kwargs['personalisation'] = personalisation
 
         super().__init__(*args, **kwargs)
@@ -269,7 +272,7 @@ class CompressorMixin(Mixin, ABC):
     ) -> typing.Tuple[bytes, bool]:
         """Compress given data if convenient or forced, otherwise do nothing.
 
-        A check is done to verify is compressed data is significantly smaller than
+        A check is done to verify if compressed data is significantly smaller than
         given data and if not then it returns given data as-is, unless compression
         is forced.
 
@@ -324,7 +327,7 @@ class EncoderMixin(Mixin, ABC):
         self._encoder = encoder()
 
         personalisation = self._force_bytes(kwargs.get('personalisation', b''))
-        personalisation += encoder.__name__.encode()
+        personalisation += self._encoder.__class__.__name__.encode()
         kwargs['personalisation'] = personalisation
 
         super().__init__(*args, **kwargs)
@@ -403,7 +406,8 @@ class Blake2SerializerSigner(
     ) -> None:
         """Serialize, sign and verify serialized signed data using Blake2.
 
-        It uses Blake2 in keyed hashing mode.
+        It uses Blake2 in keyed hashing mode and it can handle data serialization,
+        compression and encoding.
 
         Setting `max_age` will produce a timestamped signed stream.
 
@@ -420,7 +424,7 @@ class Blake2SerializerSigner(
                                 it fits the hasher limits, so it has no practical
                                 size limit. It defaults to the class name.
         :param digest_size: [optional] Size of output signature (digest) in bytes
-                            (defaults to the minimum size of 16 bytes).
+                            (defaults to the minimum allowed size of 16 bytes).
         :param hasher: [optional] Hash function to use: blake2b (default) or blake2s.
         :param serializer: [optional] Serializer class to use (defaults to a
                            JSON serializer).
@@ -465,7 +469,8 @@ class Blake2SerializerSigner(
         If `max_age` was specified then the stream will be timestamped.
 
         A cryptographically secure pseudorandom salt is generated and applied to
-        this signature.
+        this signature making it non-deterministic (meaning that the signature
+        always changes even when the payload stays the same).
 
         The full flow is as follows, where optional actions are marked between brackets:
         data -> serialize -> [compress] -> [timestamp] -> encode -> sign
@@ -514,12 +519,9 @@ class Blake2SerializerSigner(
         """Recover original data from a signed serialized string from :meth:`dumps`.
 
         If `max_age` was specified then it will be ensured that the signature is
-        not older than this time in seconds.
+        not older than that time in seconds.
 
         If the data was compressed it will be decompressed before unserializing it.
-
-        Important note: if signed data was timestamped but `max_age` was not
-        specified or vice versa then the signature validation will fail.
 
         The full flow is as follows, where optional actions are marked between brackets:
         data -> check sig -> [check timestamp] -> decode -> [decompress] -> unserialize

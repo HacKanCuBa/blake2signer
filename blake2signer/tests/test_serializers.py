@@ -106,8 +106,8 @@ class Blake2SerializerSignerTests(TestCase):
         unsigned = signer.loads(signer.dumps(self.data, use_compression=True))
         self.assertEqual(self.data, unsigned)
 
-    def test_dumps_loads_with_custom_encoder(self) -> None:  # noqa: C901
-        """Test dumping using a custom encoder."""
+    def test_dumps_loads_with_custom_serializer(self) -> None:  # noqa: C901
+        """Test dumping using a custom serializer."""
 
         class MyObject:
 
