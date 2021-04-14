@@ -100,6 +100,8 @@ signed = signer.dumps(data)  # Compression is enabled by default
 # compressed. If you know that from beforehand and don't need compression, you
 # can disable it:
 # signed = signer.dumps(data, use_compression=False)
+# Additionally, you can force compression nevertheless:
+# signed = signer.dumps(data, force_compression=True)
 cookie = {'data': signed}
 
 # To verify and recover data simply use loads: you will either get the data or
@@ -175,6 +177,14 @@ print(len(signed))  # 160048
 # In this example dumping the output of `token_hex` won't be compressed
 # even though it is enabled.
 print(len(signer.dumps(token_hex(16))) > len(signer.dumps('a' * 16)))  # True
+
+# However you can force compressing the data, even if the result might actually
+# be bigger than it was initially (detrimental compression).
+random_data = token_hex(16)
+print(
+    len(signer.dumps(random_data, force_compression=True)) >
+    len(signer.dumps(random_data))
+)  # True
 
 # You can also set the desired compression level where 1 is the fastest
 # and least compressed and 9 the slowest and most compressed (defaults to 6).

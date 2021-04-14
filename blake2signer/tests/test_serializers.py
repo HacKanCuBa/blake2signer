@@ -89,6 +89,26 @@ class Blake2SerializerSignerTests(TestCase):
         signed_not_compressed = signer.dumps(data, use_compression=True)
         self.assertEqual(len(signed_not_compressed), len(signed))
 
+    def test_dumps_loads_force_compression(self) -> None:
+        """Test dumping and loading forcing compression is correct."""
+        signer = Blake2SerializerSigner(self.secret)
+        data = self.data * 100  # so compression is meaningful
+
+        signed = signer.dumps(data, use_compression=False)
+        signed_compressed = signer.dumps(data, force_compression=True)
+        self.assertLessEqual(len(signed_compressed), len(signed))
+
+        unsigned = signer.loads(signed_compressed)
+        self.assertEqual(data, unsigned)
+
+        # Check force_compression bypasses use_compression
+        signed_compressed = signer.dumps(
+            data,
+            use_compression=False,
+            force_compression=True,
+        )
+        self.assertLessEqual(len(signed_compressed), len(signed))
+
     def test_dumps_loads_other_options(self) -> None:
         """Test dumping with other options is correct."""
         signer = Blake2SerializerSigner(

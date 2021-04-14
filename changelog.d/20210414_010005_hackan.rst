@@ -1,0 +1,4 @@
+Added
+-----
+
+- Add new `force_compression` parameter in `Blake2SerializerSigner.dumps()` to expose existing capability to force data compression.

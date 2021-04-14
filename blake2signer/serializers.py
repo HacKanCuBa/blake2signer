@@ -389,6 +389,8 @@ class Blake2SerializerSigner(
               compressed. If you know that from beforehand and don't need
               compression, you can disable it:
               `signed: str = signer.dumps(data, use_compression=False)`.
+              Likewise, you can force compression using:
+              `signed: str = signer.dumps(data, force_compression=True)`.
 
     """
 
@@ -454,6 +456,7 @@ class Blake2SerializerSigner(
         *,
         use_compression: bool = True,
         compression_level: int = 6,
+        force_compression: bool = False,
     ) -> str:
         """Serialize and sign data, optionally compressing and/or timestamping it.
 
@@ -493,6 +496,9 @@ class Blake2SerializerSigner(
                                   compressed (defaults to 6).
                                   Note that the performance impact is for both
                                   compression and decompression.
+        :param force_compression: [optional] Force compression even if it would
+                                  be detrimental for performance or size. This
+                                  parameter overrides `use_compression`.
 
         :raise SerializationError: Data can't be serialized.
         :raise CompressionError: Data can't be compressed or compression level is
@@ -506,8 +512,12 @@ class Blake2SerializerSigner(
         """
         serialized = self._serialize(data)
 
-        if use_compression:
-            compressed, _ = self._compress(serialized, level=compression_level)
+        if use_compression or force_compression:
+            compressed, _ = self._compress(
+                serialized,
+                level=compression_level,
+                force=force_compression,
+            )
         else:
             compressed = serialized
 
