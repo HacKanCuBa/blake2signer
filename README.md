@@ -290,8 +290,9 @@ from json import JSONEncoder
 import msgpack
 
 from blake2signer import Blake2SerializerSigner
+from blake2signer.interfaces import SerializerInterface
 from blake2signer.serializers import JSONSerializer
-from blake2signer.serializers import SerializerInterface
+
 
 # Custom JSON encoder
 class DecimalJSONEncoder(JSONEncoder):
@@ -302,10 +303,12 @@ class DecimalJSONEncoder(JSONEncoder):
 
         return super().default(o)
 
+
 class MyJSONSerializer(JSONSerializer):
 
     def serialize(self, data: typing.Any, **kwargs: typing.Any) -> bytes:
         return super().serialize(data, cls=DecimalJSONEncoder, **kwargs)
+
 
 secret = b'que-paso-con-Tehuel'
 signer = Blake2SerializerSigner(secret, serializer=MyJSONSerializer)
@@ -313,6 +316,7 @@ signer = Blake2SerializerSigner(secret, serializer=MyJSONSerializer)
 data = {'points': [1, 2, Decimal('3.4')]}
 unsigned = signer.loads(signer.dumps(data))
 print(unsigned)  # {'points': [1, 2, '3.4']}
+
 
 # Custom serializer with msgpack (same idea would be for orjson)
 class MsgpackSerializer(SerializerInterface):
@@ -324,6 +328,7 @@ class MsgpackSerializer(SerializerInterface):
     def unserialize(self, data: bytes, **kwargs: typing.Any) -> typing.Any:
         """Unserialize given msgpack data."""
         return msgpack.unpackb(data)
+
 
 signer = Blake2SerializerSigner(secret, serializer=MsgpackSerializer)
 data = {'points': [1, 2, 3.4]}
@@ -382,8 +387,8 @@ Here are those examples:
 
 import typing
 
-from blake2signer.serializers import CompressorMixin
-from blake2signer.serializers import EncoderMixin
+from blake2signer.mixins import CompressorMixin
+from blake2signer.mixins import EncoderMixin
 
 
 class MyEncoderCompressorSigner(EncoderMixin, CompressorMixin):
@@ -419,7 +424,7 @@ print(signer.loads(signed) == data)  # True
 import typing
 
 from blake2signer import Blake2SerializerSigner
-from blake2signer.serializers import SerializerInterface
+from blake2signer.interfaces import SerializerInterface
 from blake2signer.utils import force_bytes
 
 

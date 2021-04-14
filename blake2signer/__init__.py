@@ -26,7 +26,7 @@ See examples and more info in the README.
 """
 
 from . import errors
-from .serializers import Blake2SerializerSigner
+from .signers import Blake2SerializerSigner
 from .signers import Blake2Signer
 from .signers import Blake2TimestampSigner
 
