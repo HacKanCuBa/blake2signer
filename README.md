@@ -340,17 +340,17 @@ print(unsigned)  # {'points': [1, 2, 3.4]}
 
 `Blake2SerializerSigner` is quite flexible and can receive a custom serializer, compressor or encoder. You could i.e. create a custom base62 encoder simply inheriting from `EncoderInterface`, or a custom bzip compressor inheriting from `CompressorInterface`. You don't need to handle or worry about exceptions: those are caught by the caller class.
 
-On the other hand you can create your own *SerializerSigner* using provided `Blake2SerializerSignerBase` and/or any of the mixins: `SerializerMixin`, `CompressorMixin`, `EncoderMixin` or even creating your own mixin inheriting from `Mixin`. Note that this would be rather advanced, and you should think if this is what you really need to do.
+On the other hand you can create your own *SerializerSigner* using provided `Blake2SerializerSignerBase` and any of the mixins: `SerializerMixin`, `CompressorMixin`, `EncoderMixin` or even creating your own mixin inheriting from `Mixin` (note that the class inheritance order matters, and the mixins must come first leaving the chosen base class last). Note that this would be rather advanced, and you should think if this is what you really need to do.
 
 ```python
 """Custom serializer signer class example."""
 
 import typing
 
-from blake2signer.serializers import EncoderMixin
+from blake2signer.bases import Blake2SerializerSignerBase
 
 
-class MySerializerSigner(EncoderMixin):
+class MySerializerSigner(Blake2SerializerSignerBase):  # Contains encoder mixin
 
     def dumps(self, data: typing.Any) -> str:
         encoded = self._encode(self._force_bytes(data))
@@ -363,6 +363,7 @@ class MySerializerSigner(EncoderMixin):
         decoded = self._decode(unsigned)
 
         return decoded.decode()
+
 
 secret = b'super-secret-value'
 signer = MySerializerSigner(secret)
@@ -387,11 +388,11 @@ Here are those examples:
 
 import typing
 
+from blake2signer.bases import Blake2SerializerSignerBase
 from blake2signer.mixins import CompressorMixin
-from blake2signer.mixins import EncoderMixin
 
 
-class MyEncoderCompressorSigner(EncoderMixin, CompressorMixin):
+class MyEncoderCompressorSigner(CompressorMixin, Blake2SerializerSignerBase):
 
     def dumps(self, data: typing.AnyStr) -> str:
         data_bytes = self._force_bytes(data)

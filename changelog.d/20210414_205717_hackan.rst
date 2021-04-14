@@ -1,0 +1,4 @@
+Added
+-----
+
+- Allow changing encoder in every signer: previously only Blake2SerializerSigner accepted encoders other than b64, yet not totally: the signature was always b64 URL safe encoded. This required a slight refactor splitting the signers module into bases and signers

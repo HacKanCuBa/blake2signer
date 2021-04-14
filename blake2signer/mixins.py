@@ -79,8 +79,8 @@ class CompressorMixin(Mixin, ABC):
     Adds compressing capabilities to a subclass.
     """
 
-    COMPRESSION_FLAG: bytes = b'.'  # ascii non-base64 ([a-zA-Z0-9-_=]) symbol!
-    COMPRESSION_RATIO: int = 5  # desired minimal compression ratio between 0 and 99
+    COMPRESSION_FLAG: bytes = b'.'  # Must not be in the encoder alphabet
+    COMPRESSION_RATIO: int = 5  # Desired minimal compression ratio between 0 and 99
 
     def __init__(
         self,

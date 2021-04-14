@@ -13,7 +13,6 @@ from .interfaces import CompressorInterface
 from .interfaces import EncoderInterface
 from .interfaces import SerializerInterface
 from .mixins import CompressorMixin
-from .mixins import EncoderMixin
 from .mixins import SerializerMixin
 from .serializers import JSONSerializer
 
@@ -50,12 +49,13 @@ class Blake2Signer(Blake2SignerBase):
         Note that given data is _not_ encrypted, only signed. To recover data from
         it, while validating the signature, use :meth:`unsign`.
 
-        The signature and salt are base64 URL safe encoded without padding.
+        The signature and salt are encoded using the chosen encoder.
         Data is left as-is.
 
-        The salt is a cryptographically secure pseudorandom string generated for
-        this signature only making it non-deterministic (meaning that the signature
-        always changes even when the payload stays the same).
+        For deterministic signatures, no salt is used. For non-deterministic ones,
+        the salt is a cryptographically secure pseudorandom string generated for
+        this signature only (meaning that the signature always changes even when
+        the payload stays the same).
 
         If given data is not bytes a conversion will be applied assuming it's
         UTF-8 encoded. You should prefer to properly encode strings and passing
@@ -106,7 +106,8 @@ class Blake2TimestampSigner(Blake2TimestampSignerBase):
     >>> # data or a `SignerError` subclass exception (it is recommended to use
     >>> # `SignedDataError` given it is more specific and prevents masking other
     >>> # unrelated errors). You need to specify the signature age in seconds
-    >>> # (or a timedelta instance).
+    >>> # (or a timedelta instance). If more than said seconds since the signature
+    >>> # was made have passed then an `ExpiredSignatureError` is raised.
     >>> try:
     >>>     unsigned = signer.unsign(cookie.get('data', ''), max_age=10)
     >>> except errors.SignedDataError:
@@ -121,12 +122,13 @@ class Blake2TimestampSigner(Blake2TimestampSignerBase):
         Note that given data is _not_ encrypted, only signed. To recover data from
         it, while validating the signature and timestamp, use :meth:`unsign`.
 
-        The signature, salt and timestamp are base64 URL safe encoded without
-        padding. Data is left as-is.
+        The signature, salt and timestamp are encoded using chosen encoder.
+        Data is left as-is.
 
-        The salt is a cryptographically secure pseudorandom string generated for
-        this signature only making it non-deterministic (meaning that the signature
-        always changes even when the payload stays the same).
+        For deterministic signatures, no salt is used. For non-deterministic ones,
+        the salt is a cryptographically secure pseudorandom string generated for
+        this signature only (meaning that the signature always changes even when
+        the payload stays the same).
 
         If given data is not bytes a conversion will be applied assuming it's
         UTF-8 encoded. You should prefer to properly encode strings and passing
@@ -172,7 +174,6 @@ class Blake2TimestampSigner(Blake2TimestampSignerBase):
 class Blake2SerializerSigner(
         SerializerMixin,
         CompressorMixin,
-        EncoderMixin,
         Blake2SerializerSignerBase,
 ):
     """Blake2 for signing and optionally timestamping serialized data.
@@ -220,9 +221,9 @@ class Blake2SerializerSigner(
         digest_size: typing.Optional[int] = None,
         hasher: typing.Union[HasherChoice, str] = HasherChoice.blake2b,
         deterministic: bool = False,
+        encoder: typing.Type[EncoderInterface] = B64URLEncoder,
         serializer: typing.Type[SerializerInterface] = JSONSerializer,
         compressor: typing.Type[CompressorInterface] = ZlibCompressor,
-        encoder: typing.Type[EncoderInterface] = B64URLEncoder,
     ) -> None:
         """Serialize, sign and verify serialized signed data using Blake2.
 
@@ -254,14 +255,14 @@ class Blake2SerializerSigner(
                               obtained (the advantage is that the sig is shorter).
                               Note that this assumes that the serializer and
                               compressor are always deterministic.
+        :param encoder: [optional] Encoder class to use (defaults to a Base64
+                        URL safe encoder).
         :param serializer: [optional] Serializer class to use (defaults to a
                            JSON serializer).
         :param compressor: [optional] Compressor class to use (defaults to a
                            Zlib compressor).
-        :param encoder: [optional] Encoder class to use (defaults to a Base64
-                        URL safe encoder).
 
-        :raise ConversionError: A parameter is not bytes and can't be converted
+        :raise ConversionError: A bytes parameter is not bytes and can't be converted
                                 to bytes.
         :raise InvalidOptionError: A parameter is out of bounds.
         """
@@ -291,21 +292,22 @@ class Blake2SerializerSigner(
         the produced string, while validating the signature (and timestamp if any),
         use :meth:`loads`.
 
-        Data will be serialized to JSON and optionally compressed and base64 URL
-        safe encoded before being signed. This means that data must be of any
-        JSON serializable type: str, int, float, list, tuple, bool, None or dict,
-        or a composition of those (tuples are unserialized as lists).
+        Data will be serialized, optionally compressed, and encoded before being
+        signed. This means that it must be of any type serializable by the chosen
+        serializer, i.e. for a JSON serializer: str, int, float, list, tuple, bool,
+        None or dict, or a composition of those (tuples are unserialized as lists).
 
         If `max_age` was specified then the stream will be timestamped.
 
-        A cryptographically secure pseudorandom salt is generated and applied to
-        this signature making it non-deterministic (meaning that the signature
-        always changes even when the payload stays the same).
+        For deterministic signatures, no salt is used. For non-deterministic ones,
+        the salt is a cryptographically secure pseudorandom string generated for
+        this signature only (meaning that the signature always changes even when
+        the payload stays the same).
 
         The full flow is as follows, where optional actions are marked between brackets:
         data -> serialize -> [compress] -> [timestamp] -> encode -> sign
 
-        :param data: Any JSON encodable object.
+        :param data: Any serializable object.
         :param use_compression: [optional] Compress data after serializing it and
                                 decompress it before unserializing. For low entropy
                                 payloads such as human readable text, it's beneficial
@@ -332,10 +334,10 @@ class Blake2SerializerSigner(
                                  invalid.
         :raise EncodeError: Data can't be encoded.
 
-        :return: A base64 URL safe encoded, signed and optionally timestamped
-                 string of serialized and optionally compressed data. This value
-                 is safe for printing or transmitting as it only contains the
-                 following characters: a-z, A-Z, -, _ and .
+        :return: An encoded, signed and optionally timestamped string of serialized
+                 and optionally compressed data. This value is safe for printing or
+                 transmitting as it only contains the characters supported by the
+                 encoder and the separator, which are ASCII.
         """
         serialized = self._serialize(data)
 

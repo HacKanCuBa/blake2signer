@@ -11,6 +11,7 @@ from unittest import TestCase
 from unittest import mock
 
 from .. import errors
+from ..encoders import B64URLEncoder
 from ..serializers import JSONSerializer
 from ..signers import Blake2SerializerSigner
 from ..signers import Blake2Signer
@@ -18,6 +19,7 @@ from ..signers import Blake2TimestampSigner
 from ..utils import b64encode
 
 
+# noinspection PyArgumentEqualDefault
 class Blake2SignerTests(TestCase):
     """Test Blake2Signer class."""
 
@@ -26,8 +28,8 @@ class Blake2SignerTests(TestCase):
         self.secret = b'0123456789012345'
         self.data = b'datadata'
         self.signed = (
-            b'r2wBlTL7ogt4SfyxBeJ3gqdAs9CR8UfIWakJcyqMPdQBcb-S0LTDRoTDR7i-DypyN'
-            b'KWUVU96eUb8o-PlsT50DGOfeWLJcurMUtJcPg.datadata'
+            b'nqQeVQRD_h3uvZLQZ_dLxhpv-Ua9ckfSMuzc3VJGlMvGtKgYuJl3E9mbY2zZRQut'
+            b'hvEtItZNMnA7kBz9grVDnIpxn1UNXeQVdXcwsg.datadata'
         )
         self.person = b'acab'
 
@@ -129,6 +131,7 @@ class Blake2SignerTests(TestCase):
         self.assertEqual(unsigned, self.data)
 
 
+# noinspection PyArgumentEqualDefault
 class Blake2SignerErrorTests(TestCase):
     """Test Blake2Signer class for errors."""
 
@@ -185,7 +188,7 @@ class Blake2SignerErrorTests(TestCase):
         with self.assertRaises(errors.InvalidSignatureError):
             signer.unsign(b'0' * (signer._salt_size + signer.MIN_DIGEST_SIZE) + b'.')
 
-    def test_sign_unsign_wrong_person_same_key(self) -> None:
+    def test_sign_unsign_wrong_person_same_secret(self) -> None:
         """Test signing and unsigning using wrong person fails despite same secret."""
         signed = Blake2Signer(self.secret, personalisation=self.person).sign(self.data)
         signer = Blake2Signer(self.secret)
@@ -217,35 +220,36 @@ class Blake2SignerErrorTests(TestCase):
             Blake2Signer(self.secret, hasher='blake2')
 
 
+# noinspection PyArgumentEqualDefault
 class Blake2TimestampSignerTests(TestCase):
     """Test Blake2TimestampSigner class."""
 
     def setUp(self) -> None:
         """Set up test cases."""
-        self.key = b'0123456789012345'
+        self.secret = b'0123456789012345'
         self.data = b'datadata'
 
     def test_initialisation_defaults(self) -> None:
         """Test correct class defaults initialisation."""
-        signer = Blake2TimestampSigner(self.key)
+        signer = Blake2TimestampSigner(self.secret)
         self.assertIsInstance(signer, Blake2TimestampSigner)
 
         signer = Blake2TimestampSigner(
-            self.key,
+            self.secret,
             hasher=Blake2TimestampSigner.Hashers.blake2s,
         )
         self.assertIsInstance(signer, Blake2TimestampSigner)
 
     def test_sign(self) -> None:
         """Test signing is correct."""
-        signer = Blake2TimestampSigner(self.key)
+        signer = Blake2TimestampSigner(self.secret)
         signed = signer.sign(self.data)
         self.assertIsInstance(signed, bytes)
         self.assertEqual(len(signed), 118)
 
     def test_unsign(self) -> None:
         """Test unsigning is correct."""
-        signer = Blake2TimestampSigner(self.key)
+        signer = Blake2TimestampSigner(self.secret)
         signed = signer.sign(self.data)
         unsigned = signer.unsign(signed, max_age=timedelta(seconds=1))
         self.assertEqual(unsigned, self.data)
@@ -254,7 +258,7 @@ class Blake2TimestampSignerTests(TestCase):
     def test_sign_unsign_deterministic(self, mock_time: mock.MagicMock) -> None:
         """Test sign and unsign with a deterministic signature."""
         mock_time.return_value = datetime.now().timestamp()
-        signer = Blake2TimestampSigner(self.key, deterministic=True)
+        signer = Blake2TimestampSigner(self.secret, deterministic=True)
 
         signed = signer.sign(self.data)
         signed2 = signer.sign(self.data)
@@ -267,7 +271,7 @@ class Blake2TimestampSignerTests(TestCase):
     def test_sign_unsign_nondeterministic(self, mock_time: mock.MagicMock) -> None:
         """Test sign and unsign with a non-deterministic signature (default)."""
         mock_time.return_value = datetime.now().timestamp()
-        signer = Blake2TimestampSigner(self.key, deterministic=False)
+        signer = Blake2TimestampSigner(self.secret, deterministic=False)
 
         signed = signer.sign(self.data)
         signed2 = signer.sign(self.data)
@@ -280,6 +284,7 @@ class Blake2TimestampSignerTests(TestCase):
         self.assertEqual(self.data, unsigned2)
 
 
+# noinspection PyArgumentEqualDefault
 class Blake2TimestampSignerErrorTests(TestCase):
     """Test Blake2TimestampSigner class for errors."""
 
@@ -288,8 +293,8 @@ class Blake2TimestampSignerErrorTests(TestCase):
         self.secret = b'0123456789012345'
         self.data = b'datadata'
         self.signed = (
-            b'bbc3JgXUWr3oDNh4Z50OVUjxZ_Mtkdz-zi30vq4gHjN5R97NLuLd4gacIxer4fpPl'
-            b'cBgo_hjhHbs0AgATFlcoUP5sKpuPiHqcqFFSw.X35cyA.datadata'
+            b'0n1iOnj6g0q7N-yUGFDG7S3mLt_-8V3kYa09GHLZ5X_HITsstI9vKhkFXly3s6xW'
+            b'7gkI0_HHCi8hyRpmoOZH8hUnxcvXMkTrp58QYw.YHd8dA.datadata'
         )
 
     def test_unsign_timestamp_expired(self) -> None:
@@ -315,10 +320,17 @@ class Blake2TimestampSignerErrorTests(TestCase):
             signer.unsign(trick_signed, max_age=1)
         self.assertEqual(str(cm.exception), 'timestamp information is missing')
 
+    def test_unsign_wrong_timestamped_data(self) -> None:
+        """Test unsign wrong timestamped data."""
+        signer = Blake2TimestampSigner(self.secret)
+        trick_signer = Blake2Signer(self.secret)
+        trick_signer._key = signer._key
+        trick_signer._person = signer._person
+
         trick_signed = trick_signer.sign(b'-.' + self.data)
         with self.assertRaises(errors.DecodeError) as exc:
             signer.unsign(trick_signed, max_age=1)
-        self.assertEqual(str(exc.exception), 'timestamp can not be decoded')
+        self.assertIn('can not be decoded', str(exc.exception))
 
     @mock.patch('blake2signer.bases.time')
     def test_sign_timestamp_overflow(self, mock_time: mock.MagicMock) -> None:
@@ -335,6 +347,7 @@ class Blake2TimestampSignerErrorTests(TestCase):
             signer.sign(self.data)
 
 
+# noinspection PyArgumentEqualDefault
 class Blake2SerializerSignerTests(TestCase):
     """Test Blake2SerializerSigner class."""
 
@@ -451,6 +464,7 @@ class Blake2SerializerSignerTests(TestCase):
         """Test dumping using a custom serializer."""
 
         class MyObject:
+            """Some object."""
 
             def __init__(self):
                 self.a = None
@@ -459,16 +473,20 @@ class Blake2SerializerSignerTests(TestCase):
                 return self.a  # pragma: no cover
 
         class CustomJSONEncoder(json.JSONEncoder):
+            """Custom JSON encoder."""
 
             def default(self, o):
+                """Encode object."""
                 if isinstance(o, MyObject):
                     return str(o.a)
 
                 return super().default(o)  # pragma: no cover
 
         class MyJSONSerializer(JSONSerializer):
+            """Custom JSON serializer."""
 
             def serialize(self, data: typing.Any, **kwargs: typing.Any) -> bytes:
+                """Serialize data."""
                 return super().serialize(data, cls=CustomJSONEncoder, **kwargs)
 
         obj = MyObject()
@@ -504,7 +522,18 @@ class Blake2SerializerSignerTests(TestCase):
         unsigned2 = signer.loads(signed)
         self.assertEqual(self.data, unsigned2)
 
+    def test_dumps_loads_with_b64encoder(self) -> None:
+        """Test dumping and loading using a base64 URL safe  encoder (default)."""
+        signer = Blake2SerializerSigner(self.secret, encoder=B64URLEncoder)
+        signed = signer.dumps(self.data)
+        self.assertIsInstance(signed, str)
+        self.assertRegex(signed, r'^[a-zA-Z0-9_\-.]+$')
 
+        unsigned = signer.loads(signed)
+        self.assertEqual(self.data, unsigned)
+
+
+# noinspection PyArgumentEqualDefault
 class Blake2SerializerSignerErrorTests(TestCase):
     """Test Blake2SerializerSigner class for errors."""
 
@@ -512,7 +541,7 @@ class Blake2SerializerSignerErrorTests(TestCase):
         """Set up test cases."""
         self.secret = b'0123456789012345'
         self.data = 'datadata'
-        self.dumped = 'AuPHEW7PazR4UB7jmt20GvhunB6KNVXbEzUaOA.X4OovQ.ImRhdGFkYXRhIg'
+        self.dumped = '7e6gbEh_vwnZFwoB45yKH-lCEXgC-EWr6d5DkA.YHd85A.ImRhdGFkYXRhIg'
 
     def test_secret_too_short(self) -> None:
         """Test parameters out of bounds."""
