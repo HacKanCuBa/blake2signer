@@ -11,6 +11,7 @@ from unittest import TestCase
 from unittest import mock
 
 from .. import errors
+from ..encoders import B32Encoder
 from ..encoders import B64URLEncoder
 from ..interfaces import EncoderInterface
 from ..serializers import JSONSerializer
@@ -140,6 +141,17 @@ class Blake2SignerTests(TestCase):
         signed = signer.sign(self.data)
         self.assertIn(separator, signed)
 
+    def test_sign_unsign_with_b32encoder(self) -> None:
+        """Test signing and unsigning using a base32 encoder (non-default)."""
+        signer = Blake2Signer(self.secret, encoder=B32Encoder)
+
+        signed = signer.sign(self.data)
+        self.assertIsInstance(signed, bytes)
+        self.assertRegex(signed.decode(), r'^[A-Z2-7.]+datadata$')
+
+        unsigned = signer.unsign(signed)
+        self.assertEqual(self.data, unsigned)
+
 
 # noinspection PyArgumentEqualDefault
 class Blake2SignerErrorTests(TestCase):
@@ -238,6 +250,15 @@ class Blake2SignerErrorTests(TestCase):
             str(cm.exception),
         )
 
+    def test_wrong_separator_in_b32encoder_alphabet(self) -> None:
+        """Test error occurs when the separator is in the b32 encoder alphabet."""
+        with self.assertRaises(errors.InvalidOptionError) as cm:
+            Blake2Signer(self.secret, separator=b'A', encoder=B32Encoder)
+        self.assertIn(
+            'separator character must not belong to the encoder',
+            str(cm.exception),
+        )
+
     def test_wrong_separator_non_ascii(self) -> None:
         """Test error occurs when the separator is non-ascii."""
         with self.assertRaises(errors.InvalidOptionError) as cm:
@@ -325,6 +346,17 @@ class Blake2TimestampSignerTests(TestCase):
         signed = signer.sign(self.data)
         self.assertIn(separator, signed)
 
+    def test_sign_unsign_with_b32encoder(self) -> None:
+        """Test signing and unsigning using a base32 encoder (non-default)."""
+        signer = Blake2TimestampSigner(self.secret, encoder=B32Encoder)
+
+        signed = signer.sign(self.data)
+        self.assertIsInstance(signed, bytes)
+        self.assertRegex(signed.decode(), r'^[A-Z2-7.]+datadata$')
+
+        unsigned = signer.unsign(signed, max_age=1)
+        self.assertEqual(self.data, unsigned)
+
 
 # noinspection PyArgumentEqualDefault
 class Blake2TimestampSignerErrorTests(TestCase):
@@ -393,6 +425,15 @@ class Blake2TimestampSignerErrorTests(TestCase):
         """Test error occurs when the separator is in the b64 encoder alphabet."""
         with self.assertRaises(errors.InvalidOptionError) as cm:
             Blake2TimestampSigner(self.secret, separator=b'A', encoder=B64URLEncoder)
+        self.assertIn(
+            'separator character must not belong to the encoder',
+            str(cm.exception),
+        )
+
+    def test_wrong_separator_in_b32encoder_alphabet(self) -> None:
+        """Test error occurs when the separator is in the b32 encoder alphabet."""
+        with self.assertRaises(errors.InvalidOptionError) as cm:
+            Blake2TimestampSigner(self.secret, separator=b'A', encoder=B32Encoder)
         self.assertIn(
             'separator character must not belong to the encoder',
             str(cm.exception),
@@ -638,6 +679,16 @@ class Blake2SerializerSignerTests(TestCase):
         self.assertIsInstance(unsigned, str)
         self.assertEqual(unsigned, self.data)
 
+    def test_dumps_loads_with_b32encoder(self) -> None:
+        """Test dumping and loading using a base32 encoder (non-default)."""
+        signer = Blake2SerializerSigner(self.secret, encoder=B32Encoder)
+        signed = signer.dumps(self.data)
+        self.assertIsInstance(signed, str)
+        self.assertRegex(signed, r'^[A-Z2-7.]+$')
+
+        unsigned = signer.loads(signed)
+        self.assertEqual(self.data, unsigned)
+
 
 # noinspection PyArgumentEqualDefault
 class Blake2SerializerSignerErrorTests(TestCase):
@@ -745,6 +796,15 @@ class Blake2SerializerSignerErrorTests(TestCase):
         """Test error occurs when the separator is in the b64 encoder alphabet."""
         with self.assertRaises(errors.InvalidOptionError) as cm:
             Blake2SerializerSigner(self.secret, separator=b'A', encoder=B64URLEncoder)
+        self.assertIn(
+            'separator character must not belong to the encoder',
+            str(cm.exception),
+        )
+
+    def test_wrong_separator_in_b32encoder_alphabet(self) -> None:
+        """Test error occurs when the separator is in the b32 encoder alphabet."""
+        with self.assertRaises(errors.InvalidOptionError) as cm:
+            Blake2SerializerSigner(self.secret, separator=b'A', encoder=B32Encoder)
         self.assertIn(
             'separator character must not belong to the encoder',
             str(cm.exception),

@@ -27,3 +27,24 @@ class TestUtilsBase64(TestCase):
         """Test b64decode accepts padded value correctly."""
         decoded = utils.b64decode(b'YWJj==')
         self.assertEqual(decoded, b'abc')
+
+    def test_b32encode_strips_padding(self) -> None:
+        """Test b32encode strips padding correctly."""
+        encoded = utils.b32encode(b'abcd')
+        self.assertEqual(encoded, b'MFRGGZA')
+
+        encoded = utils.b32encode(b'abc')
+        self.assertEqual(encoded, b'MFRGG')
+
+    def test_b32decode_stripped_padding_works(self) -> None:
+        """Test b32decode works without padding."""
+        decoded = utils.b32decode(b'MFRGGZA')
+        self.assertEqual(decoded, b'abcd')
+
+        decoded = utils.b32decode(b'MFRGG')
+        self.assertEqual(decoded, b'abc')
+
+    def test_b32decode_works_with_padding(self) -> None:
+        """Test b32decode accepts padded value correctly."""
+        decoded = utils.b32decode(b'MFRGG===')
+        self.assertEqual(decoded, b'abc')

@@ -338,7 +338,10 @@ unsigned = signer.loads(signed)
 print(unsigned)  # {'points': [1, 2, 3.4]}
 ```
 
-`Blake2SerializerSigner` is quite flexible and can receive a custom serializer, compressor or encoder. You could i.e. create a custom base62 encoder simply inheriting from `EncoderInterface`, or a custom bzip compressor inheriting from `CompressorInterface`. You don't need to handle or worry about exceptions: those are caught by the caller class.
+`Blake2SerializerSigner` is quite flexible and can receive a custom serializer, compressor or encoder. You could i.e. create a custom base62 encoder simply inheriting from `EncoderInterface`, or a custom bzip compressor inheriting from `CompressorInterface`. You don't need to handle or worry about exceptions: those are caught by the caller class.  
+All serializers, encoders and compressors live in their respective submodule. In addition to base64 URL safe this package provides base32 as it is another common encoding format.
+
+Note that also both `Blake2Signer` and `Blake2TimestampSigner` supports changing the encoder.
 
 On the other hand you can create your own *SerializerSigner* using provided `Blake2SerializerSignerBase` and any of the mixins: `SerializerMixin`, `CompressorMixin`, `EncoderMixin` or even creating your own mixin inheriting from `Mixin` (note that the class inheritance order matters, and the mixins must come first leaving the chosen base class last). Note that this would be rather advanced, and you should think if this is what you really need to do.
 
@@ -648,7 +651,7 @@ print('id_b2s')
 I'm not a cryptoexpert, so there are some things that remain to be confirmed:
 
 * If an attacker can control some part (or all) of the input data, is it possible for them to guess the secret key or provoke a DoS given a huge amount of attempts? (assuming the key is long enough to prevent bruteforcing in the first place, which it should since I set the minimum key size to 128b).
-  > I think it is not possible but I would like an expert answer. I checked the code of different signers such as Itsdangerous, Django, etc. and they all do pretty much the same as I except they use the hmac lib.
+  > I think it is not possible, but I would like an expert answer. I checked the code of different signers such as Itsdangerous, Django, etc. and they all do pretty much the same as I except they use the hmac lib.
 
 * I always assume that no attacker can influence the instantiation of the classes, thus they can't change any setting. If someone were to break all the given recommendations and somehow manage to get attacker-controlled data to class instantiation, which settings an attacker may change to break the security of this implementation and guess the secret key or compromise the scheme somehow? This is more of an exercise but a fun one.
   > I think that `Blake2SerializerSigner` class is the best target that allows more room to play since it deals with many layers: serialization, compression, encoding...

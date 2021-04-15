@@ -22,3 +22,13 @@ def b64encode(data: bytes) -> bytes:
 def b64decode(data: bytes) -> bytes:
     """Decode data encoded as Base 64 URL safe without padding."""
     return base64.urlsafe_b64decode(data + (b'=' * (len(data) % 4)))
+
+
+def b32encode(data: bytes) -> bytes:
+    """Encode data as Base 32, stripping padding."""
+    return base64.b32encode(data).rstrip(b'=')
+
+
+def b32decode(data: bytes) -> bytes:
+    """Decode data encoded as Base 32 without padding."""
+    return base64.b32decode(data + (b'=' * ((8 - (len(data) % 8)) % 8)))
