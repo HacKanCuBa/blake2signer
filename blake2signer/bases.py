@@ -229,6 +229,17 @@ class Blake2SignerBase(EncoderMixin, Base, ABC):
             encoder=encoder,
         )
 
+    def _validate_separator(self, separator: typing.Union[str, bytes]) -> bytes:
+        """Validate the separator value and return it clean."""
+        sep = super()._validate_separator(separator)
+
+        if sep in self._encoder.alphabet:
+            raise errors.InvalidOptionError(
+                'the separator character must not belong to the encoder alphabet',
+            )
+
+        return sep
+
     def _get_salt(self) -> bytes:
         """Get a salt for the signature considering its type.
 

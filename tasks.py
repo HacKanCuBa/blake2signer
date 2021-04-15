@@ -11,7 +11,7 @@ from invoke import task
 def flake8(ctx):
     """Run flake8 with proper exclusions."""
     ctx.run(f'flake8 --exclude tests blake2signer/', echo=True)
-    ctx.run(f'flake8 --ignore=D100,D101,D102,D103,D104,D105,D106,D107 '
+    ctx.run(f'flake8 --ignore=D100,D101,D102,D103,D104,D105,D106,D107,S101 '
             f'blake2signer/tests/', echo=True)
 
 
@@ -29,7 +29,8 @@ def pydocstyle(ctx):
 @task
 def bandit(ctx):
     """Run bandit with proper exclusions."""
-    ctx.run(f'bandit -i -r blake2signer/', echo=True)
+    ctx.run(f'bandit -i -r -x tests blake2signer/', echo=True)
+    ctx.run(f'bandit -i -r -s B101 blake2signer/tests/', echo=True)
 
 
 @task

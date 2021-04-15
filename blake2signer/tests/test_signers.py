@@ -227,6 +227,15 @@ class Blake2SignerErrorTests(TestCase):
         with self.assertRaises(errors.InvalidOptionError):
             Blake2Signer(self.secret, hasher='blake2')
 
+    def test_wrong_separator_in_b64encoder_alphabet(self) -> None:
+        """Test error occurs when the separator is in the b64 encoder alphabet."""
+        with self.assertRaises(errors.InvalidOptionError) as cm:
+            Blake2Signer(self.secret, separator=b'A', encoder=B64URLEncoder)
+        self.assertIn(
+            'separator character must not belong to the encoder',
+            str(cm.exception),
+        )
+
 
 # noinspection PyArgumentEqualDefault
 class Blake2TimestampSignerTests(TestCase):
@@ -361,6 +370,15 @@ class Blake2TimestampSignerErrorTests(TestCase):
 
         with self.assertRaises(RuntimeError):
             signer.sign(self.data)
+
+    def test_wrong_separator_in_b64encoder_alphabet(self) -> None:
+        """Test error occurs when the separator is in the b64 encoder alphabet."""
+        with self.assertRaises(errors.InvalidOptionError) as cm:
+            Blake2TimestampSigner(self.secret, separator=b'A', encoder=B64URLEncoder)
+        self.assertIn(
+            'separator character must not belong to the encoder',
+            str(cm.exception),
+        )
 
 
 # noinspection PyArgumentEqualDefault
@@ -698,3 +716,12 @@ class Blake2SerializerSignerErrorTests(TestCase):
 
         with self.assertRaises(errors.CompressionError):
             signer.dumps(self.data, use_compression=True, compression_level=10)
+
+    def test_wrong_separator_in_b64encoder_alphabet(self) -> None:
+        """Test error occurs when the separator is in the b64 encoder alphabet."""
+        with self.assertRaises(errors.InvalidOptionError) as cm:
+            Blake2SerializerSigner(self.secret, separator=b'A', encoder=B64URLEncoder)
+        self.assertIn(
+            'separator character must not belong to the encoder',
+            str(cm.exception),
+        )

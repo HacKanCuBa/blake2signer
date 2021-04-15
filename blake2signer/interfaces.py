@@ -40,9 +40,18 @@ class EncoderInterface(ABC):
 
     Implement your own encoder inheriting from this class.
 
-    Important note: verify that both the SEPARATOR and the COMPRESSION_FLAG are
-    out of the encoder alphabet, otherwise malfunctions will happen!.
+    Important note: verify that the separator character is out of the encoder
+    alphabet (a check is enforced nevertheless).
     """
+
+    @property
+    @abstractmethod
+    def alphabet(self) -> bytes:
+        """Return the encoder alphabet characters.
+
+        This is used to validate that separator characters and flags don't belong
+        to this alphabet to prevent malfunctions.
+        """
 
     @abstractmethod
     def encode(self, data: bytes) -> bytes:
