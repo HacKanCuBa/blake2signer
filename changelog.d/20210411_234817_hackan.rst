@@ -1,4 +1,0 @@
-Changed
--------
-
-- Reworded and fixed some typos in Readme.

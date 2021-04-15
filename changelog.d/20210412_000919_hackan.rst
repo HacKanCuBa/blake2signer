@@ -1,4 +1,0 @@
-Changed
--------
-
-- Change `Blake2TimestampSignerBase._split_timestamp()` to decode the timestamp directly. It made some noise that after splitting one needed to decode the timestamp to actually use it.

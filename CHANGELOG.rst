@@ -1,3 +1,26 @@
+1.1.0 - 2021-04-15
+==================
+
+Added
+-----
+
+- Add new `force_compression` parameter in `Blake2SerializerSigner.dumps()` to expose existing capability to force data compression.
+
+Changed
+-------
+
+- Change execution order of steps to publish a package in Contrib, to allow room for fixes after publishing to testpypi.
+
+- Reworded and fixed some typos in Readme.
+
+- Change wording in DecodeError and EncodeError to abstract them from base 64 URL safe.
+
+- Change `Blake2TimestampSignerBase._split_timestamp()` to decode the timestamp directly. It made some noise that after splitting one needed to decode the timestamp to actually use it.
+
+Security
+--------
+
+- Update dev dependencies, one of which (*safety*) had a security vulnerability because of a dependency (urllib3).
 
 1.0.0 - 2021-02-26
 ==================

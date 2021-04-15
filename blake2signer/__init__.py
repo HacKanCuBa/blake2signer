@@ -30,7 +30,7 @@ from .serializers import Blake2SerializerSigner
 from .signers import Blake2Signer
 from .signers import Blake2TimestampSigner
 
-__version__ = '1.0.0'
+__version__ = '1.1.0'
 
 __all__ = (
     'errors',

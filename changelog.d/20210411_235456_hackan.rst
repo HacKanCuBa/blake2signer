@@ -1,4 +1,0 @@
-Changed
--------
-
-- Change wording in DecodeError and EncodeError to abstract them from base 64 URL safe.
