@@ -56,8 +56,8 @@ This module provides three classes:
 
 **You should generally go for Blake2SerializerSigner**, given that it's the most versatile of the three.
 
-In all classes you can choose between **blake2b** (default) or **blake2s** as hasher: the first one is optimized for 64b platforms and the second, for 8-32b platforms (read more about them in their [official site](https://blake2.net/)).  
-The digest size is configurable with a secure minimum of 16 bytes enforced. The secret is enforced to be of a secure minimum size of 16 bytes with no size limit since it's derived to produce the key. Additionally a salt is internally generated for every signature providing non-deterministic signatures by default (deterministic signatures can be generated, if needed).
+In all classes you can choose between **blake2b** (default) or **blake2s** as hasher: the first one is optimized for 64b platforms, and the second, for 8-32b platforms (read more about them in their [official site](https://blake2.net/)).  
+The digest size is configurable with a secure minimum of 16 bytes enforced. The secret is enforced to be of a secure minimum size of 16 bytes with no size limit since it's derived to produce the key. Additionally, a salt is internally generated for every signature providing non-deterministic signatures by default (deterministic signatures can be generated, if needed).
 
 ### Examples
 
@@ -115,12 +115,12 @@ except errors.SignedDataError:  # See more about errors below
 print(unsigned)  # {'message': 'attack at dawn', 'extra': [1, 2, 3, 4]}
 ```
 
-It is always a good idea to set the `personalisation` parameter which can be any arbitrarily long bytes (it defaults to the class name plus some extra information). This helps defeating the abuse of using a signed stream for different signers that share the same key by changing the digest computation result. See examples of this below and read more about it in the [hashlib docs](https://docs.python.org/3/library/hashlib.html#personalization).  
+It is always a good idea to set the `personalisation` parameter which can be any arbitrarily long bytes (it defaults to the class name plus some extra information). This helps to defeat the abuse of using a signed stream for different signers that share the same key by changing the digest computation result. See examples of this below and read more about it in the [hashlib docs](https://docs.python.org/3/library/hashlib.html#personalization).  
 For example if you use a signer for cookies set something like `b'cookies-signer'` or if you use it for some user-related data signing it could be `b'user-data-signer'`, or when used for signing a special value it could be `b'the-special-value-signer`, etc.
 
 #### More Examples
 
-Both the `secret` and `personalisation` parameters are derived so they have no size limit.  
+Both the `secret` and `personalisation` parameters are derived, so they have no size limit.  
 Input data can always be arbitrarily long.
 
 A secure pseudorandom salt of the maximum allowed size for the hasher is generated for each signature internally and can't be manually set, meaning that every produced signature is non-deterministic so even if the payload doesn't change each signed payload will be different and unique. Other packages usually refer to salt as something to add to the secret to prevent signer misuse, but here we have the *personalisation* parameter for that.
@@ -128,8 +128,8 @@ It is possible to generate deterministic signatures (meaning, without salt) usin
 
 All signers share the following instantiation parameters:
 
-* `secret`: Secret value which will be derived using blake2 to produce the signing key.
-* `digest_size`: Size of output signature (digest) in bytes.
+* `secret`: Secret value which will be derived using blake2 to produce the signing key (the minimum size required is 16 bytes).
+* `digest_size`: Size of output signature (digest) in bytes (defaults to 16, which is the minimum size allowed).
 * `personalisation`: Personalisation string (which will be derived using blake2) to force the hash function to produce different digests for the same input.
 * `hasher`: Hash function to use, either `blake2b` (default) or `blake2s`.
 * `deterministic`: Define if signatures are deterministic or non-deterministic (default). Non-deterministic sigs are preferred, and achieved through the use of a random salt. For deterministic sigs, no salt is used: this means that for the same payload, the same sig is obtained (the advantage is that the sig is shorter).
@@ -278,7 +278,7 @@ Even though both `Blake2Signer` and `Blake2TimestampSigner` accept data as strin
 
 #### Using a custom JSON encoder or custom serializer
 
-You can use a custom JSON encoder or even a custom serializer such as [msgpack](https://pypi.org/project/msgpack/) which is very efficient in size and performance, much better than JSON (half resulting size and more than twice as fast) so it is an excellent choice for a serializer. For keeping JSON as serializer a better choice than the standard library is [orjson](https://github.com/ijl/orjson) which is faster.
+You can use a custom JSON encoder or even a custom serializer such as [msgpack](https://pypi.org/project/msgpack/) which is very efficient, much better than JSON (half resulting size and more than twice as fast), so it is an excellent choice for a serializer. For keeping JSON as serializer a better choice than the standard library is [orjson](https://github.com/ijl/orjson) which is faster.
 
 ```python
 """Sample of custom JSON encoder and custom serializer."""

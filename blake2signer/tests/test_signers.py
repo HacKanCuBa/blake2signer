@@ -33,6 +33,7 @@ class Blake2SignerTests(TestCase):
             b'hvEtItZNMnA7kBz9grVDnIpxn1UNXeQVdXcwsg.datadata'
         )
         self.person = b'acab'
+        self.digest_size = 64
 
     def test_initialisation_defaults(self) -> None:
         """Test correct class defaults initialisation."""
@@ -63,11 +64,11 @@ class Blake2SignerTests(TestCase):
         signer = Blake2Signer(self.secret)
         signed = signer.sign(self.data)
         self.assertIsInstance(signed, bytes)
-        self.assertEqual(len(signed), 111)
+        self.assertEqual(len(signed), 47)
 
     def test_unsign(self) -> None:
         """Test unsigning is correct."""
-        signer = Blake2Signer(self.secret)
+        signer = Blake2Signer(self.secret, digest_size=self.digest_size)
         unsigned = signer.unsign(self.signed)
         self.assertEqual(unsigned, self.data)
 
@@ -278,7 +279,7 @@ class Blake2TimestampSignerTests(TestCase):
         signer = Blake2TimestampSigner(self.secret)
         signed = signer.sign(self.data)
         self.assertIsInstance(signed, bytes)
-        self.assertEqual(len(signed), 118)
+        self.assertEqual(len(signed), 54)
 
     def test_unsign(self) -> None:
         """Test unsigning is correct."""
@@ -337,17 +338,18 @@ class Blake2TimestampSignerErrorTests(TestCase):
             b'0n1iOnj6g0q7N-yUGFDG7S3mLt_-8V3kYa09GHLZ5X_HITsstI9vKhkFXly3s6xW'
             b'7gkI0_HHCi8hyRpmoOZH8hUnxcvXMkTrp58QYw.YHd8dA.datadata'
         )
+        self.digest_size = 64
 
     def test_unsign_timestamp_expired(self) -> None:
         """Test unsigning with timestamp is correct."""
-        signer = Blake2TimestampSigner(self.secret)
+        signer = Blake2TimestampSigner(self.secret, digest_size=self.digest_size)
         with self.assertRaises(errors.ExpiredSignatureError):
             signer.unsign(self.signed, max_age=1)
 
     def test_unsign_wrong_data(self) -> None:
         """Test unsign wrong data."""
-        signer = Blake2TimestampSigner(self.secret)
-        trick_signer = Blake2Signer(self.secret)
+        signer = Blake2TimestampSigner(self.secret, digest_size=self.digest_size)
+        trick_signer = Blake2Signer(self.secret, digest_size=self.digest_size)
         trick_signer._key = signer._key
         trick_signer._person = signer._person
 

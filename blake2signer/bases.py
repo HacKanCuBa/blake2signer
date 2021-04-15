@@ -48,6 +48,7 @@ class Base(Mixin, ABC):
 
     MIN_SECRET_SIZE: int = 16  # Minimum secret size allowed (during instantiation)
     MIN_DIGEST_SIZE: int = 16  # Minimum digest size allowed (during instantiation)
+    DEFAULT_DIGEST_SIZE: int = 16  # 16 bytes is good security/size tradeoff
 
     def __init__(
         self,
@@ -66,7 +67,7 @@ class Base(Mixin, ABC):
                        enforced to 16 bytes and there is no maximum since the key
                        will be derived to the maximum supported size.
         :param digest_size: [optional] Size of output signature (digest) in bytes
-                            (defaults to maximum digest size of chosen function).
+                            (defaults to 16 bytes).
                             The minimum size is enforced to 16 bytes.
         :param personalisation: [optional] Personalisation string to force the
                                 hash function to produce different digests for
@@ -132,7 +133,7 @@ class Base(Mixin, ABC):
     def _validate_digest_size(self, digest_size: typing.Optional[int]) -> int:
         """Validate the digest_size value and return it clean."""
         if digest_size is None:
-            return self._hasher.MAX_DIGEST_SIZE
+            digest_size = self.DEFAULT_DIGEST_SIZE
 
         if self.MIN_DIGEST_SIZE <= digest_size <= self._hasher.MAX_DIGEST_SIZE:
             return digest_size
@@ -201,7 +202,7 @@ class Blake2SignerBase(EncoderMixin, Base, ABC):
                        enforced to 16 bytes and there is no maximum since the key
                        will be derived to the maximum supported size.
         :param digest_size: [optional] Size of output signature (digest) in bytes
-                            (defaults to maximum digest size of chosen function).
+                            (defaults to 16 bytes).
                             The minimum size is enforced to 16 bytes.
         :param personalisation: [optional] Personalisation string to force the
                                 hash function to produce different digests for
@@ -436,8 +437,6 @@ class Blake2TimestampSignerBase(Blake2SignerBase, ABC):
 class Blake2DualSignerBase(Blake2TimestampSignerBase, ABC):
     """Base class for a dual signer: with and without timestamp."""
 
-    DEFAULT_DIGEST_SIZE: int = 16  # 16 bytes is good security/size tradeoff
-
     def __init__(
         self,
         secret: typing.Union[str, bytes],
@@ -469,7 +468,8 @@ class Blake2DualSignerBase(Blake2TimestampSignerBase, ABC):
                                 it fits the hasher limits, so it has no practical
                                 size limit. It defaults to the class name.
         :param digest_size: [optional] Size of output signature (digest) in bytes
-                            (defaults to the minimum size of 16 bytes).
+                            (defaults to 16 bytes).
+                            The minimum size is enforced to 16 bytes.
         :param hasher: [optional] Hash function to use: blake2b (default) or blake2s.
         :param deterministic: [optional] Define if signatures are deterministic
                               or non-deterministic (default). Non-deterministic
@@ -495,7 +495,7 @@ class Blake2DualSignerBase(Blake2TimestampSignerBase, ABC):
         super().__init__(
             secret,
             personalisation=personalisation,
-            digest_size=digest_size or self.DEFAULT_DIGEST_SIZE,
+            digest_size=digest_size,
             hasher=hasher,
             deterministic=deterministic,
             separator=separator,
