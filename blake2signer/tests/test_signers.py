@@ -13,6 +13,7 @@ from unittest import mock
 from .. import errors
 from ..encoders import B32Encoder
 from ..encoders import B64URLEncoder
+from ..encoders import HexEncoder
 from ..interfaces import EncoderInterface
 from ..serializers import JSONSerializer
 from ..signers import Blake2SerializerSigner
@@ -152,6 +153,17 @@ class Blake2SignerTests(TestCase):
         unsigned = signer.unsign(signed)
         self.assertEqual(self.data, unsigned)
 
+    def test_sign_unsign_with_hexencoder(self) -> None:
+        """Test signing and unsigning using a hex encoder (non-default)."""
+        signer = Blake2Signer(self.secret, encoder=HexEncoder)
+
+        signed = signer.sign(self.data)
+        self.assertIsInstance(signed, bytes)
+        self.assertRegex(signed.decode(), r'^[A-F0-9.]+datadata$')
+
+        unsigned = signer.unsign(signed)
+        self.assertEqual(self.data, unsigned)
+
 
 # noinspection PyArgumentEqualDefault
 class Blake2SignerErrorTests(TestCase):
@@ -259,6 +271,15 @@ class Blake2SignerErrorTests(TestCase):
             str(cm.exception),
         )
 
+    def test_wrong_separator_in_hexencoder_alphabet(self) -> None:
+        """Test error occurs when the separator is in the hex encoder alphabet."""
+        with self.assertRaises(errors.InvalidOptionError) as cm:
+            Blake2Signer(self.secret, separator=b'A', encoder=HexEncoder)
+        self.assertIn(
+            'separator character must not belong to the encoder',
+            str(cm.exception),
+        )
+
     def test_wrong_separator_non_ascii(self) -> None:
         """Test error occurs when the separator is non-ascii."""
         with self.assertRaises(errors.InvalidOptionError) as cm:
@@ -353,6 +374,17 @@ class Blake2TimestampSignerTests(TestCase):
         signed = signer.sign(self.data)
         self.assertIsInstance(signed, bytes)
         self.assertRegex(signed.decode(), r'^[A-Z2-7.]+datadata$')
+
+        unsigned = signer.unsign(signed, max_age=1)
+        self.assertEqual(self.data, unsigned)
+
+    def test_sign_unsign_with_hexencoder(self) -> None:
+        """Test signing and unsigning using a hex encoder (non-default)."""
+        signer = Blake2TimestampSigner(self.secret, encoder=HexEncoder)
+
+        signed = signer.sign(self.data)
+        self.assertIsInstance(signed, bytes)
+        self.assertRegex(signed.decode(), r'^[A-F0-9.]+datadata$')
 
         unsigned = signer.unsign(signed, max_age=1)
         self.assertEqual(self.data, unsigned)
@@ -689,6 +721,17 @@ class Blake2SerializerSignerTests(TestCase):
         unsigned = signer.loads(signed)
         self.assertEqual(self.data, unsigned)
 
+    def test_dumps_loads_with_hexencoder(self) -> None:
+        """Test dumping and loading using a hex encoder (non-default)."""
+        signer = Blake2SerializerSigner(self.secret, encoder=HexEncoder)
+
+        signed = signer.dumps(self.data)
+        self.assertIsInstance(signed, str)
+        self.assertRegex(signed, r'^[A-F0-9.]+$')
+
+        unsigned = signer.loads(signed)
+        self.assertEqual(self.data, unsigned)
+
 
 # noinspection PyArgumentEqualDefault
 class Blake2SerializerSignerErrorTests(TestCase):
@@ -805,6 +848,15 @@ class Blake2SerializerSignerErrorTests(TestCase):
         """Test error occurs when the separator is in the b32 encoder alphabet."""
         with self.assertRaises(errors.InvalidOptionError) as cm:
             Blake2SerializerSigner(self.secret, separator=b'A', encoder=B32Encoder)
+        self.assertIn(
+            'separator character must not belong to the encoder',
+            str(cm.exception),
+        )
+
+    def test_wrong_separator_in_hexencoder_alphabet(self) -> None:
+        """Test error occurs when the separator is in the hex encoder alphabet."""
+        with self.assertRaises(errors.InvalidOptionError) as cm:
+            Blake2SerializerSigner(self.secret, separator=b'A', encoder=HexEncoder)
         self.assertIn(
             'separator character must not belong to the encoder',
             str(cm.exception),

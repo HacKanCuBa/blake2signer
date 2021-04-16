@@ -339,7 +339,7 @@ print(unsigned)  # {'points': [1, 2, 3.4]}
 ```
 
 `Blake2SerializerSigner` is quite flexible and can receive a custom serializer, compressor or encoder. You could i.e. create a custom base62 encoder simply inheriting from `EncoderInterface`, or a custom bzip compressor inheriting from `CompressorInterface`. You don't need to handle or worry about exceptions: those are caught by the caller class.  
-All serializers, encoders and compressors live in their respective submodule. In addition to base64 URL safe this package provides base32 as it is another common encoding format.
+All serializers, encoders and compressors live in their respective submodule. In addition to base64 URL safe this package provides base32 and hex (base16) as they are common encoding formats.
 
 Note that also both `Blake2Signer` and `Blake2TimestampSigner` supports changing the encoder.
 

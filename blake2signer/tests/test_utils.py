@@ -48,3 +48,13 @@ class TestUtilsBase64(TestCase):
         """Test b32decode accepts padded value correctly."""
         decoded = utils.b32decode(b'MFRGG===')
         self.assertEqual(decoded, b'abc')
+
+    def test_hexdecode_accepts_bytes(self) -> None:
+        """Test hexdecode accepts bytes correctly."""
+        decoded = utils.hexdecode(b'616263')
+        self.assertEqual(decoded, b'abc')
+
+    def test_hexencode_accepts_bytes(self) -> None:
+        """Test hexencode accepts bytes correctly."""
+        encoded = utils.hexencode(b'abc')
+        self.assertEqual(encoded, b'616263')

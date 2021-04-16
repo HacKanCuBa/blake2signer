@@ -32,3 +32,13 @@ def b32encode(data: bytes) -> bytes:
 def b32decode(data: bytes) -> bytes:
     """Decode data encoded as Base 32 without padding."""
     return base64.b32decode(data + (b'=' * ((8 - (len(data) % 8)) % 8)))
+
+
+def hexencode(data: bytes) -> bytes:
+    """Encode data as hexadecimal (uppercase)."""
+    return base64.b16encode(data)
+
+
+def hexdecode(data: bytes) -> bytes:
+    """Decode data encoded as hexadecimal (uppercase)."""
+    return base64.b16decode(data)

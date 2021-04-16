@@ -5,6 +5,8 @@ from .utils import b32decode
 from .utils import b32encode
 from .utils import b64decode
 from .utils import b64encode
+from .utils import hexdecode
+from .utils import hexencode
 
 
 class B64URLEncoder(EncoderInterface):
@@ -39,3 +41,20 @@ class B32Encoder(EncoderInterface):
     def decode(self, data: bytes) -> bytes:
         """Decode given encoded data from base32 without padding."""
         return b32decode(data)
+
+
+class HexEncoder(EncoderInterface):
+    """Hexadecimal encoder."""
+
+    @property
+    def alphabet(self) -> bytes:
+        """Return the encoder alphabet characters."""
+        return b'ABCDEF0123456789'
+
+    def encode(self, data: bytes) -> bytes:
+        """Encode given data to hexadecimal."""
+        return hexencode(data)
+
+    def decode(self, data: bytes) -> bytes:
+        """Decode given encoded data from hexadecimal."""
+        return hexdecode(data)

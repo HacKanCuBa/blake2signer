@@ -1,0 +1,4 @@
+Added
+-----
+
+- Add new hex (base16) encoder.
