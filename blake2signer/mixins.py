@@ -94,11 +94,12 @@ class CompressorMixin(Mixin, ABC):
         :param compression_flag: [optional] Character to mark the payload as
                                  compressed. It must be ASCII (defaults to ".").
         :param compression_ratio: [optional] Desired minimal compression ratio,
-                                  between 0 and 99 (defaults to 5). It is used to
-                                  calculate when to consider a payload sufficiently
-                                  compressed so as to detect detrimental compression.
-                                  By default if compression achieves less than 5%
-                                  of size reduction, it is considered detrimental.
+                                  between 0 and below 100 (defaults to 5).
+                                  It is used to calculate when to consider a payload
+                                  sufficiently compressed so as to detect detrimental
+                                  compression. By default if compression achieves
+                                  less than 5% of size reduction, it is considered
+                                  detrimental.
 
         """
         self._compressor = compressor()
@@ -107,15 +108,32 @@ class CompressorMixin(Mixin, ABC):
         personalisation += self._compressor.__class__.__name__.encode()
         kwargs['personalisation'] = personalisation
 
-        self._compression_flag: bytes = self._force_bytes(compression_flag)
+        self._compression_flag: bytes = self._validate_comp_flag(compression_flag)
         self._compression_ratio: float = self._validate_comp_ratio(compression_ratio)
 
         super().__init__(*args, **kwargs)  # type: ignore
 
+    def _validate_comp_flag(self, flag: typing.Union[str, bytes]) -> bytes:
+        """Validate the compression flag value and return it clean."""
+
+        if not flag.isascii():
+            raise errors.InvalidOptionError(
+                'the compression flag character must be ASCII',
+            )
+
+        return self._force_bytes(flag)
+
     @staticmethod
-    def _validate_comp_ratio(ratio: typing.Union[int, float]) -> float:
+    def _validate_comp_ratio(ratio_: float) -> float:
         """Validate the compression ratio value and return it clean."""
-        return float(ratio)
+        ratio = float(ratio_)
+
+        if 0.0 <= ratio < 100.0:
+            return ratio
+
+        raise errors.InvalidOptionError(
+            'the compression ratio must be between 0 and 99',
+        )
 
     def _add_compression_flag(self, data: bytes) -> bytes:
         """Add the compression flag to given data."""

@@ -236,6 +236,12 @@ class Blake2SignerErrorTests(TestCase):
             str(cm.exception),
         )
 
+    def test_wrong_separator_non_ascii(self) -> None:
+        """Test error occurs when the separator is non-ascii."""
+        with self.assertRaises(errors.InvalidOptionError) as cm:
+            Blake2Signer(self.secret, separator=b'\x87')
+        self.assertIn('separator character must be ASCII', str(cm.exception))
+
 
 # noinspection PyArgumentEqualDefault
 class Blake2TimestampSignerTests(TestCase):
@@ -379,6 +385,12 @@ class Blake2TimestampSignerErrorTests(TestCase):
             'separator character must not belong to the encoder',
             str(cm.exception),
         )
+
+    def test_wrong_separator_non_ascii(self) -> None:
+        """Test error occurs when the separator is non-ascii."""
+        with self.assertRaises(errors.InvalidOptionError) as cm:
+            Blake2TimestampSigner(self.secret, separator=b'\x87')
+        self.assertIn('separator character must be ASCII', str(cm.exception))
 
 
 # noinspection PyArgumentEqualDefault
@@ -725,3 +737,25 @@ class Blake2SerializerSignerErrorTests(TestCase):
             'separator character must not belong to the encoder',
             str(cm.exception),
         )
+
+    def test_wrong_separator_non_ascii(self) -> None:
+        """Test error occurs when the separator is non-ascii."""
+        with self.assertRaises(errors.InvalidOptionError) as cm:
+            Blake2SerializerSigner(self.secret, separator=b'\x87')
+        self.assertIn('separator character must be ASCII', str(cm.exception))
+
+    def test_wrong_compression_flag_non_ascii(self) -> None:
+        """Test error occurs when the compression flag is non-ascii."""
+        with self.assertRaises(errors.InvalidOptionError) as cm:
+            Blake2SerializerSigner(self.secret, compression_flag=b'\x87')
+        self.assertIn('compression flag character must be ASCII', str(cm.exception))
+
+    def test_wrong_compression_ratio(self) -> None:
+        """Test error occurs when the compression ratio is out of bounds."""
+        with self.assertRaises(errors.InvalidOptionError) as cm:
+            Blake2SerializerSigner(self.secret, compression_ratio=-1)
+        self.assertIn('compression ratio must be', str(cm.exception))
+
+        with self.assertRaises(errors.InvalidOptionError) as cm:
+            Blake2SerializerSigner(self.secret, compression_ratio=100)
+        self.assertIn('compression ratio must be', str(cm.exception))

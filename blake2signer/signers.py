@@ -270,11 +270,12 @@ class Blake2SerializerSigner(
         :param compression_flag: [optional] Character to mark the payload as
                                  compressed. It must be ASCII (defaults to ".").
         :param compression_ratio: [optional] Desired minimal compression ratio,
-                                  between 0 and 99 (defaults to 5). It is used to
-                                  calculate when to consider a payload sufficiently
-                                  compressed so as to detect detrimental compression.
-                                  By default if compression achieves less than 5%
-                                  of size reduction, it is considered detrimental.
+                                  between 0 and below 100 (defaults to 5).
+                                  It is used to calculate when to consider a payload
+                                  sufficiently compressed so as to detect detrimental
+                                  compression. By default if compression achieves
+                                  less than 5% of size reduction, it is considered
+                                  detrimental.
 
         :raise ConversionError: A bytes parameter is not bytes and can't be converted
                                 to bytes.
