@@ -158,6 +158,31 @@ class Blake2SerializerSignerTests(TestCase):
         unsigned = signer.loads(signer.dumps(obj))
         self.assertEqual(obj.a, unsigned)
 
+    def test_dumps_loads_deterministic(self) -> None:
+        """Test dumps and loads with a deterministic signature."""
+        signer = Blake2SerializerSigner(self.secret, deterministic=True)
+
+        signed = signer.dumps(self.data)
+        signed2 = signer.dumps(self.data)
+        self.assertEqual(signed, signed2)
+
+        unsigned = signer.loads(signed)
+        self.assertEqual(unsigned, self.data)
+
+    def test_dumps_loads_nondeterministic(self) -> None:
+        """Test dumps and loads with a non-deterministic signature (default)."""
+        signer = Blake2SerializerSigner(self.secret, deterministic=False)
+
+        signed = signer.dumps(self.data)
+        signed2 = signer.dumps(self.data)
+        self.assertNotEqual(signed, signed2)
+
+        unsigned = signer.loads(signed)
+        self.assertEqual(self.data, unsigned)
+
+        unsigned2 = signer.loads(signed)
+        self.assertEqual(self.data, unsigned2)
+
 
 class Blake2SerializerSignerErrorTests(TestCase):
     """Test Blake2SerializerSigner class for errors."""

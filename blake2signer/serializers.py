@@ -115,6 +115,7 @@ class Blake2SerializerSignerBase(Blake2TimestampSignerBase, ABC):
         personalisation: bytes = b'',
         digest_size: typing.Optional[int] = None,
         hasher: typing.Union[HasherChoice, str] = HasherChoice.blake2b,
+        deterministic: bool = False,
     ) -> None:
         """Serialize, sign and verify serialized signed data using Blake2.
 
@@ -137,6 +138,12 @@ class Blake2SerializerSignerBase(Blake2TimestampSignerBase, ABC):
         :param digest_size: [optional] Size of output signature (digest) in bytes
                             (defaults to the minimum size of 16 bytes).
         :param hasher: [optional] Hash function to use: blake2b (default) or blake2s.
+        :param deterministic: [optional] Define if signatures are deterministic
+                              or non-deterministic (default). Non-deterministic
+                              sigs are preferred, and achieved through the use of a
+                              random salt. For deterministic sigs, no salt is used:
+                              this means that for the same payload, the same sig is
+                              obtained (the advantage is that the sig is shorter).
 
         :raise ConversionError: A parameter is not bytes and can't be converted
                                 to bytes.
@@ -152,6 +159,7 @@ class Blake2SerializerSignerBase(Blake2TimestampSignerBase, ABC):
             personalisation=personalisation,
             digest_size=digest_size or self.DEFAULT_DIGEST_SIZE,
             hasher=hasher,
+            deterministic=deterministic,
         )
 
     def _loads(self, signed_data: bytes) -> bytes:
@@ -402,6 +410,7 @@ class Blake2SerializerSigner(
         personalisation: bytes = b'',
         digest_size: typing.Optional[int] = None,
         hasher: typing.Union[HasherChoice, str] = HasherChoice.blake2b,
+        deterministic: bool = False,
         serializer: typing.Type[SerializerInterface] = JSONSerializer,
         compressor: typing.Type[CompressorInterface] = ZlibCompressor,
         encoder: typing.Type[EncoderInterface] = B64URLEncoder,
@@ -428,6 +437,14 @@ class Blake2SerializerSigner(
         :param digest_size: [optional] Size of output signature (digest) in bytes
                             (defaults to the minimum allowed size of 16 bytes).
         :param hasher: [optional] Hash function to use: blake2b (default) or blake2s.
+        :param deterministic: [optional] Define if signatures are deterministic
+                              or non-deterministic (default). Non-deterministic
+                              sigs are preferred, and achieved through the use of a
+                              random salt. For deterministic sigs, no salt is used:
+                              this means that for the same payload, the same sig is
+                              obtained (the advantage is that the sig is shorter).
+                              Note that this assumes that the serializer and
+                              compressor are always deterministic.
         :param serializer: [optional] Serializer class to use (defaults to a
                            JSON serializer).
         :param compressor: [optional] Compressor class to use (defaults to a
@@ -445,6 +462,7 @@ class Blake2SerializerSigner(
             personalisation=personalisation,
             digest_size=digest_size,
             hasher=hasher,
+            deterministic=deterministic,
             serializer=serializer,
             compressor=compressor,
             encoder=encoder,

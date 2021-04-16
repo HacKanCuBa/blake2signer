@@ -1,0 +1,4 @@
+Added
+-----
+
+- Add setting to allow deterministic signatures, but keep default of non-deterministic ones.

@@ -57,6 +57,7 @@ class Blake2SignerBase(ABC):
         personalisation: bytes = b'',
         digest_size: typing.Optional[int] = None,
         hasher: typing.Union[HasherChoice, str] = Hashers.blake2b,
+        deterministic: bool = False,
     ) -> None:
         """Sign and verify signed data using Blake2 in keyed hashing mode.
 
@@ -73,6 +74,12 @@ class Blake2SignerBase(ABC):
                                 it fits the hasher limits, so it has no practical
                                 size limit. It defaults to the class name.
         :param hasher: [optional] Hash function to use: blake2b (default) or blake2s.
+        :param deterministic: [optional] Define if signatures are deterministic
+                              or non-deterministic (default). Non-deterministic
+                              sigs are preferred, and achieved through the use of a
+                              random salt. For deterministic sigs, no salt is used:
+                              this means that for the same payload, the same sig is
+                              obtained (the advantage is that the sig is shorter).
 
         :raise ConversionError: A parameter is not bytes and can't be converted
                                 to bytes.
@@ -86,6 +93,8 @@ class Blake2SignerBase(ABC):
 
         secret = self._force_bytes(secret)
         person = self._force_bytes(personalisation)
+        if deterministic:
+            person += b'Deterministic'
 
         if len(secret) < self.MIN_SECRET_SIZE:
             raise errors.InvalidOptionError(
@@ -100,6 +109,7 @@ class Blake2SignerBase(ABC):
                 f'{self._hasher.MAX_DIGEST_SIZE}',
             )
 
+        self._deterministic = deterministic
         self._digest_size = digest_size
         self._person = self._derive_person(person + self.__class__.__name__.encode())
         self._key = self._derive_key(secret, person=self._person)  # forget secret :)
@@ -143,6 +153,13 @@ class Blake2SignerBase(ABC):
         # bits but it's OK since we are using the maximum allowed size.
         return token_urlsafe(self._salt_size).encode()[:self._salt_size]  # Trim excess
 
+    def _get_salt(self) -> bytes:
+        """Get a salt for the signature considering its type.
+
+        For non-deterministic signatures, a pseudo random salt is generated.
+        """
+        return b'' if self._deterministic else self._generate_salt()
+
     @staticmethod
     def _force_bytes(value: typing.AnyStr) -> bytes:
         """Force given value into bytes.
@@ -168,11 +185,15 @@ class Blake2SignerBase(ABC):
 
         composite_signature, data = signed_data.split(self.SEPARATOR, 1)
 
-        if len(composite_signature) < (self._salt_size + self.MIN_DIGEST_SIZE):
-            raise errors.SignatureError('signature is too short')
+        if self._deterministic:
+            salt = b''
+            signature = composite_signature
+        else:
+            if len(composite_signature) < (self._salt_size + self.MIN_DIGEST_SIZE):
+                raise errors.SignatureError('signature is too short')
 
-        salt = composite_signature[:self._salt_size]
-        signature = composite_signature[self._salt_size:]
+            salt = composite_signature[:self._salt_size]
+            signature = composite_signature[self._salt_size:]
 
         return SignedDataParts(data=data, salt=salt, signature=signature)
 
@@ -206,7 +227,7 @@ class Blake2SignerBase(ABC):
         The signature and salt are base64 URL safe encoded without padding.
         Data is left as-is.
         """
-        salt = self._generate_salt()
+        salt = self._get_salt()
         signature = self._signify(salt=salt, data=data)
         parts = SignedDataParts(salt=salt, signature=signature, data=data)
 

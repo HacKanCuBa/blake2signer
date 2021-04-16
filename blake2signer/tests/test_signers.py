@@ -86,15 +86,21 @@ class Blake2SignerTests(TestCase):
         self.assertIsInstance(unsigned, bytes)
         self.assertEqual(unsigned, self.data)
 
-    def test_sign_is_unique(self) -> None:
+    def test_sign_is_unique_non_deterministic(self) -> None:
         """Test that each signing is unique because of salt."""
-        signer = Blake2Signer(self.secret)
+        signer = Blake2Signer(self.secret, deterministic=False)
 
         signed1 = signer.sign(self.data)
         signed2 = signer.sign(self.data)
 
         self.assertEqual(len(signed1), len(signed2))
         self.assertNotEqual(signed1, signed2)
+
+        unsigned1 = signer.unsign(signed1)
+        self.assertEqual(self.data, unsigned1)
+
+        unsigned2 = signer.unsign(signed2)
+        self.assertEqual(self.data, unsigned2)
 
     def test_initialisation_hasher_as_string(self) -> None:
         """Test initialisation with hasher as string."""
@@ -103,6 +109,17 @@ class Blake2SignerTests(TestCase):
 
         signer = Blake2Signer(self.secret, hasher='blake2s')
         self.assertIs(signer._hasher, hashlib.blake2s)
+
+    def test_sign_unsign_deterministic(self) -> None:
+        """Test sign and unsign with a deterministic signature."""
+        signer = Blake2Signer(self.secret, deterministic=True)
+
+        signed = signer.sign(self.data)
+        signed2 = signer.sign(self.data)
+        self.assertEqual(signed, signed2)
+
+        unsigned = signer.unsign(signed)
+        self.assertEqual(unsigned, self.data)
 
 
 class Blake2SignerErrorTests(TestCase):
@@ -225,6 +242,35 @@ class Blake2TimestampSignerTests(TestCase):
         signed = signer.sign(self.data)
         unsigned = signer.unsign(signed, max_age=timedelta(seconds=1))
         self.assertEqual(unsigned, self.data)
+
+    @mock.patch('blake2signer.signers.time')
+    def test_sign_unsign_deterministic(self, mock_time: mock.MagicMock) -> None:
+        """Test sign and unsign with a deterministic signature."""
+        mock_time.return_value = datetime.now().timestamp()
+        signer = Blake2TimestampSigner(self.key, deterministic=True)
+
+        signed = signer.sign(self.data)
+        signed2 = signer.sign(self.data)
+        self.assertEqual(signed, signed2)
+
+        unsigned = signer.unsign(signed, max_age=1)
+        self.assertEqual(unsigned, self.data)
+
+    @mock.patch('blake2signer.signers.time')
+    def test_sign_unsign_nondeterministic(self, mock_time: mock.MagicMock) -> None:
+        """Test sign and unsign with a non-deterministic signature (default)."""
+        mock_time.return_value = datetime.now().timestamp()
+        signer = Blake2TimestampSigner(self.key, deterministic=False)
+
+        signed = signer.sign(self.data)
+        signed2 = signer.sign(self.data)
+        self.assertNotEqual(signed, signed2)
+
+        unsigned = signer.unsign(signed, max_age=1)
+        self.assertEqual(self.data, unsigned)
+
+        unsigned2 = signer.unsign(signed, max_age=1)
+        self.assertEqual(self.data, unsigned2)
 
 
 class Blake2TimestampSignerErrorTests(TestCase):
