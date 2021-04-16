@@ -1,0 +1,4 @@
+Added
+-----
+
+- Add new null serializer: a serializer that doesn't actually serializes. It can be useful when you need to manage bytes or strings, but you want to compress too, therefore being able to use the Blake2SerializerSigner for this.

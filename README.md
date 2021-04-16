@@ -378,13 +378,27 @@ print(signer.loads(signed) == data)  # True
 
 **I need to work with raw bytes, but I want compression and encoding**
 
-Usually to work with bytes one can choose to use either `Blake2Signer` or `Blake2TimestampSigner`. However, if you also want to have compression and encoding, you need `Blake2SerializerSigner`. The problem now is that JSON doesn't support bytes, so the class as-is won't work. There are two solutions:
+Usually to work with bytes one can choose to use either `Blake2Signer` or `Blake2TimestampSigner`. However, if you also want to have compression and encoding, you need `Blake2SerializerSigner`. The problem now is that JSON doesn't support bytes, so the class as-is won't work. There are a couple of solutions:
 
+1. Use the `NullSerializer` from the `serializers` submodule with `Blake2SerializerSigner`.
 1. Use the `MsgpackSerializer` created above given that *msgpack* does handle bytes serialization.
-1. Create your custom serializer that doesn't actually serializes to use it with `Blake2SerializerSigner`.
-1. Create your custom class inheriting from `EncoderMixin` and `CompressorMixin` (this should be a last resort kind of choice, given that it requires writing more code and uses internal API methods).
+1. Create your custom class inheriting from `CompressorMixin` and `Blake2SerializerSignerBase` - which already contains `EncoderMixin` (this should be a last resort kind of choice, given that it requires writing more code and uses internal API methods).
 
 Here are those examples:
+
+```python
+"""Sample using the NullSerializer."""
+
+from blake2signer import Blake2SerializerSigner
+from blake2signer.serializers import NullSerializer
+
+secret = b'super-secret-value'
+signer = Blake2SerializerSigner(secret, serializer=NullSerializer)
+data = b'acab' * 100
+signed = signer.dumps(data)
+print(len(signed) < len(data))  # True
+print(signer.loads(signed) == data)  # True
+```
 
 ```python
 """Sample of a custom encoder compressor signer class."""
@@ -416,35 +430,6 @@ class MyEncoderCompressorSigner(CompressorMixin, Blake2SerializerSignerBase):
 
 secret = b'super-secret-value'
 signer = MyEncoderCompressorSigner(secret)
-data = b'acab' * 100
-signed = signer.dumps(data)
-print(len(signed) < len(data))  # True
-print(signer.loads(signed) == data)  # True
-```
-
-```python
-"""Sample of a custom serializer that doesn't serializes."""
-
-import typing
-
-from blake2signer import Blake2SerializerSigner
-from blake2signer.interfaces import SerializerInterface
-from blake2signer.utils import force_bytes
-
-
-class MySerializer(SerializerInterface):
-
-    def serialize(self, data: typing.Any, **kwargs: typing.Any) -> bytes:
-        """Convert given data to bytes."""
-        return force_bytes(data)
-
-    def unserialize(self, data: bytes, **kwargs: typing.Any) -> typing.Any:
-        """Unserialize given serialized data."""
-        return data
-
-
-secret = b'super-secret-value'
-signer = Blake2SerializerSigner(secret, serializer=MySerializer)
 data = b'acab' * 100
 signed = signer.dumps(data)
 print(len(signed) < len(data))  # True

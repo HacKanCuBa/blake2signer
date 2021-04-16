@@ -17,6 +17,7 @@ from ..encoders import B64URLEncoder
 from ..encoders import HexEncoder
 from ..interfaces import EncoderInterface
 from ..serializers import JSONSerializer
+from ..serializers import NullSerializer
 from ..signers import Blake2SerializerSigner
 from ..signers import Blake2Signer
 from ..signers import Blake2TimestampSigner
@@ -743,6 +744,31 @@ class Blake2SerializerSignerTests(TestCase):
         self.assertLessEqual(len(signed_compressed), len(signed))
 
         unsigned = signer.loads(signed_compressed)
+        self.assertEqual(data, unsigned)
+
+    def test_dumps_loads_with_null_serializer(self) -> None:
+        """Test dumping and loading using the null serializer (non-default)."""
+        signer = Blake2SerializerSigner(self.secret, serializer=NullSerializer)
+
+        signed = signer.dumps(self.data)
+        self.assertIsInstance(signed, str)
+        self.assertEqual(len(signed), 50)
+
+        unsigned = signer.loads(signed)
+        self.assertIsInstance(unsigned, bytes)
+        self.assertEqual(self.data, unsigned.decode())
+
+    def test_dumps_loads_with_null_serializer_bytes_data(self) -> None:
+        """Test dumping and loading using the null serializer with bytes data."""
+        data = self.data.encode()
+        signer = Blake2SerializerSigner(self.secret, serializer=NullSerializer)
+
+        signed = signer.dumps(data)
+        self.assertIsInstance(signed, str)
+        self.assertEqual(len(signed), 50)
+
+        unsigned = signer.loads(signed)
+        self.assertIsInstance(unsigned, bytes)
         self.assertEqual(data, unsigned)
 
 
