@@ -11,6 +11,7 @@ from unittest import TestCase
 from unittest import mock
 
 from .. import errors
+from ..compressors import GzipCompressor
 from ..encoders import B32Encoder
 from ..encoders import B64URLEncoder
 from ..encoders import HexEncoder
@@ -731,6 +732,18 @@ class Blake2SerializerSignerTests(TestCase):
 
         unsigned = signer.loads(signed)
         self.assertEqual(self.data, unsigned)
+
+    def test_dumps_loads_with_gzip_compressor(self) -> None:
+        """Test dumping and loading using the gzip compressor (non-default)."""
+        signer = Blake2SerializerSigner(self.secret, compressor=GzipCompressor)
+        data = self.data * 100  # so compression is meaningful
+
+        signed = signer.dumps(data, use_compression=False)
+        signed_compressed = signer.dumps(data, use_compression=True)
+        self.assertLessEqual(len(signed_compressed), len(signed))
+
+        unsigned = signer.loads(signed_compressed)
+        self.assertEqual(data, unsigned)
 
 
 # noinspection PyArgumentEqualDefault
