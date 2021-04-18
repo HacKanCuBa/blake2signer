@@ -12,6 +12,7 @@ from unittest import mock
 
 from .. import errors
 from ..encoders import B64URLEncoder
+from ..interfaces import EncoderInterface
 from ..serializers import JSONSerializer
 from ..signers import Blake2SerializerSigner
 from ..signers import Blake2Signer
@@ -777,3 +778,49 @@ class Blake2SerializerSignerErrorTests(TestCase):
             'the compression flag character must have a value',
             str(cm.exception),
         )
+
+    def test_wrong_encoder_non_ascii_alphabet(self) -> None:
+        """Test encoder having a non-ASCII alphabet raises exception."""
+
+        class Encoder(EncoderInterface):
+            """Wrong encoder."""
+
+            @property
+            def alphabet(self) -> bytes:
+                """Get encoder alphabet."""
+                return b'\x87'
+
+            def encode(self, data: typing.AnyStr) -> bytes:
+                """Encode data."""
+                pass  # pragma: nocover
+
+            def decode(self, data: typing.AnyStr) -> bytes:
+                """Decode data."""
+                pass  # pragma: nocover
+
+        with self.assertRaises(errors.InvalidOptionError) as cm:
+            Blake2SerializerSigner(self.secret, encoder=Encoder)
+        self.assertIn('encoder alphabet must be ASCII', str(cm.exception))
+
+    def test_wrong_encoder_empty_alphabet(self) -> None:
+        """Test encoder having an empty alphabet raises exception."""
+
+        class Encoder(EncoderInterface):
+            """Wrong encoder."""
+
+            @property
+            def alphabet(self) -> bytes:
+                """Get encoder alphabet."""
+                return b''
+
+            def encode(self, data: typing.AnyStr) -> bytes:
+                """Encode data."""
+                pass  # pragma: nocover
+
+            def decode(self, data: typing.AnyStr) -> bytes:
+                """Decode data."""
+                pass  # pragma: nocover
+
+        with self.assertRaises(errors.InvalidOptionError) as cm:
+            Blake2SerializerSigner(self.secret, encoder=Encoder)
+        self.assertIn('encoder alphabet must have a value', str(cm.exception))

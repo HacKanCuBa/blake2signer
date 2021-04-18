@@ -220,13 +220,28 @@ class EncoderMixin(Mixin, ABC):
         **kwargs: typing.Any,
     ) -> None:
         """Add encoding capabilities."""
-        self._encoder = encoder()
+        self._encoder = self._validate_encoder(encoder)
 
         personalisation = self._force_bytes(kwargs.get('personalisation', b''))
         personalisation += self._encoder.__class__.__name__.encode()
         kwargs['personalisation'] = personalisation
 
         super().__init__(*args, **kwargs)  # type: ignore
+
+    @staticmethod
+    def _validate_encoder(
+        encoder_class: typing.Type[EncoderInterface],
+    ) -> EncoderInterface:
+        """Validate the separator value and return it clean."""
+        encoder = encoder_class()
+
+        if not encoder.alphabet:
+            raise errors.InvalidOptionError('the encoder alphabet must have a value')
+
+        if not encoder.alphabet.isascii():
+            raise errors.InvalidOptionError('the encoder alphabet must be ASCII')
+
+        return encoder
 
     def _encode(self, data: bytes) -> bytes:
         """Encode given data.
