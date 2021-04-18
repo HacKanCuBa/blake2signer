@@ -130,6 +130,14 @@ class Blake2SignerTests(TestCase):
         unsigned = signer.unsign(signed)
         self.assertEqual(unsigned, self.data)
 
+    def test_separator_can_be_changed(self) -> None:
+        """Test that the separator can be changed."""
+        separator = b'|'
+        signer = Blake2Signer(self.secret, separator=separator)
+
+        signed = signer.sign(self.data)
+        self.assertIn(separator, signed)
+
 
 # noinspection PyArgumentEqualDefault
 class Blake2SignerErrorTests(TestCase):
@@ -282,6 +290,14 @@ class Blake2TimestampSignerTests(TestCase):
 
         unsigned2 = signer.unsign(signed, max_age=1)
         self.assertEqual(self.data, unsigned2)
+
+    def test_separator_can_be_changed(self) -> None:
+        """Test that the separator can be changed."""
+        separator = b'|'
+        signer = Blake2TimestampSigner(self.secret, separator=separator)
+
+        signed = signer.sign(self.data)
+        self.assertIn(separator, signed)
 
 
 # noinspection PyArgumentEqualDefault
@@ -531,6 +547,14 @@ class Blake2SerializerSignerTests(TestCase):
 
         unsigned = signer.loads(signed)
         self.assertEqual(self.data, unsigned)
+
+    def test_separator_can_be_changed(self) -> None:
+        """Test that the separator can be changed."""
+        separator = b'|'
+        signer = Blake2SerializerSigner(self.secret, separator=separator)
+
+        signed = signer.dumps(self.data)
+        self.assertIn(separator.decode(), signed)
 
 
 # noinspection PyArgumentEqualDefault

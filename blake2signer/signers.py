@@ -221,6 +221,7 @@ class Blake2SerializerSigner(
         digest_size: typing.Optional[int] = None,
         hasher: typing.Union[HasherChoice, str] = HasherChoice.blake2b,
         deterministic: bool = False,
+        separator: bytes = b'.',
         encoder: typing.Type[EncoderInterface] = B64URLEncoder,
         serializer: typing.Type[SerializerInterface] = JSONSerializer,
         compressor: typing.Type[CompressorInterface] = ZlibCompressor,
@@ -255,6 +256,9 @@ class Blake2SerializerSigner(
                               obtained (the advantage is that the sig is shorter).
                               Note that this assumes that the serializer and
                               compressor are always deterministic.
+        :param separator: [optional] Character to separate the signature and the
+                          payload. It must not belong to the encoder alphabet and
+                          be ASCII (defaults to ".").
         :param encoder: [optional] Encoder class to use (defaults to a Base64
                         URL safe encoder).
         :param serializer: [optional] Serializer class to use (defaults to a
@@ -273,6 +277,7 @@ class Blake2SerializerSigner(
             digest_size=digest_size,
             hasher=hasher,
             deterministic=deterministic,
+            separator=separator,
             serializer=serializer,
             compressor=compressor,
             encoder=encoder,

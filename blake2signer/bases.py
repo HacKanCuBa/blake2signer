@@ -57,6 +57,7 @@ class Base(Mixin, ABC):
         digest_size: typing.Optional[int] = None,
         hasher: typing.Union[HasherChoice, str] = HasherChoice.blake2b,
         deterministic: bool = False,
+        separator: bytes = b'.',
     ) -> None:
         """Sign and verify signed data using Blake2 in keyed hashing mode.
 
@@ -79,6 +80,9 @@ class Base(Mixin, ABC):
                               random salt. For deterministic sigs, no salt is used:
                               this means that for the same payload, the same sig is
                               obtained (the advantage is that the sig is shorter).
+        :param separator: [optional] Character to separate the signature and the
+                          payload. It must not belong to the encoder alphabet and
+                          be ASCII (defaults to ".").
 
         :raise ConversionError: A bytes parameter is not bytes and can't be converted
                                 to bytes.
@@ -91,6 +95,7 @@ class Base(Mixin, ABC):
         self._hasher = self._validate_hasher(hasher)
 
         digest_size = self._validate_digest_size(digest_size)
+        separator = self._validate_separator(separator)
         person = self._validate_person(personalisation)
         secret = self._validate_secret(secret)
 
@@ -100,6 +105,7 @@ class Base(Mixin, ABC):
 
         self._deterministic: bool = deterministic
         self._digest_size: int = digest_size
+        self._separator: bytes = separator
         self._person: bytes = self._derive_person(person)
         self._key: bytes = self._derive_key(secret, person=self._person)  # bye secret :)
 
@@ -151,6 +157,10 @@ class Base(Mixin, ABC):
             f'{", ".join(h for h in HasherChoice)}',
         )
 
+    def _validate_separator(self, separator: typing.AnyStr) -> bytes:
+        """Validate the separator value and return it clean."""
+        return self._force_bytes(separator)
+
     def _derive_person(self, person: bytes) -> bytes:
         """Derive given personalisation value to ensure it fits the hasher correctly."""
         return self._hasher(person, digest_size=self._hasher.PERSON_SIZE).digest()
@@ -167,8 +177,6 @@ class Base(Mixin, ABC):
 class Blake2SignerBase(EncoderMixin, Base, ABC):
     """Base class for a signer based on Blake2 in keyed hashing mode."""
 
-    SEPARATOR: bytes = b'.'  # Must not be in the encoder alphabet
-
     def __init__(
         self,
         secret: bytes,
@@ -177,6 +185,7 @@ class Blake2SignerBase(EncoderMixin, Base, ABC):
         digest_size: typing.Optional[int] = None,
         hasher: typing.Union[HasherChoice, str] = HasherChoice.blake2b,
         deterministic: bool = False,
+        separator: bytes = b'.',
         encoder: typing.Type[EncoderInterface] = B64URLEncoder,
     ) -> None:
         """Sign and verify signed data using Blake2 in keyed hashing mode.
@@ -200,6 +209,9 @@ class Blake2SignerBase(EncoderMixin, Base, ABC):
                               random salt. For deterministic sigs, no salt is used:
                               this means that for the same payload, the same sig is
                               obtained (the advantage is that the sig is shorter).
+        :param separator: [optional] Character to separate the signature and the
+                          payload. It must not belong to the encoder alphabet and
+                          be ASCII (defaults to ".").
         :param encoder: [optional] Encoder class to use for the signature, nothing
                         else is encoded (defaults to a Base64 URL safe encoder).
 
@@ -212,6 +224,7 @@ class Blake2SignerBase(EncoderMixin, Base, ABC):
             personalisation=personalisation,
             digest_size=digest_size,
             hasher=hasher,
+            separator=separator,
             deterministic=deterministic,
             encoder=encoder,
         )
@@ -232,17 +245,17 @@ class Blake2SignerBase(EncoderMixin, Base, ABC):
 
     def _compose(self, parts: SignedDataParts) -> bytes:
         """Compose signed data parts into a single stream."""
-        return parts.salt + parts.signature + self.SEPARATOR + parts.data
+        return parts.salt + parts.signature + self._separator + parts.data
 
     def _decompose(self, signed_data: bytes) -> SignedDataParts:
         """Decompose a signed data stream into its parts.
 
         :raise SignatureError: Invalid signed data.
         """
-        if self.SEPARATOR not in signed_data:
+        if self._separator not in signed_data:
             raise errors.SignatureError('separator not found in signed data')
 
-        composite_signature, data = signed_data.split(self.SEPARATOR, 1)
+        composite_signature, data = signed_data.split(self._separator, 1)
 
         if self._deterministic:
             salt = b''
@@ -334,17 +347,17 @@ class Blake2TimestampSignerBase(Blake2SignerBase, ABC):
 
     def _add_timestamp(self, data: bytes) -> bytes:
         """Add timestamp value to given data."""
-        return self._get_timestamp() + self.SEPARATOR + data
+        return self._get_timestamp() + self._separator + data
 
     def _split_timestamp(self, timestamped_data: bytes) -> TimestampedDataParts:
         """Split data + timestamp value.
 
         :raise SignatureError: Invalid timestamped data.
         """
-        if self.SEPARATOR not in timestamped_data:
+        if self._separator not in timestamped_data:
             raise errors.SignatureError('separator not found in timestamped data')
 
-        encoded_timestamp, data = timestamped_data.split(self.SEPARATOR, 1)
+        encoded_timestamp, data = timestamped_data.split(self._separator, 1)
 
         if not encoded_timestamp:
             raise errors.SignatureError('timestamp information is missing')
@@ -417,6 +430,7 @@ class Blake2DualSignerBase(Blake2TimestampSignerBase, ABC):
         digest_size: typing.Optional[int] = None,
         hasher: typing.Union[HasherChoice, str] = HasherChoice.blake2b,
         deterministic: bool = False,
+        separator: bytes = b'.',
         encoder: typing.Type[EncoderInterface] = B64URLEncoder,
     ) -> None:
         """Sign and verify signed and optionally timestamped data using Blake2.
@@ -446,6 +460,9 @@ class Blake2DualSignerBase(Blake2TimestampSignerBase, ABC):
                               random salt. For deterministic sigs, no salt is used:
                               this means that for the same payload, the same sig is
                               obtained (the advantage is that the sig is shorter).
+        :param separator: [optional] Character to separate the signature and the
+                          payload. It must not belong to the encoder alphabet and
+                          be ASCII (defaults to ".").
         :param encoder: [optional] Encoder class to use (defaults to a Base64
                         URL safe encoder).
 
@@ -464,6 +481,7 @@ class Blake2DualSignerBase(Blake2TimestampSignerBase, ABC):
             digest_size=digest_size or self.DEFAULT_DIGEST_SIZE,
             hasher=hasher,
             deterministic=deterministic,
+            separator=separator,
             encoder=encoder,
         )
 
