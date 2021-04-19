@@ -225,6 +225,8 @@ class Blake2SerializerSigner(
         encoder: typing.Type[EncoderInterface] = B64URLEncoder,
         serializer: typing.Type[SerializerInterface] = JSONSerializer,
         compressor: typing.Type[CompressorInterface] = ZlibCompressor,
+        compression_flag: bytes = b'.',
+        compression_ratio: typing.Union[int, float] = 5.0,
     ) -> None:
         """Serialize, sign and verify serialized signed data using Blake2.
 
@@ -265,6 +267,14 @@ class Blake2SerializerSigner(
                            JSON serializer).
         :param compressor: [optional] Compressor class to use (defaults to a
                            Zlib compressor).
+        :param compression_flag: [optional] Character to mark the payload as
+                                 compressed. It must be ASCII (defaults to ".").
+        :param compression_ratio: [optional] Desired minimal compression ratio,
+                                  between 0 and 99 (defaults to 5). It is used to
+                                  calculate when to consider a payload sufficiently
+                                  compressed so as to detect detrimental compression.
+                                  By default if compression achieves less than 5%
+                                  of size reduction, it is considered detrimental.
 
         :raise ConversionError: A bytes parameter is not bytes and can't be converted
                                 to bytes.
@@ -281,6 +291,8 @@ class Blake2SerializerSigner(
             serializer=serializer,
             compressor=compressor,
             encoder=encoder,
+            compression_flag=compression_flag,
+            compression_ratio=compression_ratio,
         )
 
     def dumps(

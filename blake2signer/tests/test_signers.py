@@ -556,6 +556,29 @@ class Blake2SerializerSignerTests(TestCase):
         signed = signer.dumps(self.data)
         self.assertIn(separator.decode(), signed)
 
+    def test_compression_flag_can_be_changed(self) -> None:
+        """Test that the compression flag can be changed."""
+        flag = b'|'
+        data = self.data * 10  # Ensure compressibility
+        signer = Blake2SerializerSigner(self.secret, compression_flag=flag)
+
+        signed = signer.dumps(data)
+        unsigned = signer._loads(signed.encode())
+        undecoded = signer._decode(unsigned)
+        self.assertIn(flag, undecoded)
+        self.assertTrue(undecoded.startswith(flag))
+
+    def test_compression_ratio_can_be_changed(self) -> None:
+        """Test that the compression flag can be changed."""
+        data = 'datadatadatadata'  # Only somewhat compressible
+        signer1 = Blake2SerializerSigner(self.secret, compression_ratio=10)
+        signer2 = Blake2SerializerSigner(self.secret, compression_ratio=20)
+
+        signed1 = signer1.dumps(data)  # Compressed
+        signed2 = signer2.dumps(data)  # Not compressed
+
+        self.assertLess(len(signed1), len(signed2))
+
 
 # noinspection PyArgumentEqualDefault
 class Blake2SerializerSignerErrorTests(TestCase):
@@ -616,7 +639,7 @@ class Blake2SerializerSignerErrorTests(TestCase):
         """Test loads wrong data causing decompression error."""
         signer = Blake2SerializerSigner(self.secret)
         trick_signed = signer._sign(
-            b64encode(signer.COMPRESSION_FLAG + b'a'),  # trick into decompression
+            b64encode(signer._compression_flag + b'a'),  # trick into decompression
         )
 
         with self.assertRaises(errors.DecompressionError) as cm:

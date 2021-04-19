@@ -79,35 +79,55 @@ class CompressorMixin(Mixin, ABC):
     Adds compressing capabilities to a subclass.
     """
 
-    COMPRESSION_FLAG: bytes = b'.'  # Must not be in the encoder alphabet
-    COMPRESSION_RATIO: int = 5  # Desired minimal compression ratio between 0 and 99
-
     def __init__(
         self,
         *args: typing.Any,
         compressor: typing.Type[CompressorInterface] = ZlibCompressor,
+        compression_flag: bytes = b'.',
+        compression_ratio: typing.Union[int, float] = 5.0,
         **kwargs: typing.Any,
     ) -> None:
-        """Add compressing capabilities."""
+        """Add compressing capabilities.
+
+        :param compressor: [optional] Compressor class to use (defaults to a
+                           Zlib compressor).
+        :param compression_flag: [optional] Character to mark the payload as
+                                 compressed. It must be ASCII (defaults to ".").
+        :param compression_ratio: [optional] Desired minimal compression ratio,
+                                  between 0 and 99 (defaults to 5). It is used to
+                                  calculate when to consider a payload sufficiently
+                                  compressed so as to detect detrimental compression.
+                                  By default if compression achieves less than 5%
+                                  of size reduction, it is considered detrimental.
+
+        """
         self._compressor = compressor()
 
         personalisation = self._force_bytes(kwargs.get('personalisation', b''))
         personalisation += self._compressor.__class__.__name__.encode()
         kwargs['personalisation'] = personalisation
 
+        self._compression_flag: bytes = self._force_bytes(compression_flag)
+        self._compression_ratio: float = self._validate_comp_ratio(compression_ratio)
+
         super().__init__(*args, **kwargs)  # type: ignore
+
+    @staticmethod
+    def _validate_comp_ratio(ratio: typing.Union[int, float]) -> float:
+        """Validate the compression ratio value and return it clean."""
+        return float(ratio)
 
     def _add_compression_flag(self, data: bytes) -> bytes:
         """Add the compression flag to given data."""
-        return self.COMPRESSION_FLAG + data  # prevents zip bombs
+        return self._compression_flag + data  # prevents zip bombs
 
     def _is_compressed(self, data: bytes) -> bool:
         """Return True if given data is compressed, checking the compression flag."""
-        return data.startswith(self.COMPRESSION_FLAG, 0, len(self.COMPRESSION_FLAG))
+        return data.startswith(self._compression_flag, 0, len(self._compression_flag))
 
     def _remove_compression_flag(self, data: bytes) -> bytes:
         """Remove the compression flag from given data."""
-        return data[len(self.COMPRESSION_FLAG):]
+        return data[len(self._compression_flag):]
 
     def _is_significantly_compressed(
         self,
@@ -115,7 +135,7 @@ class CompressorMixin(Mixin, ABC):
         compressed_size: int,
     ) -> bool:
         """Return True if the compressed size is significantly lower than data size."""
-        return compressed_size < (data_size * (1 - (self.COMPRESSION_RATIO / 100)))
+        return compressed_size < (data_size * (1 - (self._compression_ratio / 100)))
 
     def _compress(
         self,
