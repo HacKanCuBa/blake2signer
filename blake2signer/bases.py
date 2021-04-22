@@ -15,6 +15,7 @@ from .encoders import B64URLEncoder
 from .interfaces import EncoderInterface
 from .mixins import EncoderMixin
 from .mixins import Mixin
+from .utils import timestamp_to_aware_datetime
 
 
 @dataclass(frozen=True)
@@ -429,7 +430,10 @@ class Blake2TimestampSignerBase(Blake2SignerBase, ABC):
         age = now - parts.timestamp
         ttl = self._get_ttl_from_max_age(max_age)
         if age > ttl:
-            raise errors.ExpiredSignatureError('signature has expired')
+            raise errors.ExpiredSignatureError(
+                f'signature has expired, age {age} > {ttl} seconds',
+                timestamp=timestamp_to_aware_datetime(parts.timestamp),
+            )
 
         return parts.data
 

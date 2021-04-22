@@ -409,8 +409,9 @@ class Blake2TimestampSignerErrorTests(TestCase):
     def test_unsign_timestamp_expired(self) -> None:
         """Test unsigning with timestamp is correct."""
         signer = Blake2TimestampSigner(self.secret, digest_size=self.digest_size)
-        with self.assertRaises(errors.ExpiredSignatureError):
+        with self.assertRaises(errors.ExpiredSignatureError) as cm:
             signer.unsign(self.signed, max_age=1)
+        self.assertTrue(cm.exception.timestamp)
 
     def test_unsign_wrong_data(self) -> None:
         """Test unsign wrong data."""

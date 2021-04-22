@@ -1,5 +1,6 @@
 """Utils module tests."""
 
+from datetime import datetime
 from unittest import TestCase
 
 from .. import utils
@@ -58,3 +59,19 @@ class TestUtilsBase64(TestCase):
         """Test hexencode accepts bytes correctly."""
         encoded = utils.hexencode(b'abc')
         self.assertEqual(encoded, b'616263')
+
+    def test_timestamp_to_aware_datetime_accepts_int(self) -> None:
+        """Test timestamp_to_aware_datetime accepts int timestamps."""
+        timestamp = 1619064799
+        converted_timestamp = utils.timestamp_to_aware_datetime(timestamp)
+
+        self.assertIsInstance(converted_timestamp, datetime)
+        self.assertEqual(timestamp, int(converted_timestamp.timestamp()))
+
+    def test_timestamp_to_aware_datetime_accepts_float(self) -> None:
+        """Test timestamp_to_aware_datetime accepts float timestamps."""
+        timestamp = 1619064799.965
+        converted_timestamp = utils.timestamp_to_aware_datetime(timestamp)
+
+        self.assertIsInstance(converted_timestamp, datetime)
+        self.assertEqual(timestamp, converted_timestamp.timestamp())

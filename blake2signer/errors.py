@@ -1,5 +1,8 @@
 """Errors."""
 
+import typing
+from datetime import datetime
+
 
 class SignerError(Exception):
     """Base exception for all errors."""
@@ -65,6 +68,16 @@ class ExpiredSignatureError(InvalidSignatureError):
 
     Means that the signature has expired.
     """
+
+    def __init__(self, *args: typing.Any, timestamp: datetime) -> None:
+        """Initialize self.
+
+        :param timestamp: An aware datetime object indicating when the signature
+                          was done.
+        """
+        super().__init__(*args)
+
+        self.timestamp: datetime = timestamp
 
 
 class UnserializationError(SignedDataError):

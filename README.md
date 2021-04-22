@@ -86,7 +86,8 @@ signer = Blake2SerializerSigner(
 # The optional parameter `max_age` allows you to set a timestamp in the signature
 # and verify it when checking the signature. If more than the given time has passed
 # since issuing the signature when checking, then an ExpiredSignatureError
-# exception is raised.
+# exception is raised (it contains the timestamp of the signature as an aware
+# datetime object in UTC).
 # The optional parameter `personalisation` allows you to set a unique value that
 # alters the hash result, thus changing the signature. Think of it like a "salt"
 # for the secret: it helps defeating the abuse of using the same signed stream
@@ -243,11 +244,16 @@ print(data == unsigned)  # True
 # You can use both an integer or a float to represent seconds or a
 # timedelta with the time value you want.
 signed = t_signer.sign(data)
+max_age = timedelta(seconds=2)
 sleep(2)
 try:
-    t_signer.unsign(signed, max_age=timedelta(seconds=2))
+    t_signer.unsign(signed, max_age=max_age)
 except errors.ExpiredSignatureError as exc:
-    print(repr(exc))  # ExpiredSignatureError('signed data has expired')
+    print(repr(exc), 'on', (exc.timestamp + max_age).isoformat())
+    # ExpiredSignatureError('signed data has expired') on 2021-04-22T01:25:44.550539
+# The `ExpiredSignatureError` exception contains the signature timestamp as an
+# aware datetime object (in UTC) in case you need that information to display
+# something meaningful to the user.
 
 # Preventing misuse of signed data
 try:

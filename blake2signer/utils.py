@@ -2,6 +2,8 @@
 
 import base64
 import typing
+from datetime import datetime
+from datetime import timezone
 
 
 def force_bytes(value: typing.Any) -> bytes:
@@ -42,3 +44,8 @@ def hexencode(data: bytes) -> bytes:
 def hexdecode(data: bytes) -> bytes:
     """Decode data encoded as hexadecimal (uppercase)."""
     return base64.b16decode(data)
+
+
+def timestamp_to_aware_datetime(timestamp: typing.Union[int, float]) -> datetime:
+    """Convert a UNIX timestamp into an aware datetime in UTC."""
+    return datetime.fromtimestamp(timestamp, tz=timezone.utc)
