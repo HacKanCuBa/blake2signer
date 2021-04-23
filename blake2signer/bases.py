@@ -15,6 +15,7 @@ from .encoders import B64URLEncoder
 from .interfaces import EncoderInterface
 from .mixins import EncoderMixin
 from .mixins import Mixin
+from .utils import file_mode_is_text
 from .utils import timestamp_to_aware_datetime
 
 
@@ -530,3 +531,31 @@ class Blake2SerializerSignerBase(Blake2DualSignerBase, ABC):
             return self._sign(data)
 
         return self._sign_with_timestamp(data)
+
+    @staticmethod
+    def _read(file: typing.IO) -> typing.AnyStr:
+        """Read data from a file.
+
+        :raise FileError: File can't be read.
+        """
+        try:
+            return file.read()
+        except OSError as exc:
+            raise errors.FileError('file can not be read') from exc
+
+    def _write(self, file: typing.IO, data: str) -> None:
+        """Write data to file.
+
+        Note that the file can be either in text or binary mode, therefore given
+        data is properly converted before writing.
+
+        :raise FileError: File can't be written.
+        :raise ConversionError: Data can't be converted to bytes (can happen
+                                when file is in binary mode).
+        """
+        data_ = data if file_mode_is_text(file) else self._force_bytes(data)
+
+        try:
+            file.write(data_)
+        except OSError as exc:
+            raise errors.FileError('file can not be written') from exc

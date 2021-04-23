@@ -1,6 +1,7 @@
 """Miscellaneous utilities."""
 
 import base64
+import io
 import typing
 from datetime import datetime
 from datetime import timezone
@@ -49,3 +50,14 @@ def hexdecode(data: bytes) -> bytes:
 def timestamp_to_aware_datetime(timestamp: typing.Union[int, float]) -> datetime:
     """Convert a UNIX timestamp into an aware datetime in UTC."""
     return datetime.fromtimestamp(timestamp, tz=timezone.utc)
+
+
+def file_mode_is_text(file: typing.IO) -> bool:
+    """Check if given file is opened in text mode, or otherwise in binary mode.
+
+    :return: True if file is opened in text mode, False otherwise.
+    """
+    # Is there a better way to determine this? I thought on reading one byte/char,
+    # then checking the type, but the file might be writable only, so it wouldn't
+    # work.
+    return isinstance(file, io.TextIOBase)

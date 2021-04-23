@@ -372,6 +372,81 @@ class Blake2SerializerSigner(
 
         return self._dumps(encoded).decode()  # since everything is ascii this is safe
 
+    def dump(
+        self,
+        data: typing.Any,
+        file: typing.IO,
+        *,
+        use_compression: bool = True,
+        compression_level: int = 6,
+        force_compression: bool = False,
+    ) -> str:
+        """Serialize and sign data to file optionally compressing and/or timestamping it.
+
+        This method is identical to :meth:`dumps`, but it dumps into a file, which
+        must be a `.write()`-supporting file-like object, and returns the written
+        value for convenience.
+
+        Note that given data is _not_ encrypted, only signed. To recover data from
+        the produced string, while validating the signature (and timestamp if any),
+        use :meth:`loads`.
+
+        Data will be serialized, optionally compressed, and encoded before being
+        signed. This means that it must be of any type serializable by the chosen
+        serializer, i.e. for a JSON serializer: str, int, float, list, tuple, bool,
+        None or dict, or a composition of those (tuples are unserialized as lists).
+
+        If `max_age` was specified then the stream will be timestamped.
+
+        For deterministic signatures, no salt is used. For non-deterministic ones,
+        the salt is a cryptographically secure pseudorandom string generated for
+        this signature only (meaning that the signature always changes even when
+        the payload stays the same).
+
+        The full flow is as follows, where optional actions are marked between brackets:
+        data -> serialize -> [compress] -> [timestamp] -> encode -> sign
+
+        :param data: Any serializable object.
+        :param file: A `.write()`-supporting file-like object.
+        :param use_compression: [optional] Compress data after serializing it and
+                                decompress it before unserializing. For low entropy
+                                payloads such as human readable text, it's beneficial
+                                from around ~30bytes, and detrimental if smaller.
+                                For high entropy payloads like pseudorandom text,
+                                it's beneficial from around ~300bytes and detrimental
+                                if lower than ~100bytes. You can safely enable it
+                                since a size check is done so if compression turns
+                                detrimental then it won't be used. If you know
+                                from beforehand that data can't be compressed and
+                                don't want to waste resources trying, set it to False.
+        :param compression_level: [optional] Set the desired compression level
+                                  when using compression, where 1 is the fastest
+                                  and least compressed and 9 the slowest and most
+                                  compressed (defaults to 6).
+                                  Note that the performance impact is for both
+                                  compression and decompression.
+        :param force_compression: [optional] Force compression even if it would
+                                  be detrimental for performance or size. This
+                                  parameter overrides `use_compression`.
+
+        :raise SerializationError: Data can't be serialized.
+        :raise CompressionError: Data can't be compressed or compression level is
+                                 invalid.
+        :raise EncodeError: Data can't be encoded.
+        :raise FileError: File can't be written.
+        """
+        signed = self.dumps(
+            data,
+            use_compression=use_compression,
+            compression_level=compression_level,
+            force_compression=force_compression,
+        )
+
+        # Signed value is ASCII so ConversionError can't happen.
+        self._write(file, signed)
+
+        return signed
+
     def loads(self, signed_data: typing.AnyStr) -> typing.Any:
         """Recover original data from a signed serialized string from :meth:`dumps`.
 
@@ -404,3 +479,32 @@ class Blake2SerializerSigner(
         unserizalized = self._unserialize(decompressed)
 
         return unserizalized
+
+    def load(self, file: typing.IO) -> typing.Any:
+        """Recover original data from a signed serialized file from :meth:`dump`.
+
+        This method is identical to :meth:`loads` but it reads a file, which
+        must be a `.read()`-supporting file-like object.
+
+        If `max_age` was specified then it will be ensured that the signature is
+        not older than that time in seconds.
+
+        If the data was compressed it will be decompressed before unserializing it.
+
+        The full flow is as follows, where optional actions are marked between brackets:
+        data -> check sig -> [check timestamp] -> decode -> [decompress] -> unserialize
+
+        :param file: A `.read()`-supporting file-like object containing data to unsign.
+
+        :raise ConversionError: Signed data can't be converted to bytes.
+        :raise SignatureError: Signed data structure is not valid.
+        :raise InvalidSignatureError: Signed data signature is invalid.
+        :raise ExpiredSignatureError: Signed data signature has expired.
+        :raise DecodeError: Signed data can't be decoded.
+        :raise DecompressionError: Signed data can't be decompressed.
+        :raise UnserializationError: Signed data can't be unserialized.
+        :raise FileError: File can't be read.
+
+        :return: Unserialized data.
+        """
+        return self.loads(self._read(file))

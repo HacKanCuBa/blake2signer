@@ -128,3 +128,11 @@ class ConversionError(SignedDataError, UnsignedDataError):
     Means that given data could not be converted to bytes. This can happen during
     either `sign`/`dumps` and `unsign`/`loads`.
     """
+
+
+class FileError(SignedDataError, UnsignedDataError):
+    """File error.
+
+    Means that an operation pertaining a file failed. This can happen during
+    `dump` or `load`.
+    """

@@ -1,0 +1,4 @@
+Added
+-----
+
+- Add new dump/load interface in `Blake2SerializerSigner` for file-like objects.

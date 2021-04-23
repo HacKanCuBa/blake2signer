@@ -15,6 +15,7 @@ This project began initially as a Gist but I decided to create a package because
     * [Examples](#examples)
         * [Tl; Dr](#tl-dr)
         * [More examples](#more-examples)
+        * [Dealing with files](#dealing-with-files)
         * [Using a custom JSON encoder or custom serializer](#using-a-custom-json-encoder-or-custom-serializer)
         * [Real use case example](#real-use-case-example)
     * [The errors module](#the-errors-module)
@@ -281,6 +282,26 @@ print(signed == signed2)  # True
 ```
 
 Even though both `Blake2Signer` and `Blake2TimestampSigner` accept data as string you should use bytes instead: both classes will try to convert any given string to bytes **assuming it's UTF-8 encoded** which might not be correct; if you are certain that the string given is UTF-8 then it's OK, otherwise ensure encoding the string correctly and using bytes instead.
+
+#### Dealing with files
+
+`Blake2SerializerSigner` has two convenient methods to deal with files: `dump` (write signed data to file) and `load` (read signed data from file). These methods may raise `errors.FileError` while reading from/writing to the file.
+
+```python
+"""Dealing with files with Blake2SerializerSigner."""
+
+from blake2signer import Blake2SerializerSigner
+
+secret = b'using crypto is not a crime'
+signer = Blake2SerializerSigner(secret)
+data = 'free Ola Bini!!'
+
+with open('somefile', 'wt') as file:
+    signer.dump(data, file)
+
+with open('somefile', 'rt') as file:
+    print(signer.load(file))  # free Ola Bini!!
+```
 
 #### Using a custom JSON encoder or custom serializer
 
@@ -552,6 +573,8 @@ SignerError: base exception
             |       |-- DecodeError: given data could not be decoded
             |       |
             |       |-- ConversionError: given data could not be converted to bytes
+            |       |
+            |       |-- FileError: error while reading the file
             |
             |-- UnsignedDataError: error that occurred for *data to be signed*
                     |
@@ -562,6 +585,8 @@ SignerError: base exception
                     |-- EncodeError: given data could not be encoded
                     |
                     |-- ConversionError: given data could not be converted to bytes
+                    |
+                    |-- FileError: error while writing the file
 ```
 
 ## Comparison with other libs

@@ -1,5 +1,6 @@
 """Utils module tests."""
 
+import io
 from datetime import datetime
 from unittest import TestCase
 
@@ -75,3 +76,11 @@ class TestUtilsBase64(TestCase):
 
         self.assertIsInstance(converted_timestamp, datetime)
         self.assertEqual(timestamp, converted_timestamp.timestamp())
+
+    def test_file_mode_is_text(self) -> None:
+        """Test file_mode_is_text works correctly."""
+        text_file = io.StringIO()
+        self.assertTrue(utils.file_mode_is_text(text_file))
+
+        bin_file = io.BytesIO()
+        self.assertFalse(utils.file_mode_is_text(bin_file))

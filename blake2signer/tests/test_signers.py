@@ -1,6 +1,7 @@
 """Signers module tests."""
 
 import hashlib
+import io
 import json
 import typing
 import zlib
@@ -9,6 +10,8 @@ from datetime import timedelta
 from secrets import token_bytes
 from unittest import TestCase
 from unittest import mock
+
+import pytest
 
 from .. import errors
 from ..compressors import GzipCompressor
@@ -799,6 +802,53 @@ class Blake2SerializerSignerTests(TestCase):
         self.assertIsInstance(unsigned, bytes)
         self.assertEqual(data, unsigned)
 
+    def test_dump_load_file_containing_data(self) -> None:
+        """Test dumping and loading to/from a file that contains data.
+
+        This is important to verify that we are not changing the file cursor in
+        any way.
+        """
+        initial_data = 'acab' * 5
+        file = io.StringIO()
+        file.write(initial_data)
+        initial_pos = file.tell()
+        signer = Blake2SerializerSigner(self.secret)
+
+        signed = signer.dump(self.data, file)
+        assert file.tell() == (len(initial_data) + len(signed))
+
+        file.seek(0)
+        assert file.read() == (initial_data + signed)
+
+        file.seek(initial_pos)
+        unsigned = signer.load(file)
+        assert file.tell() == (len(initial_data) + len(signed))
+        assert self.data == unsigned
+
+
+@pytest.mark.parametrize(
+    'file',
+    (
+        io.StringIO(),
+        io.BytesIO(),
+    ),
+)
+def test_blake2serializersigner_dump_load_file(file: typing.IO) -> None:
+    """Test dumping and loading to/from a file."""
+    secret = b'0123456789012345'
+    data = 'datadata'
+    signer = Blake2SerializerSigner(secret)
+
+    signed = signer.dump(data, file)
+    assert file.tell() == len(signed)
+
+    assert data == signer.loads(signed)
+
+    file.seek(0)
+    unsigned = signer.load(file)
+    assert file.tell() == len(signed)
+    assert data == unsigned
+
 
 # noinspection PyArgumentEqualDefault
 class Blake2SerializerSignerErrorTests(TestCase):
@@ -1015,3 +1065,32 @@ class Blake2SerializerSignerErrorTests(TestCase):
         with self.assertRaises(errors.InvalidOptionError) as cm:
             Blake2SerializerSigner(self.secret, encoder=Encoder)
         self.assertIn('encoder alphabet must have a value', str(cm.exception))
+
+    def test_wrong_load_file(self) -> None:
+        """Test error occurring during reading from a file."""
+        file = mock.MagicMock()
+        file.read.side_effect = TimeoutError
+        signer = Blake2SerializerSigner(self.secret)
+
+        with self.assertRaises(errors.FileError) as cm:
+            signer.load(file)
+        self.assertIn('can not be read', str(cm.exception))
+
+    def test_wrong_dump_file(self) -> None:
+        """Test error occurring during writing to a file."""
+        file = mock.MagicMock()
+        file.write.side_effect = PermissionError
+        signer = Blake2SerializerSigner(self.secret)
+
+        with self.assertRaises(errors.FileError) as cm:
+            signer.dump(self.data, file)
+        self.assertIn('can not be written', str(cm.exception))
+
+    def test_wrong_dump_file_conversion_error_file_binary(self) -> None:
+        """Test error occurring during _write when file is in binary mode."""
+        file = io.BytesIO()
+        signer = Blake2SerializerSigner(self.secret)
+
+        with self.assertRaises(errors.ConversionError) as cm:
+            signer._write(file, '\uD83D')
+        self.assertIn('can not be converted to bytes', str(cm.exception))
