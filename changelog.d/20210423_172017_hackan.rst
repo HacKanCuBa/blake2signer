@@ -1,0 +1,4 @@
+Changed
+-------
+
+- Change type annotations for secret, personalisation, separator and compression_flag to show support for bytes and string as it has always been supported.

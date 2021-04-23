@@ -214,18 +214,18 @@ class Blake2SerializerSigner(
 
     def __init__(
         self,
-        secret: bytes,
+        secret: typing.Union[str, bytes],
         *,
         max_age: typing.Union[None, int, float, timedelta] = None,
-        personalisation: bytes = b'',
+        personalisation: typing.Union[str, bytes] = b'',
         digest_size: typing.Optional[int] = None,
         hasher: typing.Union[HasherChoice, str] = HasherChoice.blake2b,
         deterministic: bool = False,
-        separator: bytes = b'.',
+        separator: typing.Union[str, bytes] = b'.',
         encoder: typing.Type[EncoderInterface] = B64URLEncoder,
         serializer: typing.Type[SerializerInterface] = JSONSerializer,
         compressor: typing.Type[CompressorInterface] = ZlibCompressor,
-        compression_flag: bytes = b'.',
+        compression_flag: typing.Union[str, bytes] = b'.',
         compression_ratio: typing.Union[int, float] = 5.0,
     ) -> None:
         """Serialize, sign and verify serialized signed data using Blake2.

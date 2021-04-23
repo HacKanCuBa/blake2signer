@@ -20,7 +20,7 @@ class Mixin(ABC):
     """Base class for a Blake2Signer mixin."""
 
     @staticmethod
-    def _force_bytes(value: typing.AnyStr) -> bytes:
+    def _force_bytes(value: typing.Any) -> bytes:
         """Force given value into bytes.
 
         :raise ConversionError: Can't force value into bytes.
@@ -83,7 +83,7 @@ class CompressorMixin(Mixin, ABC):
         self,
         *args: typing.Any,
         compressor: typing.Type[CompressorInterface] = ZlibCompressor,
-        compression_flag: bytes = b'.',
+        compression_flag: typing.Union[str, bytes] = b'.',
         compression_ratio: typing.Union[int, float] = 5.0,
         **kwargs: typing.Any,
     ) -> None:

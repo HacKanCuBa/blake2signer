@@ -51,13 +51,13 @@ class Base(Mixin, ABC):
 
     def __init__(
         self,
-        secret: bytes,
+        secret: typing.Union[str, bytes],
         *,
-        personalisation: bytes = b'',
+        personalisation: typing.Union[str, bytes] = b'',
         digest_size: typing.Optional[int] = None,
         hasher: typing.Union[HasherChoice, str] = HasherChoice.blake2b,
         deterministic: bool = False,
-        separator: bytes = b'.',
+        separator: typing.Union[str, bytes] = b'.',
     ) -> None:
         """Sign and verify signed data using Blake2 in keyed hashing mode.
 
@@ -114,7 +114,7 @@ class Base(Mixin, ABC):
         """Get the salt size."""
         return self._hasher.SALT_SIZE
 
-    def _validate_secret(self, secret_: typing.AnyStr) -> bytes:
+    def _validate_secret(self, secret_: typing.Union[str, bytes]) -> bytes:
         """Validate the secret value and return it clean."""
         secret = self._force_bytes(secret_)
 
@@ -125,7 +125,7 @@ class Base(Mixin, ABC):
 
         return secret
 
-    def _validate_person(self, person: typing.AnyStr) -> bytes:
+    def _validate_person(self, person: typing.Union[str, bytes]) -> bytes:
         """Validate the personalisation value and return it clean."""
         return self._force_bytes(person)
 
@@ -157,7 +157,7 @@ class Base(Mixin, ABC):
             f'{", ".join(h for h in HasherChoice)}',
         )
 
-    def _validate_separator(self, separator: typing.AnyStr) -> bytes:
+    def _validate_separator(self, separator: typing.Union[str, bytes]) -> bytes:
         """Validate the separator value and return it clean."""
         return self._force_bytes(separator)
 
@@ -179,13 +179,13 @@ class Blake2SignerBase(EncoderMixin, Base, ABC):
 
     def __init__(
         self,
-        secret: bytes,
+        secret: typing.Union[str, bytes],
         *,
-        personalisation: bytes = b'',
+        personalisation: typing.Union[str, bytes] = b'',
         digest_size: typing.Optional[int] = None,
         hasher: typing.Union[HasherChoice, str] = HasherChoice.blake2b,
         deterministic: bool = False,
-        separator: bytes = b'.',
+        separator: typing.Union[str, bytes] = b'.',
         encoder: typing.Type[EncoderInterface] = B64URLEncoder,
     ) -> None:
         """Sign and verify signed data using Blake2 in keyed hashing mode.
@@ -423,14 +423,14 @@ class Blake2DualSignerBase(Blake2TimestampSignerBase, ABC):
 
     def __init__(
         self,
-        secret: bytes,
+        secret: typing.Union[str, bytes],
         *,
         max_age: typing.Union[None, int, float, timedelta] = None,
-        personalisation: bytes = b'',
+        personalisation: typing.Union[str, bytes] = b'',
         digest_size: typing.Optional[int] = None,
         hasher: typing.Union[HasherChoice, str] = HasherChoice.blake2b,
         deterministic: bool = False,
-        separator: bytes = b'.',
+        separator: typing.Union[str, bytes] = b'.',
         encoder: typing.Type[EncoderInterface] = B64URLEncoder,
     ) -> None:
         """Sign and verify signed and optionally timestamped data using Blake2.

@@ -77,13 +77,13 @@ class Blake2SignerTests(TestCase):
         unsigned = signer.unsign(signed)
         self.assertEqual(unsigned, self.data)
 
-    def test_nonbytes_inputs(self) -> None:
+    def test_string_instead_of_bytes_inputs(self) -> None:
         """Test non-bytes values for parameters such as secret, person, data, etc."""
         secret = self.secret.decode()
-        # noinspection PyTypeChecker
         signer = Blake2Signer(
-            secret,  # type: ignore
-            personalisation=self.person.decode(),  # type: ignore
+            secret,
+            personalisation=self.person.decode(),
+            separator=',',
         )
         self.assertIsInstance(signer, Blake2Signer)
 
@@ -578,6 +578,23 @@ class Blake2SerializerSignerTests(TestCase):
         signed2 = signer2.dumps(data)  # Not compressed
 
         self.assertLess(len(signed1), len(signed2))
+
+    def test_string_instead_of_bytes_inputs(self) -> None:
+        """Test non-bytes values for parameters such as secret, person, data, etc."""
+        secret = self.secret.decode()
+        signer = Blake2SerializerSigner(
+            secret,
+            personalisation='person',
+            separator=',',
+            compression_flag='!',
+        )
+
+        signed = signer.dumps(self.data)
+        self.assertIsInstance(signed, str)
+
+        unsigned = signer.loads(signed.encode())
+        self.assertIsInstance(unsigned, str)
+        self.assertEqual(unsigned, self.data)
 
 
 # noinspection PyArgumentEqualDefault
