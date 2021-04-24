@@ -1,3 +1,11 @@
+1.2.0 - 2021-04-24
+==================
+
+Added
+-----
+
+- Add setting to allow deterministic signatures, but keep default of non-deterministic ones.
+
 1.1.0 - 2021-04-15
 ==================
 
@@ -10,11 +18,8 @@ Changed
 -------
 
 - Change execution order of steps to publish a package in Contrib, to allow room for fixes after publishing to testpypi.
-
 - Reworded and fixed some typos in Readme.
-
 - Change wording in DecodeError and EncodeError to abstract them from base 64 URL safe.
-
 - Change `Blake2TimestampSignerBase._split_timestamp()` to decode the timestamp directly. It made some noise that after splitting one needed to decode the timestamp to actually use it.
 
 Security
