@@ -12,11 +12,8 @@ class JSONSerializer(SerializerInterface):
 
     def serialize(self, data: typing.Any, **kwargs: typing.Any) -> bytes:
         """Serialize given data to JSON."""
-        return json.dumps(
-            data,
-            separators=(',', ':'),  # Use JSON compact encoding
-            **kwargs,
-        ).encode()
+        kwargs.setdefault('separators', (',', ':'))  # Use JSON compact encoding
+        return json.dumps(data, **kwargs).encode()
 
     def unserialize(self, data: bytes, **kwargs: typing.Any) -> typing.Any:
         """Unserialize given JSON data."""

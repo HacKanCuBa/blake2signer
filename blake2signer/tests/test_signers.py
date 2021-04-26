@@ -825,6 +825,42 @@ class Blake2SerializerSignerTests(TestCase):
         assert file.tell() == (len(initial_data) + len(signed))
         assert self.data == unsigned
 
+    def test_dumps_serializer_kwargs(self) -> None:
+        """Test dumping using serializer kwargs."""
+        signer = Blake2SerializerSigner(self.secret, deterministic=True)
+        data = self.data + '\x87'
+
+        signed1 = signer.dumps(
+            data,
+            serializer_kwargs={'ensure_ascii': True},
+        )
+        signed2 = signer.dumps(
+            data,
+            serializer_kwargs={'ensure_ascii': False},
+        )
+        self.assertNotEqual(signed1, signed2)
+
+    def test_dump_serializer_kwargs(self) -> None:
+        """Test dumping to file using serializer kwargs."""
+        file1 = io.StringIO()
+        file2 = io.StringIO()
+        signer = Blake2SerializerSigner(self.secret, deterministic=True)
+        data = self.data + '\x87'
+
+        signer.dump(
+            data,
+            file1,
+            serializer_kwargs={'ensure_ascii': True},
+        )
+        file1.seek(0)
+        signer.dump(
+            data,
+            file2,
+            serializer_kwargs={'ensure_ascii': False},
+        )
+        file2.seek(0)
+        self.assertNotEqual(file1.read(), file2.read())
+
 
 @pytest.mark.parametrize(
     'file',

@@ -1,0 +1,4 @@
+Added
+-----
+
+- Add argument to `Blake2SerializerSigner.dumps()` to pass keyword arguments to the serializer.

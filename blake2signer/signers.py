@@ -303,6 +303,7 @@ class Blake2SerializerSigner(
         use_compression: bool = True,
         compression_level: int = 6,
         force_compression: bool = False,
+        serializer_kwargs: typing.Optional[typing.Dict[str, typing.Any]] = None,
     ) -> str:
         """Serialize and sign data, optionally compressing and/or timestamping it.
 
@@ -346,6 +347,8 @@ class Blake2SerializerSigner(
         :param force_compression: [optional] Force compression even if it would
                                   be detrimental for performance or size. This
                                   parameter overrides `use_compression`.
+        :param serializer_kwargs: [optional] Provide keyword arguments for the
+                                  serializer.
 
         :raise SerializationError: Data can't be serialized.
         :raise CompressionError: Data can't be compressed or compression level is
@@ -357,7 +360,8 @@ class Blake2SerializerSigner(
                  transmitting as it only contains the characters supported by the
                  encoder and the separator, which are ASCII.
         """
-        serialized = self._serialize(data)
+        kwargs = serializer_kwargs if serializer_kwargs else {}
+        serialized = self._serialize(data, **kwargs)
 
         if use_compression or force_compression:
             compressed, _ = self._compress(
@@ -380,6 +384,7 @@ class Blake2SerializerSigner(
         use_compression: bool = True,
         compression_level: int = 6,
         force_compression: bool = False,
+        serializer_kwargs: typing.Optional[typing.Dict[str, typing.Any]] = None,
     ) -> str:
         """Serialize and sign data to file optionally compressing and/or timestamping it.
 
@@ -428,6 +433,8 @@ class Blake2SerializerSigner(
         :param force_compression: [optional] Force compression even if it would
                                   be detrimental for performance or size. This
                                   parameter overrides `use_compression`.
+        :param serializer_kwargs: [optional] Provide keyword arguments for the
+                                  serializer.
 
         :raise SerializationError: Data can't be serialized.
         :raise CompressionError: Data can't be compressed or compression level is
@@ -440,6 +447,7 @@ class Blake2SerializerSigner(
             use_compression=use_compression,
             compression_level=compression_level,
             force_compression=force_compression,
+            serializer_kwargs=serializer_kwargs,
         )
 
         # Signed value is ASCII so ConversionError can't happen.

@@ -52,13 +52,13 @@ class SerializerMixin(Mixin, ABC):
 
         super().__init__(*args, **kwargs)  # type: ignore
 
-    def _serialize(self, data: typing.Any) -> bytes:
-        """Serialize given data.
+    def _serialize(self, data: typing.Any, **kwargs: typing.Any) -> bytes:
+        """Serialize given data.  Additional kwargs are passed to the serializer.
 
         :raise SerializationError: Data can't be serialized.
         """
         try:
-            return self._serializer.serialize(data)
+            return self._serializer.serialize(data, **kwargs)
         except Exception as exc:
             raise errors.SerializationError('data can not be serialized') from exc
 
