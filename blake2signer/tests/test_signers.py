@@ -209,8 +209,8 @@ class Blake2SignerErrorTests(TestCase):
                 hasher=Blake2Signer.Hashers.blake2s,
             )
 
-    def test_unsign_wrong_data(self) -> None:
-        """Test unsign with wrong data."""
+    def test_unsign_no_separator(self) -> None:
+        """Test unsign with wrong data without separator."""
         signer = Blake2Signer(self.secret)
 
         with self.assertRaises(errors.SignatureError) as cm:  # using `msg` doesn't work
@@ -218,16 +218,24 @@ class Blake2SignerErrorTests(TestCase):
         self.assertEqual(str(cm.exception), 'separator not found in signed data')
         self.assertIsNone(cm.exception.__cause__)
 
+    def test_unsign_short_data_without_signature(self) -> None:
+        """Test unsign with very short signed data."""
+        signer = Blake2Signer(self.secret)
+
         with self.assertRaises(errors.SignatureError) as cm:
-            signer.unsign(b'123.45678')
-        self.assertEqual(str(cm.exception), 'signature is too short')
+            signer.unsign(b'.')  # The shortest possible that passes the separator check
+        self.assertEqual(str(cm.exception), 'signature information is missing')
         self.assertIsNone(cm.exception.__cause__)
 
-    def test_unsign_invalid_signature(self) -> None:
-        """Test unsign with invalid signature."""
+        with self.assertRaises(errors.SignatureError) as cm:
+            signer.unsign(b'.12345678')
+        self.assertEqual(str(cm.exception), 'signature information is missing')
+
+    def test_unsign_wrong_data(self) -> None:
+        """Test unsign with wrong signed data."""
         signer = Blake2Signer(self.secret)
         with self.assertRaises(errors.InvalidSignatureError) as cm:
-            signer.unsign(b'0' * (signer._salt_size + signer.MIN_DIGEST_SIZE) + b'.')
+            signer.unsign(b's.')
         self.assertEqual(str(cm.exception), 'signature is not valid')
         self.assertIsNone(cm.exception.__cause__)
 

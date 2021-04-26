@@ -277,13 +277,13 @@ class Blake2SignerBase(EncoderMixin, Base, ABC):
 
         composite_signature, data = signed_data.split(self._separator, 1)
 
+        if not composite_signature:
+            raise errors.SignatureError('signature information is missing')
+
         if self._deterministic:
             salt = b''
             signature = composite_signature
         else:
-            if len(composite_signature) < (self._salt_size + self.MIN_DIGEST_SIZE):
-                raise errors.SignatureError('signature is too short')
-
             salt = composite_signature[:self._salt_size]
             signature = composite_signature[self._salt_size:]
 
