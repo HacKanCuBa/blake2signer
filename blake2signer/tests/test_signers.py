@@ -309,9 +309,9 @@ class Blake2TimestampSignerErrorTests(TestCase):
         self.assertEqual(str(cm.exception), 'timestamp information is missing')
 
         trick_signed = trick_signer.sign(b'-.' + self.data)
-        with self.assertRaises(errors.SignatureError) as cm:
+        with self.assertRaises(errors.DecodeError) as exc:
             signer.unsign(trick_signed, max_age=1)
-        self.assertEqual(str(cm.exception), 'timestamp can not be decoded')
+        self.assertEqual(str(exc.exception), 'timestamp can not be decoded')
 
     @mock.patch('blake2signer.signers.time')
     def test_sign_timestamp_overflow(self, mock_time: mock.MagicMock) -> None:

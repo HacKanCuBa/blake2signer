@@ -276,7 +276,7 @@ class Blake2TimestampSignerBase(Blake2SignerBase, ABC):
         try:
             return int.from_bytes(b64decode(encoded_timestamp), 'big', signed=False)
         except Exception:
-            raise errors.SignatureError('timestamp can not be decoded')
+            raise errors.DecodeError('timestamp can not be decoded')
 
     def _add_timestamp(self, data: bytes) -> bytes:
         """Add timestamp value to given data."""
