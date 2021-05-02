@@ -77,6 +77,7 @@ def clean(ctx):
         'htmlcov',
         '.mypy_cache',
         '.pytest_cache',
+        'site',
     )
     ctx.run(f'rm -vrf {" ".join(remove)}', echo=True)
     ctx.run('find . -type d -name "__pycache__" -exec rm -rf "{}" \\+', echo=True)
@@ -134,3 +135,19 @@ def commit(ctx, amend=False):
         cmd.append('--amend')
 
     ctx.run(' '.join(cmd), pty=True)
+
+
+@task(help={'build': 'Build the docs instead of serving them'})
+def docs(ctx, build=False, verbose=False):
+    """Serve the docs using mkdocs, alternatively building them."""
+    args = ['mkdocs']
+
+    if verbose:
+        args.append('--verbose')
+
+    if build:
+        args.extend(['build', '--clean', '--strict'])
+    else:
+        args.append('serve')
+
+    ctx.run(' '.join(args))

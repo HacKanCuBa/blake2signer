@@ -8,11 +8,13 @@ This section is intended for those who wish to contribute to this project. You c
 * Forking this project to create your own.
 * Becoming a project maintainer.
 
-To do so, you have to agree with the following *Code of Conduct*.
+!!! note
+    You have to agree with the following *Code of Conduct*.
 
 ## Code of conduct
 
-This Code of Conduct is adapted from the [Contributor Covenant](https://www.contributor-covenant.org/), [version 2.0](https://www.contributor-covenant.org/version/2/0/code_of_conduct.html).
+!!! info
+    This Code of Conduct is adapted from the [Contributor Covenant](https://www.contributor-covenant.org/), [version 2.0](https://www.contributor-covenant.org/version/2/0/code_of_conduct.html).
 
 ### Our Pledge
 
@@ -40,7 +42,10 @@ Examples of unacceptable behavior include:
 
 ## Developing
 
-Start your local dev environment by activating the virtualenv. I recommend using [pyenv](https://github.com/pyenv/pyenv), but whatever suits your needs is fine. Don't worry about Python versions, use any of the supported ones. The pipeline will test the rest of them.
+Start your local dev environment by activating the virtualenv. I recommend using [pyenv](https://github.com/pyenv/pyenv), but whatever suits your needs is fine.
+
+!!! success "Python versions"
+    Don't worry about Python versions, use any of the [supported ones](index.md#requirements). The pipeline will test the rest of them.
 
 After that, install dependencies with `poetry install --remove-untracked`.
 
@@ -49,7 +54,8 @@ After that, install dependencies with `poetry install --remove-untracked`.
 Write your code. Then create a changelog fragment using `scriv create` with a short description of your changes in the corresponding category (added, changed, fixed, etc.).  
 You must include the necessary docstrings and unit tests so that coverage remains 100%.
 
-It is preferred to contribute with short, reviewable commits rather than huge changes.
+!!! note
+    It is preferred to contribute with short, reviewable commits rather than huge changes.
 
 Finally, the following commands must succeed locally:
 
@@ -58,7 +64,8 @@ Finally, the following commands must succeed locally:
 * `inv tests`: run the tests' battery.
 * `inv safety`: run a security analysis over dependencies using `safety`.
 
-You can alternatively run `inv commit` to run all the above and commit afterwards.
+!!! tip
+    You can alternatively run `inv commit` to run all the above and commit afterwards.
 
 If the linter complains about *code too complex*, run `inv cc -c` (or the long expression `inv cyclomatic-complexity --complex`) for more information.
 

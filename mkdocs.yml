@@ -1,0 +1,99 @@
+site_name: Blake2Signer Docs
+repo_name: hackancuba/blake2signer
+repo_url: https://gitlab.com/hackancuba/blake2signer
+edit_uri: ''
+site_description: Blake2Signer documentation
+site_author: HacKan
+copyright: Copyright &copy; 2020 - 2021 HacKan
+site_url: https://blake2signer.hackan.net/
+
+theme:
+  name: material
+  palette:
+    - media: '(prefers-color-scheme: light)'
+      scheme: default
+      toggle:
+        icon: material/eye-outline
+        name: Switch to dark mode
+      primary: teal
+      accent: teal
+    - media: '(prefers-color-scheme: dark)'
+      scheme: slate
+      toggle:
+        icon: material/eye
+        name: Switch to light mode
+      primary: teal
+      accent: teal
+  font:
+    text: Lato
+    code: Fira Code
+  features:
+    - search.suggest
+    - search.highlight
+    - navigation.top
+    - navigation.tracking
+    - navigation.sections
+  icon:
+    repo: fontawesome/brands/gitlab
+  favicon: img/favicon.ico
+  logo: img/logo.png
+  language: en
+
+nav:
+  - 'index.md'
+  - 'details.md'
+  - 'examples.md'
+  - 'security.md'
+  - 'performance.md'
+  - 'comparison.md'
+  - 'inspirations.md'
+  - 'contrib.md'
+  - 'faq.md'
+  - Code References:
+    - 'signers.md'
+    - 'errors.md'
+    - 'serializers.md'
+    - 'compressors.md'
+    - 'encoders.md'
+    - 'interfaces.md'
+    - 'mixins.md'
+    - 'bases.md'
+    - 'utils.md'
+  - Releases:
+    - 'changelog.md'
+    - 'upgrade.md'
+
+plugins:
+  - search
+  - mkdocstrings:
+      default_handler: python
+      handlers:
+        python:
+          docstring_style: 'restructured-text'
+          rendering:
+            show_root_heading: true
+      watch:
+        - blake2signer
+
+markdown_extensions:
+  - toc:
+      permalink: true
+  - admonition
+  - pymdownx.details
+  - pymdownx.highlight
+  - pymdownx.superfences
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.tabbed
+
+extra:
+  social:
+    - icon: fontawesome/brands/gitlab
+      link: https://gitlab.com/hackancuba
+    - icon: fontawesome/brands/github
+      link: https://github.com/hackancuba
+    - icon: fontawesome/brands/twitter
+      link: https://twitter.com/hackancuba
+    - icon: fontawesome/solid/globe
+      link: https://hackan.net
+
