@@ -23,7 +23,14 @@ class Mixin(ABC):
     def _force_bytes(value: typing.Any) -> bytes:
         """Force given value into bytes.
 
-        :raise ConversionError: Can't force value into bytes.
+        Args:
+            value: Value to convert to bytes.
+
+        Returns:
+            Converted value into bytes.
+
+        Raises:
+            ConversionError: Can't force value into bytes.
         """
         try:
             return force_bytes(value)
@@ -43,7 +50,17 @@ class SerializerMixin(Mixin, ABC):
         serializer: typing.Type[SerializerInterface] = JSONSerializer,
         **kwargs: typing.Any,
     ) -> None:
-        """Add serializing capabilities."""
+        """Add serializing capabilities.
+
+        Args:
+            *args: Additional positional arguments.
+            serializer (optional): Serializer class to use (defaults to a JSON
+                serializer).
+            **kwargs: Additional keyword only arguments.
+
+        Returns:
+            None.
+        """
         self._serializer = serializer()
 
         personalisation = self._force_bytes(kwargs.get('personalisation', b''))
@@ -55,7 +72,8 @@ class SerializerMixin(Mixin, ABC):
     def _serialize(self, data: typing.Any, **kwargs: typing.Any) -> bytes:
         """Serialize given data.  Additional kwargs are passed to the serializer.
 
-        :raise SerializationError: Data can't be serialized.
+        Raises:
+            SerializationError: Data can't be serialized.
         """
         try:
             return self._serializer.serialize(data, **kwargs)
@@ -65,7 +83,8 @@ class SerializerMixin(Mixin, ABC):
     def _unserialize(self, data: bytes) -> typing.Any:
         """Unserialize given data.
 
-        :raise UnserializationError: Data can't be unserialized.
+        Raises:
+            UnserializationError: Data can't be unserialized.
         """
         try:
             return self._serializer.unserialize(data)
@@ -89,18 +108,21 @@ class CompressorMixin(Mixin, ABC):
     ) -> None:
         """Add compressing capabilities.
 
-        :param compressor: [optional] Compressor class to use (defaults to a
-                           Zlib compressor).
-        :param compression_flag: [optional] Character to mark the payload as
-                                 compressed. It must be ASCII (defaults to ".").
-        :param compression_ratio: [optional] Desired minimal compression ratio,
-                                  between 0 and below 100 (defaults to 5).
-                                  It is used to calculate when to consider a payload
-                                  sufficiently compressed so as to detect detrimental
-                                  compression. By default if compression achieves
-                                  less than 5% of size reduction, it is considered
-                                  detrimental.
+        Args:
+            *args: Additional positional arguments.
+            compressor (optional): Compressor class to use (defaults to a Zlib
+                compressor).
+            compression_flag (optional): Character to mark the payload as compressed.
+                It must be ASCII (defaults to ".").
+            compression_ratio (optional): Desired minimal compression ratio, between
+                0 and below 100 (defaults to 5). It is used to calculate when
+                to consider a payload sufficiently compressed to detect detrimental
+                compression. By default, if compression achieves less than 5% of
+                size reduction, it is considered detrimental.
+            **kwargs: Additional keyword only arguments.
 
+        Returns:
+            None.
         """
         self._compressor = compressor()
 
@@ -172,14 +194,17 @@ class CompressorMixin(Mixin, ABC):
         given data and if not then it returns given data as-is, unless compression
         is forced.
 
-        :param data: Data to compress.
-        :param level: Compression level wanted.
-        :param force: Force compression without checking if convenient.
+        Args:
+            data: Data to compress.
+            level: Compression level wanted.
+            force (optional): Force compression without checking if convenient.
 
-        :return: A tuple containing data and a flag indicating if data is
-                 compressed (True) or not.
+        Returns:
+            A tuple containing data, and a flag indicating if data is compressed
+            (True) or not.
 
-        :raise CompressionError: Data can't be compressed.
+        Raises
+            CompressionError: Data can't be compressed.
         """
         try:
             compressed = self._compressor.compress(data, level=level)
@@ -195,7 +220,8 @@ class CompressorMixin(Mixin, ABC):
     def _decompress(self, data: bytes) -> bytes:
         """Decompress given data if it is compressed, otherwise do nothing.
 
-        :raise DecompressionError: Data can't be decompressed.
+        Raises:
+            DecompressionError: Data can't be decompressed.
         """
         if not self._is_compressed(data):
             return data
@@ -219,7 +245,17 @@ class EncoderMixin(Mixin, ABC):
         encoder: typing.Type[EncoderInterface] = B64URLEncoder,
         **kwargs: typing.Any,
     ) -> None:
-        """Add encoding capabilities."""
+        """Add encoding capabilities.
+
+        Args:
+            *args: Additional positional arguments.
+            encoder (optional): Encoder class to use (defaults to a Base64 URL
+                safe encoder).
+            **kwargs: Additional keyword only arguments.
+
+        Returns:
+            None.
+        """
         self._encoder = self._validate_encoder(encoder)
 
         personalisation = self._force_bytes(kwargs.get('personalisation', b''))
@@ -246,7 +282,8 @@ class EncoderMixin(Mixin, ABC):
     def _encode(self, data: bytes) -> bytes:
         """Encode given data.
 
-        :raise EncodeError: Data can't be encoded.
+        Raises:
+            EncodeError: Data can't be encoded.
         """
         try:
             return self._encoder.encode(data)
@@ -256,7 +293,8 @@ class EncoderMixin(Mixin, ABC):
     def _decode(self, data: bytes) -> bytes:
         """Decode given encoded data.
 
-        :raise DecodeError: Data can't be decoded.
+        Raises:
+            DecodeError: Data can't be decoded.
         """
         try:
             return self._encoder.decode(data)

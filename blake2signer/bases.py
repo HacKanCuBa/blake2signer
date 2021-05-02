@@ -65,9 +65,14 @@ class Base(Mixin, ABC):
 
     Hashers = HasherChoice  # Sugar to avoid having to import the enum
 
-    MIN_SECRET_SIZE: int = 16  # Minimum secret size allowed (during instantiation)
-    MIN_DIGEST_SIZE: int = 16  # Minimum digest size allowed (during instantiation)
+    MIN_SECRET_SIZE: int = 16
+    """Minimum secret size allowed (during instantiation)."""
+
+    MIN_DIGEST_SIZE: int = 16
+    """Minimum digest size allowed (during instantiation)."""
+
     DEFAULT_DIGEST_SIZE: int = 16  # 16 bytes is good security/size tradeoff
+    """Default digest size to use when no digest size is indicated."""
 
     def __init__(
         self,
@@ -79,34 +84,33 @@ class Base(Mixin, ABC):
         deterministic: bool = False,
         separator: typing.Union[str, bytes] = b'.',
     ) -> None:
-        """Sign and verify signed data using Blake2 in keyed hashing mode.
+        """Sign and verify signed data using BLAKE2 in keyed hashing mode.
 
-        :param secret: Secret value which will be derived using blake2 to
-                       produce the signing key. The minimum secret size is
-                       enforced to 16 bytes and there is no maximum since the key
-                       will be derived to the maximum supported size.
-        :param digest_size: [optional] Size of output signature (digest) in bytes
-                            (defaults to 16 bytes).
-                            The minimum size is enforced to 16 bytes.
-        :param personalisation: [optional] Personalisation string to force the
-                                hash function to produce different digests for
-                                the same input. It is derived using blake2 to ensure
-                                it fits the hasher limits, so it has no practical
-                                size limit. It defaults to the class name.
-        :param hasher: [optional] Hash function to use: blake2b (default) or blake2s.
-        :param deterministic: [optional] Define if signatures are deterministic
-                              or non-deterministic (default). Non-deterministic
-                              sigs are preferred, and achieved through the use of a
-                              random salt. For deterministic sigs, no salt is used:
-                              this means that for the same payload, the same sig is
-                              obtained (the advantage is that the sig is shorter).
-        :param separator: [optional] Character to separate the signature and the
-                          payload. It must not belong to the encoder alphabet and
-                          be ASCII (defaults to ".").
+        Args:
+            secret: Secret value which will be derived using BLAKE2 to
+                produce the signing key. The minimum secret size is enforced to
+                16 bytes and there is no maximum since the key will be derived to
+                the maximum supported size.
+            personalisation (optional): Personalisation string to force the hash
+                function to produce different digests for the same input. It is
+                derived using BLAKE2 to ensure it fits the hasher limits, so it
+                has no practical size limit. It defaults to the class name.
+            digest_size (optional): Size of output signature (digest) in bytes
+                (defaults to 16 bytes). The minimum size is enforced to 16 bytes.
+            hasher (optional): Hash function to use: blake2b (default) or blake2s.
+            deterministic (optional): Define if signatures are deterministic or
+                non-deterministic (default). Non-deterministic sigs are preferred,
+                and achieved through the use of a random salt. For deterministic
+                sigs, no salt is used: this means that for the same payload, the
+                same sig is obtained (the advantage is that the sig is shorter).
+            separator (optional): Character to separate the signature and the
+                payload. It must not belong to the encoder alphabet and be ASCII
+                (defaults to ".").
 
-        :raise ConversionError: A bytes parameter is not bytes and can't be converted
-                                to bytes.
-        :raise InvalidOptionError: A parameter is out of bounds.
+        Raises:
+            ConversionError: A bytes parameter is not bytes and can't be converted
+                to bytes.
+            InvalidOptionError: A parameter is out of bounds.
         """
         self._hasher: typing.Union[
             typing.Type[hashlib.blake2b],
@@ -135,7 +139,18 @@ class Base(Mixin, ABC):
         return self._hasher.SALT_SIZE
 
     def _validate_secret(self, secret_: typing.Union[str, bytes]) -> bytes:
-        """Validate the secret value and return it clean."""
+        """Validate the secret value and return it clean.
+
+        Args:
+            secret_: Secret value to validate.
+
+        Returns:
+            Cleaned secret value.
+
+        Raises:
+            ConversionError: The value is not bytes and can't be converted to bytes.
+            InvalidOptionError: The value is out of bounds.
+        """
         secret = self._force_bytes(secret_)
 
         if len(secret) < self.MIN_SECRET_SIZE:
@@ -146,11 +161,31 @@ class Base(Mixin, ABC):
         return secret
 
     def _validate_person(self, person: typing.Union[str, bytes]) -> bytes:
-        """Validate the personalisation value and return it clean."""
+        """Validate the personalisation value and return it clean.
+
+        Args:
+            person: Personalisation value to validate.
+
+        Returns:
+            Cleaned personalisation value.
+
+        Raises:
+            ConversionError: The value is not bytes and can't be converted to bytes.
+        """
         return self._force_bytes(person)
 
     def _validate_digest_size(self, digest_size: typing.Optional[int]) -> int:
-        """Validate the digest_size value and return it clean."""
+        """Validate the digest_size value and return it clean.
+
+        Args:
+            digest_size: Digest size value to validate.
+
+        Returns:
+            Cleaned digest size value.
+
+        Raises:
+            InvalidOptionError: The value is out of bounds.
+        """
         if digest_size is None:
             digest_size = self.DEFAULT_DIGEST_SIZE
 
@@ -166,7 +201,17 @@ class Base(Mixin, ABC):
     def _validate_hasher(
         hasher: typing.Union[HasherChoice, str],
     ) -> typing.Union[typing.Type[hashlib.blake2b], typing.Type[hashlib.blake2s]]:
-        """Validate and choose hashing function."""
+        """Validate and choose hashing function.
+
+        Args:
+            hasher: Hasher value to validate.
+
+        Returns:
+            A hashing function based on the hasher value.
+
+        Raises:
+            InvalidOptionError: Invalid hasher choice.
+        """
         if hasher == HasherChoice.blake2b:
             return hashlib.blake2b
         elif hasher == HasherChoice.blake2s:
@@ -178,7 +223,18 @@ class Base(Mixin, ABC):
         )
 
     def _validate_separator(self, separator: typing.Union[str, bytes]) -> bytes:
-        """Validate the separator value and return it clean."""
+        """Validate the separator value and return it clean.
+
+        Args:
+            separator: Separator value to validate.
+
+        Returns:
+            Cleaned separator value.
+
+        Raises:
+            ConversionError: The value is not bytes and can't be converted to bytes.
+            InvalidOptionError:  The value is out of bounds.
+        """
         if not separator:
             raise errors.InvalidOptionError('the separator character must have a value')
 
@@ -188,11 +244,28 @@ class Base(Mixin, ABC):
         return self._force_bytes(separator)
 
     def _derive_person(self, person: bytes) -> bytes:
-        """Derive given personalisation value to ensure it fits the hasher correctly."""
+        """Derive given personalisation value to ensure it fits the hasher correctly.
+
+        Args:
+            person: Personalisation value to derive.
+
+        Returns:
+            A raw derived person value to use with the hasher.
+        """
         return self._hasher(person, digest_size=self._hasher.PERSON_SIZE).digest()
 
     def _derive_key(self, secret: bytes, *, person: bytes = b'') -> bytes:
-        """Derive given secret to ensure it fits correctly as the hasher key."""
+        """Derive given secret to ensure it fits correctly as the hasher key.
+
+        Args:
+            secret: Secret value to derive.
+
+        Keyword Args:
+            person (optional): Personalisation value to change the secret derivation.
+
+        Returns:
+            A raw derived secret value to use as hasher key.
+        """
         return self._hasher(
             secret,
             person=person,
@@ -201,7 +274,7 @@ class Base(Mixin, ABC):
 
 
 class Blake2SignerBase(EncoderMixin, Base, ABC):
-    """Base class for a signer based on Blake2 in keyed hashing mode."""
+    """Base class for a signer based on BLAKE2 in keyed hashing mode."""
 
     def __init__(
         self,
@@ -214,36 +287,35 @@ class Blake2SignerBase(EncoderMixin, Base, ABC):
         separator: typing.Union[str, bytes] = b'.',
         encoder: typing.Type[EncoderInterface] = B64URLEncoder,
     ) -> None:
-        """Sign and verify signed data using Blake2 in keyed hashing mode.
+        """Sign and verify signed data using BLAKE2 in keyed hashing mode.
 
-        :param secret: Secret value which will be derived using blake2 to
-                       produce the signing key. The minimum secret size is
-                       enforced to 16 bytes and there is no maximum since the key
-                       will be derived to the maximum supported size.
-        :param digest_size: [optional] Size of output signature (digest) in bytes
-                            (defaults to 16 bytes).
-                            The minimum size is enforced to 16 bytes.
-        :param personalisation: [optional] Personalisation string to force the
-                                hash function to produce different digests for
-                                the same input. It is derived using blake2 to ensure
-                                it fits the hasher limits, so it has no practical
-                                size limit. It defaults to the class name.
-        :param hasher: [optional] Hash function to use: blake2b (default) or blake2s.
-        :param deterministic: [optional] Define if signatures are deterministic
-                              or non-deterministic (default). Non-deterministic
-                              sigs are preferred, and achieved through the use of a
-                              random salt. For deterministic sigs, no salt is used:
-                              this means that for the same payload, the same sig is
-                              obtained (the advantage is that the sig is shorter).
-        :param separator: [optional] Character to separate the signature and the
-                          payload. It must not belong to the encoder alphabet and
-                          be ASCII (defaults to ".").
-        :param encoder: [optional] Encoder class to use for the signature, nothing
-                        else is encoded (defaults to a Base64 URL safe encoder).
+        Args:
+            secret: Secret value which will be derived using BLAKE2 to
+                produce the signing key. The minimum secret size is enforced to
+                16 bytes and there is no maximum since the key will be derived to
+                the maximum supported size.
+            personalisation (optional): Personalisation string to force the hash
+                function to produce different digests for the same input. It is
+                derived using BLAKE2 to ensure it fits the hasher limits, so it
+                has no practical size limit. It defaults to the class name.
+            digest_size (optional): Size of output signature (digest) in bytes
+                (defaults to 16 bytes). The minimum size is enforced to 16 bytes.
+            hasher (optional): Hash function to use: blake2b (default) or blake2s.
+            deterministic (optional): Define if signatures are deterministic or
+                non-deterministic (default). Non-deterministic sigs are preferred,
+                and achieved through the use of a random salt. For deterministic
+                sigs, no salt is used: this means that for the same payload, the
+                same sig is obtained (the advantage is that the sig is shorter).
+            separator (optional): Character to separate the signature and the
+                payload. It must not belong to the encoder alphabet and be ASCII
+                (defaults to ".").
+            encoder (optional): Encoder class to use for the signature, nothing
+                else is encoded (defaults to a Base64 URL safe encoder).
 
-        :raise ConversionError: A bytes parameter is not bytes and can't be converted
-                                to bytes.
-        :raise InvalidOptionError: A parameter is out of bounds.
+        Raises:
+            ConversionError: A bytes parameter is not bytes and can't be converted
+                to bytes.
+            InvalidOptionError: A parameter is out of bounds.
         """
         super().__init__(
             secret,
@@ -256,7 +328,18 @@ class Blake2SignerBase(EncoderMixin, Base, ABC):
         )
 
     def _validate_separator(self, separator: typing.Union[str, bytes]) -> bytes:
-        """Validate the separator value and return it clean."""
+        """Validate the separator value and return it clean.
+
+        Args:
+            separator: Separator value to validate.
+
+        Returns:
+            Cleaned separator value.
+
+        Raises:
+            ConversionError: The value is not bytes and can't be converted to bytes.
+            InvalidOptionError: The value is out of bounds.
+        """
         sep = super()._validate_separator(separator)
 
         if sep in self._encoder.alphabet:
@@ -275,7 +358,7 @@ class Blake2SignerBase(EncoderMixin, Base, ABC):
             return b''
 
         salt = token_bytes(self._salt_size)
-        # Produce an encoded salt to use it as is so we don't have to deal with
+        # Produce an encoded salt to use it as is, so we don't have to deal with
         # decoding it when unsigning. The only downside is that we loose a few
         # bits but it's tolerable since we are using the maximum allowed size.
         return self._encode(salt)[:self._salt_size]
@@ -297,7 +380,8 @@ class Blake2SignerBase(EncoderMixin, Base, ABC):
     def _decompose(self, signed_data: bytes) -> SignedDataParts:
         """Decompose a signed data stream into its parts.
 
-        :raise SignatureError: Invalid signed data.
+        Raises:
+            SignatureError: Invalid signed data.
         """
         if self._separator not in signed_data:
             raise errors.SignatureError('separator not found in signed data')
@@ -317,7 +401,7 @@ class Blake2SignerBase(EncoderMixin, Base, ABC):
         return SignedDataParts(data=data, salt=salt, signature=signature)
 
     def _signify(self, *, salt: bytes, data: bytes) -> bytes:
-        """Return signature for given data using salt and all of the hasher options.
+        """Return signature for given data using salt and all the hasher options.
 
         The signature is encoded using the chosen encoder.
         """
@@ -344,12 +428,15 @@ class Blake2SignerBase(EncoderMixin, Base, ABC):
     def _unsign(self, parts: SignedDataParts) -> bytes:
         """Verify signed data parts and recover original data.
 
-        :param parts: Signed data parts to unsign.
+        Args:
+            parts: Signed data parts to unsign.
 
-        :raise SignatureError: Signed data structure is not valid.
-        :raise InvalidSignatureError: Signed data signature is invalid.
+        Returns:
+            Original data.
 
-        :return: Original data.
+        Raises:
+            SignatureError: Signed data structure is not valid.
+            InvalidSignatureError: Signed data signature is invalid.
         """
         good_signature = self._signify(salt=parts.salt, data=parts.data)
 
@@ -360,11 +447,11 @@ class Blake2SignerBase(EncoderMixin, Base, ABC):
 
 
 class Blake2TimestampSignerBase(Blake2SignerBase, ABC):
-    """Base class for a timestamp signer based on Blake2 in keyed hashing mode."""
+    """Base class for a timestamp signer based on BLAKE2 in keyed hashing mode."""
 
     def _get_timestamp(self) -> bytes:
         """Get the encoded timestamp value."""
-        timestamp = int(time())  # its easier to encode and decode an integer
+        timestamp = int(time())  # It's easier to encode and decode an integer
         try:
             timestamp_b = timestamp.to_bytes(4, 'big', signed=False)
         except OverflowError:  # This will happen in ~2106-02-07
@@ -378,7 +465,8 @@ class Blake2TimestampSignerBase(Blake2SignerBase, ABC):
     def _decode_timestamp(self, encoded_timestamp: bytes) -> int:
         """Decode an encoded timestamp whose signature should have been validated.
 
-        :raise DecodeError: timestamp can't be decoded.
+        Raises:
+            DecodeError: Timestamp can't be decoded.
         """
         return int.from_bytes(self._decode(encoded_timestamp), 'big', signed=False)
 
@@ -389,7 +477,9 @@ class Blake2TimestampSignerBase(Blake2SignerBase, ABC):
     def _decompose_timestamp(self, timestamped_data: bytes) -> TimestampedDataParts:
         """Decompose data + timestamp value.
 
-        :raise SignatureError: Invalid timestamped data.
+        Raises:
+            SignatureError: Invalid timestamped data.
+            DecodeError: Timestamp can't be decoded.
         """
         if self._separator not in timestamped_data:
             raise errors.SignatureError('separator not found in timestamped data')
@@ -417,7 +507,8 @@ class Blake2TimestampSignerBase(Blake2SignerBase, ABC):
         The timestamped signature stream (timestamp, signature and salt) is
         encoded using the chosen encoder.
 
-        :return: A signature stream composed of salt, signature and timestamp.
+        Returns:
+            A signature stream composed of salt, signature and timestamp.
         """
         timestamp = self._get_timestamp()
         timestamped_data = self._compose_timestamp(data, timestamp=timestamp)
@@ -432,14 +523,20 @@ class Blake2TimestampSignerBase(Blake2SignerBase, ABC):
     ) -> bytes:
         """Verify signed data parts with timestamp and recover original data.
 
-        :param parts: Signed data parts to unsign.
-        :keyword max_age: Ensure the signature is not older than this time in seconds.
+        Args:
+            parts: Signed data parts to unsign.
 
-        :raise SignatureError: Signed data structure is not valid.
-        :raise InvalidSignatureError: Signed data signature is invalid.
-        :raise ExpiredSignatureError: Signed data signature has expired.
+        Keyword Args:
+            max_age: Ensure the signature is not older than this time in seconds.
 
-        :return: Original data.
+        Returns:
+            Original data.
+
+        Raises:
+            SignatureError: Signed data structure is not valid.
+            InvalidSignatureError: Signed data signature is invalid.
+            ExpiredSignatureError: Signed data signature has expired.
+            DecodeError: Timestamp can't be decoded.
         """
         timestamped_data = self._unsign(parts)
 
@@ -479,43 +576,41 @@ class Blake2DualSignerBase(Blake2TimestampSignerBase, ABC):
         separator: typing.Union[str, bytes] = b'.',
         encoder: typing.Type[EncoderInterface] = B64URLEncoder,
     ) -> None:
-        """Sign and verify signed and optionally timestamped data using Blake2.
+        """Sign and verify signed and optionally timestamped data using BLAKE2.
 
-        It uses Blake2 in keyed hashing mode.
+        It uses BLAKE2 in keyed hashing mode.
 
         Setting `max_age` will produce a timestamped signed stream.
 
-        :param secret: Secret value which will be derived using blake2 to
-                       produce the signing key. The minimum secret size is
-                       enforced to 16 bytes and there is no maximum since the key
-                       will be derived to the maximum supported size.
-        :param max_age: [optional] Use a timestamp signer instead of a regular
-                        one to ensure that the signature is not older than this
-                        time in seconds.
-        :param personalisation: [optional] Personalisation string to force the
-                                hash function to produce different digests for
-                                the same input. It is derived using blake2 to ensure
-                                it fits the hasher limits, so it has no practical
-                                size limit. It defaults to the class name.
-        :param digest_size: [optional] Size of output signature (digest) in bytes
-                            (defaults to 16 bytes).
-                            The minimum size is enforced to 16 bytes.
-        :param hasher: [optional] Hash function to use: blake2b (default) or blake2s.
-        :param deterministic: [optional] Define if signatures are deterministic
-                              or non-deterministic (default). Non-deterministic
-                              sigs are preferred, and achieved through the use of a
-                              random salt. For deterministic sigs, no salt is used:
-                              this means that for the same payload, the same sig is
-                              obtained (the advantage is that the sig is shorter).
-        :param separator: [optional] Character to separate the signature and the
-                          payload. It must not belong to the encoder alphabet and
-                          be ASCII (defaults to ".").
-        :param encoder: [optional] Encoder class to use (defaults to a Base64
-                        URL safe encoder).
+        Args:
+            secret: Secret value which will be derived using BLAKE2 to
+                produce the signing key. The minimum secret size is enforced to
+                16 bytes and there is no maximum since the key will be derived to
+                the maximum supported size.
+            max_age (optional): Use a timestamp signer instead of a regular one
+                to ensure that the signature is not older than this time in seconds.
+            personalisation (optional): Personalisation string to force the hash
+                function to produce different digests for the same input. It is
+                derived using BLAKE2 to ensure it fits the hasher limits, so it
+                has no practical size limit. It defaults to the class name.
+            digest_size (optional): Size of output signature (digest) in bytes
+                (defaults to 16 bytes). The minimum size is enforced to 16 bytes.
+            hasher (optional): Hash function to use: blake2b (default) or blake2s.
+            deterministic (optional): Define if signatures are deterministic or
+                non-deterministic (default). Non-deterministic sigs are preferred,
+                and achieved through the use of a random salt. For deterministic
+                sigs, no salt is used: this means that for the same payload, the
+                same sig is obtained (the advantage is that the sig is shorter).
+            separator (optional): Character to separate the signature and the
+                payload. It must not belong to the encoder alphabet and be ASCII
+                (defaults to ".").
+            encoder (optional): Encoder class to use (defaults to a Base64 URL
+                safe encoder).
 
-        :raise ConversionError: A bytes parameter is not bytes and can't be converted
-                                to bytes.
-        :raise InvalidOptionError: A parameter is out of bounds.
+        Raises:
+            ConversionError: A bytes parameter is not bytes and can't be converted
+                to bytes.
+            InvalidOptionError: A parameter is out of bounds.
         """
         if max_age is not None:
             personalisation = self._force_bytes(personalisation) + b'Timestamp'
@@ -546,10 +641,11 @@ class Blake2DualSignerBase(Blake2TimestampSignerBase, ABC):
     def _proper_unsign(self, parts: SignedDataParts) -> bytes:
         """Unsign signed data properly with the corresponding signer.
 
-        :raise SignatureError: Signed data structure is not valid.
-        :raise InvalidSignatureError: Signed data signature is invalid.
-        :raise ExpiredSignatureError: Signed data signature has expired.
-        :raise DecodeError: Timestamp can't be decoded.
+        Raises:
+            SignatureError: Signed data structure is not valid.
+            InvalidSignatureError: Signed data signature is invalid.
+            ExpiredSignatureError: Signed data signature has expired.
+            DecodeError: Timestamp can't be decoded.
         """
         if self._max_age is None:
             return self._unsign(parts)
@@ -567,10 +663,14 @@ class Blake2SerializerSignerBase(Blake2DualSignerBase, ABC):
         Implement this method with all the tasks necessary to serialize data, such
         as encoding, compression, etc.
 
-        :param data: Data to serialize.
-        :keyword kwargs: Additional keyword only arguments for the method.
+        Args:
+            data: Data to serialize.
 
-        :return: Serialized data.
+        Keyword Args:
+            **kwargs: Additional keyword only arguments for the method.
+
+        Returns:
+            Serialized data.
         """
 
     @abstractmethod
@@ -580,17 +680,22 @@ class Blake2SerializerSignerBase(Blake2DualSignerBase, ABC):
         Implement this method with all the tasks necessary to unserialize data,
         such as decoding, decompression, etc.
 
-        :param dumped_data: Data to unserialize.
-        :keyword kwargs: Additional keyword only arguments for the method.
+        Args:
+            dumped_data: Data to unserialize.
 
-        :return: Original data.
+        Keyword Args
+            **kwargs: Additional keyword only arguments for the method.
+
+        Returns:
+            Original data.
         """
 
     @staticmethod
     def _read(file: typing.IO) -> typing.AnyStr:
         """Read data from a file.
 
-        :raise FileError: File can't be read.
+        Raises:
+            FileError: File can't be read.
         """
         try:
             return file.read()
@@ -600,12 +705,14 @@ class Blake2SerializerSignerBase(Blake2DualSignerBase, ABC):
     def _write(self, file: typing.IO, data: str) -> None:
         """Write data to file.
 
-        Note that the file can be either in text or binary mode, therefore given
-        data is properly converted before writing.
+        Notes:
+            The file can be either in text or binary mode, therefore given data
+            is properly converted before writing.
 
-        :raise FileError: File can't be written.
-        :raise ConversionError: Data can't be converted to bytes (can happen
-                                when file is in binary mode).
+        Raises:
+            FileError: File can't be written.
+            ConversionError: Data can't be converted to bytes (can happen when
+                file is in binary mode).
         """
         data_ = data if file_mode_is_text(file) else self._force_bytes(data)
 

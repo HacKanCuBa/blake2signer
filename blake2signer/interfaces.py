@@ -13,11 +13,27 @@ class SerializerInterface(ABC):
 
     @abstractmethod
     def serialize(self, data: typing.Any, **kwargs: typing.Any) -> bytes:
-        """Serialize given data."""
+        """Serialize given data.
+
+        Args:
+            data: Data to serialize.
+            **kwargs: Additional arguments for the serializer.
+
+        Returns:
+            Serialized data
+        """
 
     @abstractmethod
     def unserialize(self, data: bytes, **kwargs: typing.Any) -> typing.Any:
-        """Unserialize given serialized data."""
+        """Unserialize given serialized data.
+
+        Args:
+            data: Serialized data to unserialize.
+            **kwargs: Additional arguments for the serializer.
+
+        Returns:
+            Original data.
+        """
 
 
 class CompressorInterface(ABC):
@@ -28,11 +44,26 @@ class CompressorInterface(ABC):
 
     @abstractmethod
     def compress(self, data: bytes, *, level: int) -> bytes:
-        """Compress given data."""
+        """Compress given data.
+
+        Args:
+            data: Data to compress.
+            level: Desired compression level.
+
+        Returns:
+            Raw compressed data.
+        """
 
     @abstractmethod
     def decompress(self, data: bytes) -> bytes:
-        """Decompress given compressed data."""
+        """Decompress given compressed data.
+
+        Args:
+            data: Compressed data to decompress.
+
+        Returns:
+            Original data.
+        """
 
 
 class EncoderInterface(ABC):
@@ -40,8 +71,8 @@ class EncoderInterface(ABC):
 
     Implement your own encoder inheriting from this class.
 
-    Important note: verify that the separator character is out of the encoder
-    alphabet (a check is enforced nevertheless).
+    Note:
+        Verify that the encoder alphabet is ASCII (a check is enforced nevertheless).
     """
 
     @property
@@ -55,8 +86,22 @@ class EncoderInterface(ABC):
 
     @abstractmethod
     def encode(self, data: bytes) -> bytes:
-        """Encode given data."""
+        """Encode given data.
+
+        Args:
+            data: Data to encode.
+
+        Returns:
+            Encoded data.
+        """
 
     @abstractmethod
     def decode(self, data: bytes) -> bytes:
-        """Decode given encoded data."""
+        """Decode given encoded data.
+
+        Args:
+            data: Encoded data to decode.
+
+        Returns:
+            Original data.
+        """

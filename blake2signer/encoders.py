@@ -18,11 +18,25 @@ class B64URLEncoder(EncoderInterface):
         return b'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-'
 
     def encode(self, data: bytes) -> bytes:
-        """Encode given data to base64 URL safe without padding."""
+        """Encode given data to base64 URL safe without padding.
+
+        Args:
+            data: Data to encode.
+
+        Returns:
+            Encoded data.
+        """
         return b64encode(data)
 
     def decode(self, data: bytes) -> bytes:
-        """Decode given encoded data from base64 URL safe without padding."""
+        """Decode given encoded data from base64 URL safe without padding.
+
+        Args:
+            data: Data to decode.
+
+        Returns:
+            Original data.
+        """
         return b64decode(data)
 
 
@@ -35,11 +49,25 @@ class B32Encoder(EncoderInterface):
         return b'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567'
 
     def encode(self, data: bytes) -> bytes:
-        """Encode given data to base32 without padding."""
+        """Encode given data to base32 without padding.
+
+        Args:
+            data: Data to encode.
+
+        Returns:
+            Encoded data.
+        """
         return b32encode(data)
 
     def decode(self, data: bytes) -> bytes:
-        """Decode given encoded data from base32 without padding."""
+        """Decode given encoded data from base32 without padding.
+
+        Args:
+            data: Data to decode.
+
+        Returns:
+            Original data.
+        """
         return b32decode(data)
 
 
@@ -52,9 +80,23 @@ class HexEncoder(EncoderInterface):
         return b'ABCDEF0123456789'
 
     def encode(self, data: bytes) -> bytes:
-        """Encode given data to hexadecimal."""
+        """Encode given data to hexadecimal.
+
+        Args:
+            data: Data to encode.
+
+        Returns:
+            Encoded data.
+        """
         return hexencode(data)
 
     def decode(self, data: bytes) -> bytes:
-        """Decode given encoded data from hexadecimal."""
+        """Decode given encoded data from hexadecimal.
+
+        Args:
+            data: Data to decode.
+
+        Returns:
+            Original data.
+        """
         return hexdecode(data)

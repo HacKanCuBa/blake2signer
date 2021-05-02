@@ -1,4 +1,51 @@
-"""Errors."""
+"""Errors: contains all errors and exceptions raised by this lib.
+
+Note:
+    Here's the hierarchy tree:
+
+        SignerError
+            |
+            |-- InvalidOptionError: given option value is out of bounds, has the wrong
+            |                       format or type.
+            |
+            |-- DataError: generic data error.
+                    |
+                    |-- SignedDataError: error that occurred for *signed data*.
+                    |       |
+                    |       |-- SignatureError: error encountered while dealing with
+                    |       |       |           the signature.
+                    |       |       |
+                    |       |       |-- InvalidSignatureError: the signature is not
+                    |       |               |                  valid.
+                    |       |               |
+                    |       |               |-- ExpiredSignatureError: the signature
+                    |       |                                          has expired.
+                    |       |
+                    |       |-- UnserializationError: given data could not be
+                    |       |                         unserialized.
+                    |       |
+                    |       |-- DecompressionError: given data could not be decompressed.
+                    |       |
+                    |       |-- DecodeError: given data could not be decoded.
+                    |       |
+                    |       |-- ConversionError: given data could not be converted
+                    |       |                    to bytes.
+                    |       |
+                    |       |-- FileError: error while reading the file.
+                    |
+                    |-- UnsignedDataError: error that occurred for *data to be signed*.
+                            |
+                            |-- SerializationError: given data could not be serialized.
+                            |
+                            |-- CompressionError: given data could not be compressed.
+                            |
+                            |-- EncodeError: given data could not be encoded.
+                            |
+                            |-- ConversionError: given data could not be converted
+                            |                    to bytes.
+                            |
+                            |-- FileError: error while writing the file.
+"""
 
 import typing
 from datetime import datetime
@@ -72,8 +119,12 @@ class ExpiredSignatureError(InvalidSignatureError):
     def __init__(self, *args: typing.Any, timestamp: datetime) -> None:
         """Initialize self.
 
-        :param timestamp: An aware datetime object indicating when the signature
-                          was done.
+        Args:
+            *args: Additional positional arguments, see `Exception.__init__`.
+            timestamp: An aware datetime object indicating when the signature was done.
+
+        Returns:
+            None.
         """
         super().__init__(*args)
 
