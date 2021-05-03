@@ -7,7 +7,8 @@ from unittest import TestCase
 from .. import utils
 
 
-class TestUtilsBase64(TestCase):
+class TestUtils(TestCase):
+    """Test the utils module."""
 
     def test_b64encode_strips_padding(self) -> None:
         """Test b64encode strips padding correctly."""

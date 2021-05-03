@@ -14,6 +14,8 @@ from unittest import mock
 import pytest
 
 from .. import errors
+from ..bases import Blake2Signature
+from ..bases import Blake2SignatureDump
 from ..compressors import GzipCompressor
 from ..encoders import B32Encoder
 from ..encoders import B64URLEncoder
@@ -24,7 +26,22 @@ from ..serializers import NullSerializer
 from ..signers import Blake2SerializerSigner
 from ..signers import Blake2Signer
 from ..signers import Blake2TimestampSigner
-from ..utils import b64encode
+
+
+def _trick_sign(
+    data: typing.AnyStr,
+    signer: typing.Union[Blake2TimestampSigner, Blake2SerializerSigner],
+) -> bytes:
+    """Sign data properly as if using Blake2Signer.sign().
+
+    This function is useful to trick a signer into unsigning something that normally
+    wouldn't be possible because of different safeguard checks.
+    """
+    # noinspection PyProtectedMember
+    data_b = signer._force_bytes(data)
+
+    # noinspection PyProtectedMember
+    return signer._compose(data_b, signature=signer._sign(data_b))
 
 
 # noinspection PyArgumentEqualDefault
@@ -169,6 +186,34 @@ class Blake2SignerTests(TestCase):
         unsigned = signer.unsign(signed)
         self.assertEqual(self.data, unsigned)
 
+    def test_sign_unsign_parts(self) -> None:
+        """Test signing and unsigning in parts."""
+        signer = Blake2Signer(self.secret)
+
+        signature = signer.sign_parts(self.data)
+        self.assertIsInstance(signature, Blake2Signature)
+        self.assertIsInstance(signature.data, bytes)
+        self.assertIsInstance(signature.signature, bytes)
+        self.assertEqual(self.data, signature.data)
+        self.assertEqual(len(signature.signature), 38)
+
+        unsigned = signer.unsign_parts(signature)
+        self.assertEqual(unsigned, self.data)
+
+    def test_sign_unsign_parts_both_containers(self) -> None:
+        """Test signing and unsigning in parts accepting both signature containers."""
+        signer = Blake2Signer(self.secret)
+
+        signature = signer.sign_parts(self.data)
+        self.assertIsInstance(signature, Blake2Signature)
+
+        other_signature = Blake2SignatureDump(
+            data=signature.data.decode(),
+            signature=signature.signature.decode(),
+        )
+        unsigned = signer.unsign_parts(other_signature)
+        self.assertEqual(unsigned, self.data)
+
 
 # noinspection PyArgumentEqualDefault
 class Blake2SignerErrorTests(TestCase):
@@ -219,7 +264,7 @@ class Blake2SignerErrorTests(TestCase):
         self.assertIsNone(cm.exception.__cause__)
 
     def test_unsign_short_data_without_signature(self) -> None:
-        """Test unsign with very short signed data."""
+        """Test unsign with very short data without signature."""
         signer = Blake2Signer(self.secret)
 
         with self.assertRaises(errors.SignatureError) as cm:
@@ -408,6 +453,20 @@ class Blake2TimestampSignerTests(TestCase):
         unsigned = signer.unsign(signed, max_age=1)
         self.assertEqual(self.data, unsigned)
 
+    def test_sign_unsign_parts(self) -> None:
+        """Test signing and unsigning in parts."""
+        signer = Blake2TimestampSigner(self.secret)
+
+        signature = signer.sign_parts(self.data)
+        self.assertIsInstance(signature, Blake2Signature)
+        self.assertIsInstance(signature.data, bytes)
+        self.assertIsInstance(signature.signature, bytes)
+        self.assertEqual(self.data, signature.data)
+        self.assertEqual(len(signature.signature), 45)
+
+        unsigned = signer.unsign_parts(signature, max_age=10)
+        self.assertEqual(unsigned, self.data)
+
 
 # noinspection PyArgumentEqualDefault
 class Blake2TimestampSignerErrorTests(TestCase):
@@ -435,17 +494,14 @@ class Blake2TimestampSignerErrorTests(TestCase):
     def test_unsign_wrong_data(self) -> None:
         """Test unsign wrong data."""
         signer = Blake2TimestampSigner(self.secret, digest_size=self.digest_size)
-        trick_signer = Blake2Signer(self.secret, digest_size=self.digest_size)
-        trick_signer._key = signer._key
-        trick_signer._person = signer._person
 
-        trick_signed = trick_signer.sign(self.data)
+        trick_signed = _trick_sign(self.data, signer)
         with self.assertRaises(errors.SignatureError) as cm:
             signer.unsign(trick_signed, max_age=1)
         self.assertEqual(str(cm.exception), 'separator not found in timestamped data')
         self.assertIsNone(cm.exception.__cause__)
 
-        trick_signed = trick_signer.sign(b'.' + self.data)
+        trick_signed = _trick_sign(b'.' + self.data, signer)
         with self.assertRaises(errors.SignatureError) as cm:
             signer.unsign(trick_signed, max_age=1)
         self.assertEqual(str(cm.exception), 'timestamp information is missing')
@@ -454,11 +510,8 @@ class Blake2TimestampSignerErrorTests(TestCase):
     def test_unsign_wrong_timestamped_data(self) -> None:
         """Test unsign wrong timestamped data."""
         signer = Blake2TimestampSigner(self.secret)
-        trick_signer = Blake2Signer(self.secret)
-        trick_signer._key = signer._key
-        trick_signer._person = signer._person
 
-        trick_signed = trick_signer.sign(b'-.' + self.data)
+        trick_signed = _trick_sign(b'-.' + self.data, signer)
         with self.assertRaises(errors.DecodeError) as cm:
             signer.unsign(trick_signed, max_age=1)
         self.assertIn('can not be decoded', str(cm.exception))
@@ -719,7 +772,7 @@ class Blake2SerializerSignerTests(TestCase):
         signer = Blake2SerializerSigner(self.secret, compression_flag=flag)
 
         signed = signer.dumps(data)
-        unsigned = signer._proper_unsign(signed.encode())
+        unsigned = signer._proper_unsign(signer._decompose(signed.encode()))
         undecoded = signer._decode(unsigned)
         self.assertIn(flag, undecoded)
         self.assertTrue(undecoded.startswith(flag))
@@ -869,6 +922,48 @@ class Blake2SerializerSignerTests(TestCase):
         file2.seek(0)
         self.assertNotEqual(file1.read(), file2.read())
 
+    def test_dumps_loads_parts(self) -> None:
+        """Test dumping and loading in parts."""
+        signer = Blake2SerializerSigner(self.secret)
+
+        signature = signer.dumps_parts(self.data)
+        self.assertIsInstance(signature, Blake2SignatureDump)
+        self.assertIsInstance(signature.data, str)
+        self.assertIsInstance(signature.signature, str)
+        self.assertEqual(len(signature.data), 14)
+        self.assertEqual(len(signature.signature), 38)
+
+        unsigned = signer.loads_parts(signature)
+        self.assertEqual(unsigned, self.data)
+
+    def test_dumps_loads_parts_with_timestamp(self) -> None:
+        """Test dumping and loading in parts with timestamp."""
+        signer = Blake2SerializerSigner(self.secret, max_age=10)
+
+        signature = signer.dumps_parts(self.data)
+        self.assertIsInstance(signature, Blake2SignatureDump)
+        self.assertIsInstance(signature.data, str)
+        self.assertIsInstance(signature.signature, str)
+        self.assertEqual(len(signature.data), 14)
+        self.assertEqual(len(signature.signature), 45)
+
+        unsigned = signer.loads_parts(signature)
+        self.assertEqual(unsigned, self.data)
+
+    def test_dumps_loads_parts_both_containers(self) -> None:
+        """Test dumping and loading in parts accepting both signature containers."""
+        signer = Blake2SerializerSigner(self.secret)
+
+        signature = signer.dumps_parts(self.data)
+        self.assertIsInstance(signature, Blake2SignatureDump)
+
+        other_signature = Blake2Signature(
+            data=signature.data.encode(),
+            signature=signature.signature.encode(),
+        )
+        unsigned = signer.loads_parts(other_signature)
+        self.assertEqual(unsigned, self.data)
+
 
 @pytest.mark.parametrize(
     'file',
@@ -943,8 +1038,10 @@ class Blake2SerializerSignerErrorTests(TestCase):
 
     def test_loads_b64decode_error(self) -> None:
         """Test loads wrong data causing base64 decoding error."""
+        data = b'-'  # some non-base64 char
         signer = Blake2SerializerSigner(self.secret)
-        trick_signed = signer._sign(b'-')  # some non-base64 char
+
+        trick_signed = _trick_sign(data, signer)
 
         with self.assertRaises(errors.DecodeError) as cm:
             signer.loads(trick_signed)
@@ -954,9 +1051,9 @@ class Blake2SerializerSignerErrorTests(TestCase):
     def test_loads_decompression_error(self) -> None:
         """Test loads wrong data causing decompression error."""
         signer = Blake2SerializerSigner(self.secret)
-        trick_signed = signer._sign(
-            b64encode(signer._compression_flag + b'a'),  # trick into decompression
-        )
+
+        data = signer._compression_flag + b'a'  # Trick into decompression
+        trick_signed = _trick_sign(signer._encode(data), signer)
 
         with self.assertRaises(errors.DecompressionError) as cm:
             signer.loads(trick_signed)
@@ -966,7 +1063,8 @@ class Blake2SerializerSignerErrorTests(TestCase):
     def test_loads_unserialization_error(self) -> None:
         """Test loads wrong data causing unserialization error."""
         signer = Blake2SerializerSigner(self.secret)
-        trick_signed = signer._sign(b'data')  # non-serializable data
+
+        trick_signed = _trick_sign(b'data', signer)  # Non-serializable data
 
         with self.assertRaises(errors.UnserializationError) as cm:
             signer.loads(trick_signed)

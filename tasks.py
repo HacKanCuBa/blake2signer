@@ -11,19 +11,13 @@ from invoke import task
 def flake8(ctx):
     """Run flake8 with proper exclusions."""
     ctx.run(f'flake8 --exclude tests blake2signer/', echo=True)
-    ctx.run(f'flake8 --ignore=D100,D101,D102,D103,D104,D105,D106,D107,S101 '
-            f'blake2signer/tests/', echo=True)
+    ctx.run(f'flake8 --ignore=S101 blake2signer/tests/', echo=True)
 
 
 @task
 def pydocstyle(ctx):
     """Run pydocstyle with proper exclusions."""
-    cmd = f'find blake2signer/'
-    ctx.run(
-        cmd + ' -type f \\( -path "*/tests/*" \\) '
-              '-prune -o -name "*.py" -exec pydocstyle --explain "{}" \\+',
-        echo=True,
-    )
+    ctx.run('pydocstyle --explain blake2signer/', echo=True)
 
 
 @task

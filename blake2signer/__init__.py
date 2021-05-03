@@ -27,6 +27,8 @@ See examples and more info in the README.
 
 from . import errors
 from .signers import Blake2SerializerSigner
+from .signers import Blake2Signature
+from .signers import Blake2SignatureDump
 from .signers import Blake2Signer
 from .signers import Blake2TimestampSigner
 
@@ -35,6 +37,8 @@ __version__ = '1.2.1'
 __all__ = (
     'errors',
     'Blake2SerializerSigner',
+    'Blake2Signature',
+    'Blake2SignatureDump',
     'Blake2Signer',
     'Blake2TimestampSigner',
 )

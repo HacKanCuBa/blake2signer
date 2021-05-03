@@ -44,6 +44,22 @@ class HasherChoice(str, Enum):
     blake2s = 'blake2s'
 
 
+@dataclass(frozen=True)
+class Blake2SignatureDump:
+    """Signature container."""
+
+    signature: str  # Composite signature
+    data: str
+
+
+@dataclass(frozen=True)
+class Blake2Signature:
+    """Signature container."""
+
+    signature: bytes  # Composite signature
+    data: bytes
+
+
 class Base(Mixin, ABC):
     """Base class containing the minimum for a signer."""
 
@@ -264,9 +280,19 @@ class Blake2SignerBase(EncoderMixin, Base, ABC):
         # bits but it's tolerable since we are using the maximum allowed size.
         return self._encode(salt)[:self._salt_size]
 
-    def _compose(self, parts: SignedDataParts) -> bytes:
-        """Compose signed data parts into a single stream."""
-        return parts.salt + parts.signature + self._separator + parts.data
+    def _force_bytes_parts(
+        self,
+        signature: typing.Union[Blake2Signature, Blake2SignatureDump],
+    ) -> Blake2Signature:
+        """Force given value into bytes, meaning a Blake2Signature container."""
+        return Blake2Signature(
+            data=self._force_bytes(signature.data),
+            signature=self._force_bytes(signature.signature),
+        )
+
+    def _compose(self, data: bytes, *, signature: bytes) -> bytes:
+        """Compose data and signature into a single stream."""
+        return signature + self._separator + data
 
     def _decompose(self, signed_data: bytes) -> SignedDataParts:
         """Decompose a signed data stream into its parts.
@@ -305,39 +331,29 @@ class Blake2SignerBase(EncoderMixin, Base, ABC):
 
         return self._encode(signature)
 
-    def _verify(self, parts: SignedDataParts) -> bool:
-        """Verify a signature for given data and salt.
-
-        :return: True if the signature is correct, False otherwise.
-        """
-        good_signature = self._signify(salt=parts.salt, data=parts.data)
-
-        return compare_digest(good_signature, parts.signature)
-
     def _sign(self, data: bytes) -> bytes:
-        """Sign given data and produce a stream composed of it, salt and signature.
+        """Sign given data and produce a signature stream composed of salt and signature.
 
-        The signature and salt are encoded using the chosen encoder.
-        Data is left as-is.
+        The signature stream (salt and signature) is encoded using the chosen encoder.
         """
         salt = self._get_salt()
         signature = self._signify(salt=salt, data=data)
-        parts = SignedDataParts(salt=salt, signature=signature, data=data)
 
-        return self._compose(parts)
+        return salt + signature
 
-    def _unsign(self, signed_data: bytes) -> bytes:
-        """Verify a signed stream and recover original data.
+    def _unsign(self, parts: SignedDataParts) -> bytes:
+        """Verify signed data parts and recover original data.
 
-        :param signed_data: Signed data to unsign.
+        :param parts: Signed data parts to unsign.
 
         :raise SignatureError: Signed data structure is not valid.
         :raise InvalidSignatureError: Signed data signature is invalid.
 
         :return: Original data.
         """
-        parts = self._decompose(signed_data)
-        if self._verify(parts):
+        good_signature = self._signify(salt=parts.salt, data=parts.data)
+
+        if compare_digest(good_signature, parts.signature):
             return parts.data
 
         raise errors.InvalidSignatureError('signature is not valid')
@@ -366,12 +382,12 @@ class Blake2TimestampSignerBase(Blake2SignerBase, ABC):
         """
         return int.from_bytes(self._decode(encoded_timestamp), 'big', signed=False)
 
-    def _add_timestamp(self, data: bytes) -> bytes:
-        """Add timestamp value to given data."""
-        return self._get_timestamp() + self._separator + data
+    def _compose_timestamp(self, data: bytes, *, timestamp: bytes) -> bytes:
+        """Compose timestamp value with data."""
+        return timestamp + self._separator + data
 
-    def _split_timestamp(self, timestamped_data: bytes) -> TimestampedDataParts:
-        """Split data + timestamp value.
+    def _decompose_timestamp(self, timestamped_data: bytes) -> TimestampedDataParts:
+        """Decompose data + timestamp value.
 
         :raise SignatureError: Invalid timestamped data.
         """
@@ -396,27 +412,28 @@ class Blake2TimestampSignerBase(Blake2SignerBase, ABC):
         return float(max_age)
 
     def _sign_with_timestamp(self, data: bytes) -> bytes:
-        """Sign given data and produce a stream of it, timestamp, salt and signature.
+        """Sign given data and produce a timestamped signature stream.
 
-        The signature, salt and timestamp are encoded using chosen encoder.
-        Data is left as-is.
+        The timestamped signature stream (timestamp, signature and salt) is
+        encoded using the chosen encoder.
 
-        :return: A signed stream composed of salt, signature, timestamp and data.
+        :return: A signature stream composed of salt, signature and timestamp.
         """
-        timestamped_data = self._add_timestamp(data)
+        timestamp = self._get_timestamp()
+        timestamped_data = self._compose_timestamp(data, timestamp=timestamp)
 
-        return self._sign(timestamped_data)
+        return self._compose(timestamp, signature=self._sign(timestamped_data))
 
     def _unsign_with_timestamp(
         self,
-        signed_data: bytes,
+        parts: SignedDataParts,
         *,
         max_age: typing.Union[int, float, timedelta],
     ) -> bytes:
-        """Verify a stream signed and timestamped and recover data.
+        """Verify signed data parts with timestamp and recover original data.
 
-        :param signed_data: Signed data to unsign.
-        :param max_age: Ensure the signature is not older than this time in seconds.
+        :param parts: Signed data parts to unsign.
+        :keyword max_age: Ensure the signature is not older than this time in seconds.
 
         :raise SignatureError: Signed data structure is not valid.
         :raise InvalidSignatureError: Signed data signature is invalid.
@@ -424,27 +441,27 @@ class Blake2TimestampSignerBase(Blake2SignerBase, ABC):
 
         :return: Original data.
         """
-        data = self._unsign(signed_data)
+        timestamped_data = self._unsign(parts)
 
-        parts = self._split_timestamp(data)
+        timestamped_parts = self._decompose_timestamp(timestamped_data)
 
         now = time()
-        age = now - parts.timestamp
+        age = now - timestamped_parts.timestamp
         ttl = self._get_ttl_from_max_age(max_age)
 
         if age > ttl:
             raise errors.ExpiredSignatureError(
                 f'signature has expired, age {age} > {ttl} seconds',
-                timestamp=timestamp_to_aware_datetime(parts.timestamp),
+                timestamp=timestamp_to_aware_datetime(timestamped_parts.timestamp),
             )
 
         if age < 0:  # Signed in the future
             raise errors.ExpiredSignatureError(
                 f'signature has expired, age {age} < 0 seconds',
-                timestamp=timestamp_to_aware_datetime(parts.timestamp),
+                timestamp=timestamp_to_aware_datetime(timestamped_parts.timestamp),
             )
 
-        return parts.data
+        return timestamped_parts.data
 
 
 class Blake2DualSignerBase(Blake2TimestampSignerBase, ABC):
@@ -516,17 +533,17 @@ class Blake2DualSignerBase(Blake2TimestampSignerBase, ABC):
         )
 
     def _proper_sign(self, data: bytes) -> bytes:
-        """Sign given data with a signer or timestamp signer properly producing a stream.
+        """Sign given data with a (timestamp) signer producing a signature stream.
 
-        The signature and salt are encoded using the chosen encoder.
-        Data is left as-is.
+        The signature stream (salt, signature and/or timestamp) are encoded using
+        the chosen encoder.
         """
         if self._max_age is None:
             return self._sign(data)
 
         return self._sign_with_timestamp(data)
 
-    def _proper_unsign(self, signed_data: bytes) -> bytes:
+    def _proper_unsign(self, parts: SignedDataParts) -> bytes:
         """Unsign signed data properly with the corresponding signer.
 
         :raise SignatureError: Signed data structure is not valid.
@@ -535,9 +552,9 @@ class Blake2DualSignerBase(Blake2TimestampSignerBase, ABC):
         :raise DecodeError: Timestamp can't be decoded.
         """
         if self._max_age is None:
-            return self._unsign(signed_data)
+            return self._unsign(parts)
 
-        return self._unsign_with_timestamp(signed_data, max_age=self._max_age)
+        return self._unsign_with_timestamp(parts, max_age=self._max_age)
 
 
 class Blake2SerializerSignerBase(Blake2DualSignerBase, ABC):

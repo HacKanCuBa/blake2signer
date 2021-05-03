@@ -4,6 +4,8 @@ import typing
 from datetime import timedelta
 
 from .bases import Blake2SerializerSignerBase
+from .bases import Blake2Signature
+from .bases import Blake2SignatureDump
 from .bases import Blake2SignerBase
 from .bases import Blake2TimestampSignerBase
 from .bases import HasherChoice
@@ -65,7 +67,40 @@ class Blake2Signer(Blake2SignerBase):
 
         :return: A signed stream composed of salt, signature and data.
         """
-        return self._sign(self._force_bytes(data))
+        data_b = self._force_bytes(data)
+
+        return self._compose(data_b, signature=self._sign(data_b))
+
+    def sign_parts(self, data: typing.AnyStr) -> Blake2Signature:
+        """Sign given data and produce a container with it and salted signature.
+
+        This method is identical to `sign` but it produces a container instead
+        of a stream, in case of needing to handle data and signature separately.
+
+        Note that given data is _not_ encrypted, only signed. To recover data from
+        it, while validating the signature, use `unsign_parts`.
+
+        The signature and salt are encoded using the chosen encoder.
+        Data is left as-is.
+
+        For deterministic signatures, no salt is used. For non-deterministic ones,
+        the salt is a cryptographically secure pseudorandom string generated for
+        this signature only (meaning that the signature always changes even when
+        the payload stays the same).
+
+        If given data is not bytes a conversion will be applied assuming it's
+        UTF-8 encoded. You should prefer to properly encode strings and passing
+        bytes to this function.
+
+        :param data: Data to sign.
+
+        :return: A container with data and its salted signature.
+
+        :raise ConversionError: Data can't be converted to bytes.
+        """
+        data_b = self._force_bytes(data)
+
+        return Blake2Signature(data=data_b, signature=self._sign(data_b))
 
     def unsign(self, signed_data: typing.AnyStr) -> bytes:
         """Verify a stream signed by :meth:`sign` and recover original data.
@@ -82,10 +117,34 @@ class Blake2Signer(Blake2SignerBase):
 
         :return: Original data.
         """
-        # Unfortunately I have to do this operation before checking the signature
-        # and there's no other way around it since the hashers only support
-        # bytes-like objects. Both itsdangerous and Django do this too.
-        return self._unsign(self._force_bytes(signed_data))
+        return self._unsign(self._decompose(self._force_bytes(signed_data)))
+
+    def unsign_parts(
+        self,
+        signature: typing.Union[Blake2Signature, Blake2SignatureDump],
+    ) -> bytes:
+        """Verify a container signed by `sign_parts` and recover original data.
+
+        This method is identical to `unsign` but it reads a container instead of
+        a stream.
+
+        If given container is not bytes a conversion will be applied assuming it's
+        UTF-8 encoded. You should prefer to properly encode strings and passing
+        a bytes container to this function.
+
+        :param signature: Signed data container to unsign.
+
+        :return: Original data.
+
+        :raise ConversionError: Signed data can't be converted to bytes.
+        :raise SignatureError: Signed data structure is not valid.
+        :raise InvalidSignatureError: Signed data signature is invalid.
+        """
+        signature = self._force_bytes_parts(signature)
+        # It's easier to just join the parts together and unsign the stream.
+        signed_data = self._compose(signature.data, signature=signature.signature)
+
+        return self.unsign(signed_data)
 
 
 class Blake2TimestampSigner(Blake2TimestampSignerBase):
@@ -138,7 +197,40 @@ class Blake2TimestampSigner(Blake2TimestampSignerBase):
 
         :return: A signed stream composed of salt, signature, timestamp and data.
         """
-        return self._sign_with_timestamp(self._force_bytes(data))
+        data_b = self._force_bytes(data)
+
+        return self._compose(data_b, signature=self._sign_with_timestamp(data_b))
+
+    def sign_parts(self, data: typing.AnyStr) -> Blake2Signature:
+        """Sign given data and produce a container of it, timestamp, salt and signature.
+
+        This method is identical to `sign` but it produces a container instead
+        of a stream, in case of needing to handle data and signature separately.
+
+        Note that given data is _not_ encrypted, only signed. To recover data from
+        it, while validating the signature and timestamp, use `unsign_parts`.
+
+        The signature, salt and timestamp are encoded using chosen encoder.
+        Data is left as-is.
+
+        For deterministic signatures, no salt is used. For non-deterministic ones,
+        the salt is a cryptographically secure pseudorandom string generated for
+        this signature only (meaning that the signature always changes even when
+        the payload stays the same).
+
+        If given data is not bytes a conversion will be applied assuming it's
+        UTF-8 encoded. You should prefer to properly encode strings and passing
+        bytes to this function.
+
+        :param data: Data to sign.
+
+        :return: A container with data and its timestamped salted signature.
+
+        :raise ConversionError: Data can't be converted to bytes.
+        """
+        data_b = self._force_bytes(data)
+
+        return Blake2Signature(data=data_b, signature=self._sign_with_timestamp(data_b))
 
     def unsign(
         self,
@@ -166,9 +258,40 @@ class Blake2TimestampSigner(Blake2TimestampSignerBase):
         # and there's no other way around it since the hashers only support
         # bytes-like objects. Both itsdangerous and Django do this too.
         return self._unsign_with_timestamp(
-            self._force_bytes(signed_data),
+            self._decompose(self._force_bytes(signed_data)),
             max_age=max_age,
         )
+
+    def unsign_parts(
+        self,
+        signature: typing.Union[Blake2Signature, Blake2SignatureDump],
+        *,
+        max_age: typing.Union[int, float, timedelta],
+    ) -> bytes:
+        """Verify a container signed by `sign_parts` and recover original data.
+
+        This method is identical to `unsign` but it reads a container instead of
+        a stream.
+
+        If given container is not bytes a conversion will be applied assuming it's
+        UTF-8 encoded. You should prefer to properly encode strings and passing
+        a bytes container to this function.
+
+        :param signature: Signed data container to unsign.
+        :keyword max_age: Ensure the signature is not older than this time in seconds.
+
+        :raise ConversionError: Signed data can't be converted to bytes.
+        :raise SignatureError: Signed data structure is not valid.
+        :raise InvalidSignatureError: Signed data signature is invalid.
+        :raise ExpiredSignatureError: Signed data signature has expired.
+
+        :return: Original data.
+        """
+        sig = self._force_bytes_parts(signature)
+        # It's easier to just join the parts together and unsign the stream.
+        signed_data = self._compose(sig.data, signature=sig.signature)
+
+        return self.unsign(signed_data, max_age=max_age)
 
 
 class Blake2SerializerSigner(
@@ -429,7 +552,88 @@ class Blake2SerializerSigner(
         )
 
         # since everything is ASCII, decoding is safe
-        return self._proper_sign(dump).decode()
+        return self._compose(dump, signature=self._proper_sign(dump)).decode()
+
+    def dumps_parts(
+        self,
+        data: typing.Any,
+        *,
+        use_compression: bool = True,
+        compression_level: int = 6,
+        force_compression: bool = False,
+        serializer_kwargs: typing.Optional[typing.Dict[str, typing.Any]] = None,
+    ) -> Blake2SignatureDump:
+        """Serialize and sign data, optionally compressing and/or timestamping it.
+
+        This method is identical to `dumps` but it dumps into a container instead
+        of a stream, in case of needing to handle data and signature separately.
+
+        Note that given data is _not_ encrypted, only signed. To recover data from
+        the produced string, while validating the signature (and timestamp if any),
+        use `loads_parts`.
+
+        Data will be serialized, optionally compressed, and encoded before being
+        signed. This means that it must be of any type serializable by the chosen
+        serializer, i.e. for a JSON serializer: str, int, float, list, tuple, bool,
+        None or dict, or a composition of those (tuples are unserialized as lists).
+
+        If `max_age` was specified then the stream will be timestamped.
+
+        For deterministic signatures, no salt is used. For non-deterministic ones,
+        the salt is a cryptographically secure pseudorandom string generated for
+        this signature only (meaning that the signature always changes even when
+        the payload stays the same).
+
+        The full flow is as follows, where optional actions are marked between brackets:
+        data -> serialize -> [compress] -> [timestamp] -> encode -> sign
+
+        :param data: Any serializable object.
+        :keyword use_compression: [optional] Compress data after serializing it and
+                                decompress it before unserializing. For low entropy
+                                payloads such as human readable text, it's beneficial
+                                from around ~30bytes, and detrimental if smaller.
+                                For high entropy payloads like pseudorandom text,
+                                it's beneficial from around ~300bytes and detrimental
+                                if lower than ~100bytes. You can safely enable it
+                                since a size check is done so if compression turns
+                                detrimental then it won't be used. If you know
+                                from beforehand that data can't be compressed and
+                                don't want to waste resources trying, set it to False.
+        :keyword compression_level: [optional] Set the desired compression level
+                                  when using compression, where 1 is the fastest
+                                  and least compressed and 9 the slowest and most
+                                  compressed (defaults to 6).
+                                  Note that the performance impact is for both
+                                  compression and decompression.
+        :keyword force_compression: [optional] Force compression even if it would
+                                  be detrimental for performance or size. This
+                                  parameter overrides `use_compression`.
+        :keyword serializer_kwargs: [optional] Provide keyword arguments for the
+                                  serializer.
+
+        :return: A container with an encoded, signed and optionally timestamped string
+                 of serialized and optionally compressed data. This value is safe for
+                 printing or transmitting as it only contains the characters supported
+                 by the encoder and the separator, which are ASCII.
+
+        :raise SerializationError: Data can't be serialized.
+        :raise CompressionError: Data can't be compressed or compression level is
+                                 invalid.
+        :raise EncodeError: Data can't be encoded.
+        """
+        dump = self._dumps(
+            data,
+            use_compression=use_compression,
+            compression_level=compression_level,
+            force_compression=force_compression,
+            serializer_kwargs=serializer_kwargs,
+        )
+
+        # since everything is ASCII, decoding is safe
+        return Blake2SignatureDump(
+            data=dump.decode(),
+            signature=self._proper_sign(dump).decode(),
+        )
 
     def dump(
         self,
@@ -531,11 +735,38 @@ class Blake2SerializerSigner(
         :raise DecompressionError: Signed data can't be decompressed.
         :raise UnserializationError: Signed data can't be unserialized.
 
-        :return: Unserialized data.
+        :return: Original data.
         """
-        unsigned_data = self._proper_unsign(self._force_bytes(signed_data))
+        parts = self._decompose(self._force_bytes(signed_data))
 
-        return self._loads(unsigned_data)
+        return self._loads(self._proper_unsign(parts))
+
+    def loads_parts(
+        self,
+        signature: typing.Union[Blake2Signature, Blake2SignatureDump],
+    ) -> typing.Any:
+        """Recover original data from a signed serialized container from `dumps_parts`.
+
+        This method is identical to `loads` but it reads a container instead of
+        a stream.
+
+        If `max_age` was specified then it will be ensured that the signature is
+        not older than that time in seconds.
+
+        If the data was compressed it will be decompressed before unserializing it.
+
+        The full flow is as follows, where optional actions are marked between brackets:
+        data -> check sig -> [check timestamp] -> decode -> [decompress] -> unserialize
+
+        :param signature: Signed data container to unsign.
+
+        :return: Original data.
+        """
+        sig = self._force_bytes_parts(signature)
+        # It's easier to just join the parts together and unsign the stream.
+        signed_data = self._compose(sig.data, signature=sig.signature)
+
+        return self.loads(signed_data)
 
     def load(self, file: typing.IO) -> typing.Any:
         """Recover original data from a signed serialized file from :meth:`dump`.

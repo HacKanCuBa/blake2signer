@@ -32,8 +32,8 @@ class SignedDataError(DataError):
     Generic data error that occurred for signed data that is being processed.
 
     All exceptions regarding signed data handling depends on this one, so you can
-    safely catch it to deal with signed data errors (produced during `unsgin` or
-    `loads`).
+    safely catch it to deal with signed data errors (produced during `unsign`,
+    `unsign_parts`, `loads`, `loads_parts`, or `load`).
     """
 
 
@@ -44,7 +44,7 @@ class UnsignedDataError(DataError):
 
     All exceptions regarding non-signed data handling depends on this one, so you
     can safely catch it to deal with non-signed data errors (produced during
-    `sign` or `dumps`).
+    `sign`, `sign_parts`, `dumps`, `dumps_parts` or `dump`).
     """
 
 
@@ -125,8 +125,8 @@ class EncodeError(UnsignedDataError):
 class ConversionError(SignedDataError, UnsignedDataError):
     """Conversion error.
 
-    Means that given data could not be converted to bytes. This can happen during
-    either `sign`/`dumps` and `unsign`/`loads`.
+    Means that given data could not be converted to bytes. This can happen for
+    any process.
     """
 
 
