@@ -3,6 +3,7 @@
 import hashlib
 import typing
 from abc import ABC
+from abc import abstractmethod
 from dataclasses import dataclass
 from datetime import timedelta
 from enum import Enum
@@ -514,23 +515,59 @@ class Blake2DualSignerBase(Blake2TimestampSignerBase, ABC):
             encoder=encoder,
         )
 
+    def _proper_sign(self, data: bytes) -> bytes:
+        """Sign given data with a signer or timestamp signer properly producing a stream.
 
-class Blake2SerializerSignerBase(Blake2DualSignerBase, ABC):
-    """Base class for a serializer signer that implements `dumps` and `loads`."""
+        The signature and salt are encoded using the chosen encoder.
+        Data is left as-is.
+        """
+        if self._max_age is None:
+            return self._sign(data)
 
-    def _loads(self, signed_data: bytes) -> bytes:
-        """Unsign signed data and get it ready for processing."""
+        return self._sign_with_timestamp(data)
+
+    def _proper_unsign(self, signed_data: bytes) -> bytes:
+        """Unsign signed data properly with the corresponding signer.
+
+        :raise SignatureError: Signed data structure is not valid.
+        :raise InvalidSignatureError: Signed data signature is invalid.
+        :raise ExpiredSignatureError: Signed data signature has expired.
+        :raise DecodeError: Timestamp can't be decoded.
+        """
         if self._max_age is None:
             return self._unsign(signed_data)
 
         return self._unsign_with_timestamp(signed_data, max_age=self._max_age)
 
-    def _dumps(self, data: bytes) -> bytes:
-        """Sign given data with a signer or a timestamp signer properly."""
-        if self._max_age is None:
-            return self._sign(data)
 
-        return self._sign_with_timestamp(data)
+class Blake2SerializerSignerBase(Blake2DualSignerBase, ABC):
+    """Base class for a serializer signer that implements `dumps` and `loads`."""
+
+    @abstractmethod
+    def _dumps(self, data: typing.Any, **kwargs: typing.Any) -> bytes:
+        """Dump data serializing it.
+
+        Implement this method with all the tasks necessary to serialize data, such
+        as encoding, compression, etc.
+
+        :param data: Data to serialize.
+        :keyword kwargs: Additional keyword only arguments for the method.
+
+        :return: Serialized data.
+        """
+
+    @abstractmethod
+    def _loads(self, dumped_data: bytes, **kwargs: typing.Any) -> typing.Any:
+        """Load serialized data to recover it.
+
+        Implement this method with all the tasks necessary to unserialize data,
+        such as decoding, decompression, etc.
+
+        :param dumped_data: Data to unserialize.
+        :keyword kwargs: Additional keyword only arguments for the method.
+
+        :return: Original data.
+        """
 
     @staticmethod
     def _read(file: typing.IO) -> typing.AnyStr:

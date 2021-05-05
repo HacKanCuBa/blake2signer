@@ -719,7 +719,7 @@ class Blake2SerializerSignerTests(TestCase):
         signer = Blake2SerializerSigner(self.secret, compression_flag=flag)
 
         signed = signer.dumps(data)
-        unsigned = signer._loads(signed.encode())
+        unsigned = signer._proper_unsign(signed.encode())
         undecoded = signer._decode(unsigned)
         self.assertIn(flag, undecoded)
         self.assertTrue(undecoded.startswith(flag))

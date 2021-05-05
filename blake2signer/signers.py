@@ -296,6 +296,66 @@ class Blake2SerializerSigner(
             compression_ratio=compression_ratio,
         )
 
+    def _dumps(self, data: typing.Any, **kwargs: typing.Any) -> bytes:
+        """Dump data serializing it.
+
+        This method serializes data, then compresses it and finally encodes it.
+
+        :param data: Data to serialize.
+        :keyword use_compression (bool): Compress data after serializing.
+        :keyword compression_level (int): Set the desired compression level when using
+                                          compression, where 1 is the fastest and least
+                                          compressed and 9 the slowest and most
+                                          compressed.
+        :keyword force_compression (bool): Force compression even if it would be
+                                           detrimental for performance or size. This
+                                           parameter overrides `use_compression`.
+        :keyword serializer_kwargs (dict, optional): Provide keyword arguments for the
+                                                     serializer.
+
+        :return: Serialized data.
+        """
+        use_compression: bool = kwargs['use_compression']
+        compression_level: int = kwargs['compression_level']
+        force_compression: bool = kwargs['force_compression']
+        serializer_kwargs: typing.Optional[typing.Dict[str, typing.Any]]
+        serializer_kwargs = kwargs.get('serializer_kwargs') or {}
+
+        serialized = self._serialize(data, **serializer_kwargs)
+
+        if use_compression or force_compression:
+            compressed, _ = self._compress(
+                serialized,
+                level=compression_level,
+                force=force_compression,
+            )
+        else:
+            compressed = serialized
+
+        return self._encode(compressed)
+
+    def _loads(self, dumped_data: bytes, **kwargs: typing.Any) -> typing.Any:
+        """Load serialized data to recover it.
+
+        This method decodes data, then decompresses it and finally unserializes it.
+
+        :param dumped_data: Data to unserialize.
+        :keyword kwargs: Ignored.
+
+        :return: Original data.
+
+        :raises DecodeError: Data can't be decoded.
+        :raises DecompressionError: Data can't be decompressed.
+        :raises UnserializationError: Data can't be unserialized.
+        """
+        decoded = self._decode(dumped_data)
+
+        decompressed = self._decompress(decoded)
+
+        unserizalized = self._unserialize(decompressed)
+
+        return unserizalized
+
     def dumps(
         self,
         data: typing.Any,
@@ -360,21 +420,16 @@ class Blake2SerializerSigner(
                  transmitting as it only contains the characters supported by the
                  encoder and the separator, which are ASCII.
         """
-        kwargs = serializer_kwargs if serializer_kwargs else {}
-        serialized = self._serialize(data, **kwargs)
+        dump = self._dumps(
+            data,
+            use_compression=use_compression,
+            compression_level=compression_level,
+            force_compression=force_compression,
+            serializer_kwargs=serializer_kwargs,
+        )
 
-        if use_compression or force_compression:
-            compressed, _ = self._compress(
-                serialized,
-                level=compression_level,
-                force=force_compression,
-            )
-        else:
-            compressed = serialized
-
-        encoded = self._encode(compressed)
-
-        return self._dumps(encoded).decode()  # since everything is ascii this is safe
+        # since everything is ASCII, decoding is safe
+        return self._proper_sign(dump).decode()
 
     def dump(
         self,
@@ -478,15 +533,9 @@ class Blake2SerializerSigner(
 
         :return: Unserialized data.
         """
-        unsigned = self._loads(self._force_bytes(signed_data))
+        unsigned_data = self._proper_unsign(self._force_bytes(signed_data))
 
-        decoded = self._decode(unsigned)
-
-        decompressed = self._decompress(decoded)
-
-        unserizalized = self._unserialize(decompressed)
-
-        return unserizalized
+        return self._loads(unsigned_data)
 
     def load(self, file: typing.IO) -> typing.Any:
         """Recover original data from a signed serialized file from :meth:`dump`.
