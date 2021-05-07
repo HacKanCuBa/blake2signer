@@ -54,7 +54,7 @@ class EncoderInterface(ABC):
     """
 
     @abstractmethod
-    def encode(self, data: bytes) -> bytes:
+    def encode(self, data: typing.AnyStr) -> bytes:
         """Encode given data."""
 
     @abstractmethod
@@ -93,7 +93,7 @@ class ZlibCompressor(CompressorInterface):
 class B64URLEncoder(EncoderInterface):
     """Base64 URL safe encoder."""
 
-    def encode(self, data: bytes) -> bytes:
+    def encode(self, data: typing.AnyStr) -> bytes:
         """Encode given data to base64 URL safe without padding."""
         return b64encode(data)
 
@@ -340,7 +340,7 @@ class EncoderMixin(Mixin, ABC):
 
         super().__init__(*args, **kwargs)
 
-    def _encode(self, data: bytes) -> bytes:
+    def _encode(self, data: typing.AnyStr) -> bytes:
         """Encode given data.
 
         :raise EncodeError: Data can't be encoded.
