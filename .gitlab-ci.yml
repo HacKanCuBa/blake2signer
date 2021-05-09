@@ -108,3 +108,29 @@ tests py3.10:
     - main
     - tags
     - feature/deploy
+
+publish test:
+  stage: publish
+  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.4"
+  variables:
+    POETRY_VIRTUALENVS_CREATE: 0
+  script:
+    - MAX_TRIES=${PUBLISH_TEST_MAX_TRIES:-10}
+    - poetry config repositories.testpypi https://test.pypi.org/legacy/
+    - poetry config pypi-token.testpypi "$POETRY_PYPI_TOKEN_TESTPYPI"
+    - count=0; while [ $count -lt $MAX_TRIES ]; do printf "Attempt %d of %d\n" "$((count + 1))" "$MAX_TRIES"; sleep "$((count / 2))"; poetry version prerelease && poetry publish --build -r testpypi && break || let "count+=1"; done
+    - if [ $count -ge $MAX_TRIES ]; then exit 1; fi
+  only:
+    - /^release\/.+$/
+
+publish:
+  stage: publish
+  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.4"
+  variables:
+    POETRY_VIRTUALENVS_CREATE: 0
+  script:
+    - poetry publish --build
+    - sha256sum dist/*
+    - sha512sum dist/*
+  only:
+    - tags
