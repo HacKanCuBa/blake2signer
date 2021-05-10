@@ -1,4 +1,0 @@
-Added
------
-
-- Add jobs to publish python packages automatically.

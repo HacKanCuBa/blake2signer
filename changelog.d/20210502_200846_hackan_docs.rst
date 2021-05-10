@@ -1,4 +1,0 @@
-Fixed
------
-
-- Fix wrong exception being raised in `Blake2TimestampSignerBase._decode_timestamp()`.

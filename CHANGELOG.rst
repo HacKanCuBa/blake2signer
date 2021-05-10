@@ -1,3 +1,17 @@
+
+1.2.1 - 2021-05-10
+==================
+
+Added
+-----
+
+- Add jobs to publish python packages automatically.
+
+Fixed
+-----
+
+- Fix wrong exception being raised in `Blake2TimestampSignerBase._decode_timestamp()`.
+
 1.2.0 - 2021-04-24
 ==================
 
