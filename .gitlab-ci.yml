@@ -1,6 +1,7 @@
-image: "docker:19.03.13"
+image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.6"
 
 stages:
+  - setup
   - static_analysis
   - test
   - build
@@ -8,106 +9,134 @@ stages:
   - security_analysis
   - publish
 
-python lint:
-  stage: static_analysis
-  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.4"
-  variables:
-    INVOKE_RUN_SHELL: /bin/ash
-    POETRY_VIRTUALENVS_CREATE: 0
-  before_script:
-    - poetry install
+variables:
+  POETRY_CACHE_DIR: "$CI_PROJECT_DIR/.cache/poetry"
+
+.poetry cache:
+  stage: setup
   script:
-    - inv reformat
-    - changes="$(git status --porcelain=v2 2>/dev/null)"
-    - if [ -n "$changes" ]; then printf "Code is not properly formatted\n%s" "$changes"; exit 1; fi
-    - inv lint
+    - time poetry install --remove-untracked --no-ansi
+  cache:
+    key: "python-${CI_COMMIT_REF_SLUG}"  # Prevent cache poisoning
+    policy: pull-push
+    paths:
+      - .cache/poetry/
   except:
     - main
     - tags
-    - feature/deploy
+
+poetry cache py3.9:
+  extends: .poetry cache
+  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.6-3.9"
+  cache:
+    key: "py39-${CI_COMMIT_REF_SLUG}"
+
+poetry cache py3.7:
+  extends: .poetry cache
+  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.6-3.7"
+  cache:
+    key: "py37-${CI_COMMIT_REF_SLUG}"
+
+poetry cache py3.8:
+  extends: .poetry cache
+  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.6-3.8"
+  cache:
+    key: "py38-${CI_COMMIT_REF_SLUG}"
+
+poetry cache py3.10rc:
+  extends: .poetry cache
+  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.6-3.10rc"
+  allow_failure: true
+  cache:
+    key: "py310rc-${CI_COMMIT_REF_SLUG}"
+
+python lint:
+  stage: static_analysis
+  needs:
+    - poetry cache py3.9
+  script:
+    - time poetry run inv reformat
+    - changes="$(git status --porcelain=v2 2>/dev/null)"
+    - if [ -n "$changes" ]; then printf "Code is not properly formatted\n%s" "$changes"; exit 1; fi
+    - time poetry run inv lint
+  cache:
+    key: "py39-${CI_COMMIT_REF_SLUG}"
+    policy: pull
+    paths:
+      - .cache/poetry/
+  except:
+    - main
+    - tags
 
 packages security:
   stage: static_analysis
-  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.4"
-  before_script:
-    - pip install safety
+  needs:
+    - poetry cache py3.9
   script:
-    - poetry export -f requirements.txt -o requirements.txt --dev
-    - safety check --full-report -r requirements.txt
+    - time poetry export -f requirements.txt -o requirements.txt --dev
+    - time poetry run safety check --full-report -r requirements.txt
+  cache:
+    key: "py39-${CI_COMMIT_REF_SLUG}"
+    policy: pull
+    paths:
+      - .cache/poetry/
   except:
     - main
     - tags
-    - feature/deploy
+
+.tests:
+  stage: test
+  script:
+    - time poetry run inv tests
+  cache:
+    key: "python-${CI_COMMIT_REF_SLUG}"
+    policy: pull
+    paths:
+      - .cache/poetry/
+  except:
+    - main
+    - tags
 
 tests py3.9:
-  stage: test
-  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.4"
-  variables:
-    INVOKE_RUN_SHELL: /bin/ash
-    POETRY_VIRTUALENVS_CREATE: 0
-  before_script:
-    - poetry install
-  script:
-    - inv tests
-  except:
-    - main
-    - tags
-    - feature/deploy
+  extends: .tests
+  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.6-3.9"
+  needs:
+    - poetry cache py3.9
+    - python lint
+    - packages security
+  cache:
+    key: "py39-${CI_COMMIT_REF_SLUG}"
 
 tests py3.8:
-  stage: test
-  image: "python:3.8-slim"
-  variables:
-    INVOKE_RUN_SHELL: /bin/bash
-    POETRY_VIRTUALENVS_CREATE: 0
-  before_script:
-    - apt update
-    - apt install -qy git build-essential libffi-dev
-    - pip install poetry
-    - poetry install
-  script:
-    - inv tests
-  except:
-    - main
-    - tags
-    - feature/deploy
+  extends: .tests
+  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.6-3.8"
+  needs:
+    - poetry cache py3.8
+    - python lint
+    - packages security
+  cache:
+    key: "py38-${CI_COMMIT_REF_SLUG}"
 
 tests py3.7:
-  stage: test
-  image: "python:3.7-slim"
-  variables:
-    INVOKE_RUN_SHELL: /bin/bash
-    POETRY_VIRTUALENVS_CREATE: 0
-  before_script:
-    - apt update
-    - apt install -qy git build-essential libffi-dev
-    - pip install poetry
-    - poetry install
-  script:
-    - inv tests
-  except:
-    - main
-    - tags
-    - feature/deploy
+  extends: .tests
+  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.6-3.7"
+  needs:
+    - poetry cache py3.7
+    - python lint
+    - packages security
+  cache:
+    key: "py37-${CI_COMMIT_REF_SLUG}"
 
 tests py3.10:
-  stage: test
-  image: "python:3.10-rc-slim"  # python bug can't build wheel so alpine doesn't work
-  variables:
-    INVOKE_RUN_SHELL: /bin/bash
-    POETRY_VIRTUALENVS_CREATE: 0
+  extends: .tests
+  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.6-3.10rc"
+  needs:
+    - poetry cache py3.10rc
+    - python lint
+    - packages security
+  cache:
+    key: "py310rc-${CI_COMMIT_REF_SLUG}"
   allow_failure: true
-  before_script:
-    - apt update
-    - apt install -qy git build-essential libffi-dev
-    - pip install poetry
-    - poetry install
-  script:
-    - inv tests
-  except:
-    - main
-    - tags
-    - feature/deploy
 
 # https://aquasecurity.github.io/trivy/v0.18.0/integrations/gitlab-ci/
 security scanning:
@@ -115,6 +144,8 @@ security scanning:
   image:
     name: docker.io/aquasec/trivy:latest
     entrypoint: [ "" ]
+  needs:
+    - packages security
   script:
     - trivy --version
     # update vulnerabilities db
@@ -144,23 +175,19 @@ security scanning:
 
 publish test:
   stage: publish
-  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.4"
-  variables:
-    POETRY_VIRTUALENVS_CREATE: 0
   script:
     - MAX_TRIES=${PUBLISH_TEST_MAX_TRIES:-10}
     - poetry config repositories.testpypi https://test.pypi.org/legacy/
     - poetry config pypi-token.testpypi "$POETRY_PYPI_TOKEN_TESTPYPI"
     - count=0; while [ $count -lt $MAX_TRIES ]; do printf "Attempt %d of %d\n" "$((count + 1))" "$MAX_TRIES"; sleep "$((count / 2))"; poetry version prerelease && poetry publish --build -r testpypi && break || let "count+=1"; done
+    - sha256sum dist/*
+    - sha512sum dist/*
     - if [ $count -ge $MAX_TRIES ]; then exit 1; fi
   only:
     - /^release\/.+$/
 
 publish:
   stage: publish
-  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.4"
-  variables:
-    POETRY_VIRTUALENVS_CREATE: 0
   script:
     - poetry publish --build
     - sha256sum dist/*
