@@ -1,0 +1,4 @@
+Added
+-----
+
+- Create a security scanning job using `Trivy <https://aquasecurity.github.io/trivy/>`_.

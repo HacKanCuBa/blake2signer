@@ -12,7 +12,7 @@ With the goal of keeping this project secure, several measures are taken:
 * Tags, releases and packages are always signed.
 * No external dependencies to diminish attack surface and risk.
 * Safe defaults and secure minimums enforced for sensitive values.
-* Analysis of (dev) dependencies for known vulnerabilities using [safety](https://pyup.io/safety).
+* Analysis of (dev) dependencies for known vulnerabilities using [safety](https://pyup.io/safety) and [trivy](https://aquasecurity.github.io/trivy/).
 * Static analysis of code for common pitfalls and potential vulnerabilities using [bandit](https://bandit.readthedocs.io/en/latest).
 * Build reproducibility thanks to [poetry](https://python-poetry.org/): trusted code -> trusted package (although [this may not be too important](https://blog.cmpxchg8b.com/2020/07/you-dont-need-reproducible-builds.html)).
 

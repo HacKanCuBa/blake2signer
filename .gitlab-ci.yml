@@ -109,6 +109,39 @@ tests py3.10:
     - tags
     - feature/deploy
 
+# https://aquasecurity.github.io/trivy/v0.18.0/integrations/gitlab-ci/
+security scanning:
+  stage: security_analysis
+  image:
+    name: docker.io/aquasec/trivy:latest
+    entrypoint: [ "" ]
+  script:
+    - trivy --version
+    # update vulnerabilities db
+    - time trivy --cache-dir .trivycache/ --download-db-only --no-progress
+    # Builds report and puts it in the default workdir $CI_PROJECT_DIR, so `artifacts:` can take it from there
+    - time trivy --cache-dir .cache/trivy/ fs --exit-code 0 --no-progress --format template --template "@/contrib/gitlab.tpl" --output "$CI_PROJECT_DIR/gl-container-scanning-report.json" .
+    # Prints full report
+    - time trivy --cache-dir .cache/trivy/ fs --exit-code 0 --no-progress .
+    # Fails on every vulnerability that can be fixed
+    - time trivy --cache-dir .cache/trivy/ fs --exit-code 1 --ignore-unfixed --no-progress .
+  cache:
+    key: "trivy-${CI_COMMIT_REF_SLUG}"
+    paths:
+      - .cache/trivy/
+    policy: pull-push
+  artifacts:
+    reports:
+      # Enables https://docs.gitlab.com/ee/user/application_security/container_scanning/
+      # (Container Scanning report is available on GitLab EE Ultimate or GitLab.com Gold)
+      container_scanning: gl-container-scanning-report.json
+  except:
+    variables:
+      - $CONTAINER_SCANNING_DISABLED
+    refs:
+      - tags
+      - main
+
 publish test:
   stage: publish
   image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.4"
