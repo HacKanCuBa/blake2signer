@@ -1,0 +1,4 @@
+Added
+-----
+
+- Add a job to test support for `Stackless Python <https://github.com/stackless-dev/stackless/wiki>`_ 3.7.

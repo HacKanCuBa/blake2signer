@@ -68,6 +68,10 @@ You can install and run this package in PyPy without issues but if you are using
 
 Other than that I once tried to run the [performance tests](https://blake2signer.hackan.net/en/stable/comparison/#performance-comparison), and my machine froze during the serializer tests because it exhausted the memory. I tried again using fewer iterations, and it worked.
 
+### Working under Stackless
+
+You can install and run this package in Stackless without issues but if you are using Stackless to contribute to this project, you probably noticed that running `inv tests` fails with a segmentation fault: I have no idea what causes it, but it is related to `coverage` and `pytest`. The solution is to run `pytest --no-cov` directly, and letting the pipeline show the coverage for you.
+
 ## Releasing new versions
 
 I choose to stick with [semver](https://semver.org/), which is compatible with [PEP440](https://www.python.org/dev/peps/pep-0440/) (but only the syntax for version core).

@@ -62,6 +62,13 @@ poetry cache pypy3.7:
     key: "pypy37-${CI_COMMIT_REF_SLUG}"
   allow_failure: true
 
+poetry cache stackless3.7:
+  extends: .poetry cache
+  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.6-3.7stackless"
+  cache:
+    key: "stackless37-${CI_COMMIT_REF_SLUG}"
+  allow_failure: true
+
 python lint:
   stage: static_analysis
   needs:
@@ -159,6 +166,19 @@ tests pypy3.7:
     - packages security
   cache:
     key: "pypy37-${CI_COMMIT_REF_SLUG}"
+  allow_failure: true
+
+tests stackless3.7:
+  extends: .tests
+  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.6-3.7stackless"
+  needs:
+    - poetry cache stackless3.7
+    - python lint
+    - packages security
+  script:
+    - time poetry run pytest --no-cov  # with coverage is segfaulting for some reason
+  cache:
+    key: "stackless37-${CI_COMMIT_REF_SLUG}"
   allow_failure: true
 
 # https://aquasecurity.github.io/trivy/v0.18.0/integrations/gitlab-ci/
