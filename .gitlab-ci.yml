@@ -50,6 +50,18 @@ poetry cache py3.10rc:
   cache:
     key: "py310rc-${CI_COMMIT_REF_SLUG}"
 
+poetry cache pypy3.7:
+  extends: .poetry cache
+  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.6-3.7pypy"
+  script:
+    # Running `poetry install` fails because `mypy` uses `typed_ast` which doesn't
+    # build in PyPy and probably never will, see:
+    # https://github.com/python/typed_ast/issues/111
+    - time poetry remove --no-ansi --dev mypy  # Runs install by itself
+  cache:
+    key: "pypy37-${CI_COMMIT_REF_SLUG}"
+  allow_failure: true
+
 python lint:
   stage: static_analysis
   needs:
@@ -136,6 +148,17 @@ tests py3.10:
     - packages security
   cache:
     key: "py310rc-${CI_COMMIT_REF_SLUG}"
+  allow_failure: true
+
+tests pypy3.7:
+  extends: .tests
+  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.6-3.7pypy"
+  needs:
+    - poetry cache pypy3.7
+    - python lint
+    - packages security
+  cache:
+    key: "pypy37-${CI_COMMIT_REF_SLUG}"
   allow_failure: true
 
 # https://aquasecurity.github.io/trivy/v0.18.0/integrations/gitlab-ci/

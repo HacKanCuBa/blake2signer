@@ -287,6 +287,9 @@ Regarding **pyjwt** (2.1.0), I found this lib to be *quite faster* when compared
 !!! note
     The standard deviation presented on each evaluation should be at least two orders of magnitude lower than the mean for appropriate results. As a simple reference, for an Intel i7-6820HQ @ 2.70GHz × 8 with 16 GB memory the mean is in `ms` and the std dev should be in `us`.
 
+!!! warning
+    Careful running these tests under PyPy as-is! My machine froze because the memory was exhausted. Try first with a few executions like `-n 10`.
+
 ```python
 """Timing comparison."""
 

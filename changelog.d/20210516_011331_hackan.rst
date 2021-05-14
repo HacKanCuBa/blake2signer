@@ -1,0 +1,4 @@
+Added
+-----
+
+- Add a job to test support for `PyPy <https://www.pypy.org>`_ 3.7.

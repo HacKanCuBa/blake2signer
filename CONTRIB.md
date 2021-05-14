@@ -62,6 +62,12 @@ You can alternatively run `inv commit` to run all the above and commit afterward
 
 If the linter complains about *code too complex*, run `inv cc -c` (or the long expression `inv cyclomatic-complexity --complex`) for more information.
 
+### Working under PyPy
+
+You can install and run this package in PyPy without issues but if you are using PyPy to contribute to this project, you probably noticed that running `poetry install` fails: that's due to a `mypy` dependency, `typed_ast`, which [will probably never work under PyPy](https://github.com/python/typed_ast/issues/111). What you can do is `poetry remove --dev mypy` and let the pipeline run `mypy` for you.
+
+Other than that I once tried to run the [performance tests](https://blake2signer.hackan.net/en/stable/comparison/#performance-comparison), and my machine froze during the serializer tests because it exhausted the memory. I tried again using fewer iterations, and it worked.
+
 ## Releasing new versions
 
 I choose to stick with [semver](https://semver.org/), which is compatible with [PEP440](https://www.python.org/dev/peps/pep-0440/) (but only the syntax for version core).

@@ -56,10 +56,12 @@ You can check the [releases page](https://gitlab.com/hackancuba/blake2signer/-/r
 
 Versions currently tested (check the [pipelines](https://gitlab.com/hackancuba/blake2signer/-/pipelines)):
 
-* Python 3.7
-* Python 3.8
-* Python 3.9
-* Python 3.10rc
+* CPython 3.7
+* CPython 3.8
+* CPython 3.9
+* CPython 3.10rc
+* [PyPy](https://www.pypy.org) 3.7
+    * If you are contributing to this project under PyPy, [read the contrib notes first](contrib.md#working-under-pypy).
 
 ## Documentation
 
