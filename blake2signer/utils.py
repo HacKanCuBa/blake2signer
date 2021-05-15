@@ -4,9 +4,11 @@ import base64
 import typing
 
 
-def force_bytes(value: typing.AnyStr) -> bytes:
+def force_bytes(value: typing.Any) -> bytes:
     """Force a given value into bytes."""
-    if isinstance(value, str):
+    if isinstance(value, bytes):
+        return value
+    elif isinstance(value, str):
         return value.encode('utf-8', errors='strict')
 
     return bytes(value)

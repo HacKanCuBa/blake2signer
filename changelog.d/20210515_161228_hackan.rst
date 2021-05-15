@@ -1,0 +1,4 @@
+Changed
+-------
+
+- Improve force_bytes performance by not casting bytes to bytes, and change its signature to accept any.
