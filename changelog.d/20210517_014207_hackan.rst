@@ -1,0 +1,4 @@
+Changed
+-------
+
+- Split tests by module or class to avoid having a giant single file with all the tests in it.

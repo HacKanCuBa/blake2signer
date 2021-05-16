@@ -11,7 +11,7 @@ from invoke import task
 def flake8(ctx):
     """Run flake8 with proper exclusions."""
     ctx.run(f'flake8 --exclude tests blake2signer/', echo=True)
-    ctx.run(f'flake8 --ignore=S101 blake2signer/tests/', echo=True)
+    ctx.run(f'flake8 --ignore=S101,R701,C901 blake2signer/tests/', echo=True)
 
 
 @task
