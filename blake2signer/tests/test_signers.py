@@ -213,24 +213,30 @@ class Blake2SignerErrorTests(TestCase):
         with self.assertRaises(errors.SignatureError) as cm:  # using `msg` doesn't work
             signer.unsign(b'12345678')
         self.assertEqual(str(cm.exception), 'separator not found in signed data')
+        self.assertIsNone(cm.exception.__cause__)
 
         with self.assertRaises(errors.SignatureError) as cm:
             signer.unsign(b'123.45678')
         self.assertEqual(str(cm.exception), 'signature is too short')
+        self.assertIsNone(cm.exception.__cause__)
 
     def test_unsign_invalid_signature(self) -> None:
         """Test unsign with invalid signature."""
         signer = Blake2Signer(self.secret)
-        with self.assertRaises(errors.InvalidSignatureError):
+        with self.assertRaises(errors.InvalidSignatureError) as cm:
             signer.unsign(b'0' * (signer._salt_size + signer.MIN_DIGEST_SIZE) + b'.')
+        self.assertEqual(str(cm.exception), 'signature is not valid')
+        self.assertIsNone(cm.exception.__cause__)
 
     def test_sign_unsign_wrong_person_same_secret(self) -> None:
         """Test signing and unsigning using wrong person fails despite same secret."""
         signed = Blake2Signer(self.secret, personalisation=self.person).sign(self.data)
         signer = Blake2Signer(self.secret)
 
-        with self.assertRaises(errors.InvalidSignatureError):
+        with self.assertRaises(errors.InvalidSignatureError) as cm:
             signer.unsign(signed)
+        self.assertEqual(str(cm.exception), 'signature is not valid')
+        self.assertIsNone(cm.exception.__cause__)
 
     def test_wrong_nonbytes_inputs(self) -> None:
         """Test wrong non-bytes values for parameters such as secret, person, etc."""
@@ -411,7 +417,9 @@ class Blake2TimestampSignerErrorTests(TestCase):
         signer = Blake2TimestampSigner(self.secret, digest_size=self.digest_size)
         with self.assertRaises(errors.ExpiredSignatureError) as cm:
             signer.unsign(self.signed, max_age=1)
+        self.assertIn('signature has expired', str(cm.exception))
         self.assertTrue(cm.exception.timestamp)
+        self.assertIsNone(cm.exception.__cause__)
 
     def test_unsign_wrong_data(self) -> None:
         """Test unsign wrong data."""
@@ -424,11 +432,13 @@ class Blake2TimestampSignerErrorTests(TestCase):
         with self.assertRaises(errors.SignatureError) as cm:
             signer.unsign(trick_signed, max_age=1)
         self.assertEqual(str(cm.exception), 'separator not found in timestamped data')
+        self.assertIsNone(cm.exception.__cause__)
 
         trick_signed = trick_signer.sign(b'.' + self.data)
         with self.assertRaises(errors.SignatureError) as cm:
             signer.unsign(trick_signed, max_age=1)
         self.assertEqual(str(cm.exception), 'timestamp information is missing')
+        self.assertIsNone(cm.exception.__cause__)
 
     def test_unsign_wrong_timestamped_data(self) -> None:
         """Test unsign wrong timestamped data."""
@@ -438,9 +448,10 @@ class Blake2TimestampSignerErrorTests(TestCase):
         trick_signer._person = signer._person
 
         trick_signed = trick_signer.sign(b'-.' + self.data)
-        with self.assertRaises(errors.DecodeError) as exc:
+        with self.assertRaises(errors.DecodeError) as cm:
             signer.unsign(trick_signed, max_age=1)
-        self.assertIn('can not be decoded', str(exc.exception))
+        self.assertIn('can not be decoded', str(cm.exception))
+        self.assertIsNotNone(cm.exception.__cause__)
 
     @mock.patch('blake2signer.bases.time')
     def test_sign_timestamp_overflow(self, mock_time: mock.MagicMock) -> None:
@@ -813,8 +824,10 @@ class Blake2SerializerSignerErrorTests(TestCase):
         """Test loading with timestamp is correct."""
         signer = Blake2SerializerSigner(self.secret, max_age=1)
 
-        with self.assertRaises(errors.ExpiredSignatureError):
+        with self.assertRaises(errors.ExpiredSignatureError) as cm:
             signer.loads(self.dumped)
+        self.assertIn('signature has expired', str(cm.exception))
+        self.assertIsNone(cm.exception.__cause__)
 
     def test_dumps_wrong_data(self) -> None:
         """Test dumps wrong data."""
@@ -822,10 +835,8 @@ class Blake2SerializerSignerErrorTests(TestCase):
 
         with self.assertRaises(errors.SerializationError) as cm:  # `msg` doesn't work
             signer.dumps(b'datadata')  # any non JSON encodable type
-        self.assertEqual(
-            str(cm.exception),
-            'Object of type bytes is not JSON serializable',
-        )
+        self.assertEqual(str(cm.exception), 'data can not be serialized')
+        self.assertIsNotNone(cm.exception.__cause__)
 
     def test_loads_wrong_data(self) -> None:
         """Test loads wrong data."""
@@ -834,6 +845,7 @@ class Blake2SerializerSignerErrorTests(TestCase):
             # noinspection PyTypeChecker
             signer.loads(1.0)  # type: ignore
         self.assertEqual(str(cm.exception), 'value can not be converted to bytes')
+        self.assertIsNotNone(cm.exception.__cause__)
 
     def test_loads_b64decode_error(self) -> None:
         """Test loads wrong data causing base64 decoding error."""
@@ -843,6 +855,7 @@ class Blake2SerializerSignerErrorTests(TestCase):
         with self.assertRaises(errors.DecodeError) as cm:
             signer.loads(trick_signed)
         self.assertEqual(str(cm.exception), 'data can not be decoded')
+        self.assertIsNotNone(cm.exception.__cause__)
 
     def test_loads_decompression_error(self) -> None:
         """Test loads wrong data causing decompression error."""
@@ -854,6 +867,7 @@ class Blake2SerializerSignerErrorTests(TestCase):
         with self.assertRaises(errors.DecompressionError) as cm:
             signer.loads(trick_signed)
         self.assertEqual(str(cm.exception), 'data can not be decompressed')
+        self.assertIsNotNone(cm.exception.__cause__)
 
     def test_loads_unserialization_error(self) -> None:
         """Test loads wrong data causing unserialization error."""
@@ -863,6 +877,7 @@ class Blake2SerializerSignerErrorTests(TestCase):
         with self.assertRaises(errors.UnserializationError) as cm:
             signer.loads(trick_signed)
         self.assertEqual(str(cm.exception), 'data can not be unserialized')
+        self.assertIsNotNone(cm.exception.__cause__)
 
     @mock.patch('blake2signer.compressors.zlib.compress')
     def test_dumps_compression_error(self, mock_zlib_compress: mock.MagicMock) -> None:
@@ -871,8 +886,10 @@ class Blake2SerializerSignerErrorTests(TestCase):
 
         signer = Blake2SerializerSigner(self.secret)
 
-        with self.assertRaises(errors.CompressionError):
+        with self.assertRaises(errors.CompressionError) as cm:
             signer.dumps(self.data, use_compression=True)
+        self.assertEqual(str(cm.exception), 'data can not be compressed')
+        self.assertIsInstance(cm.exception.__cause__, zlib.error)
 
     @mock.patch('blake2signer.encoders.b64encode')
     def test_dumps_encoding_error(self, mock_b64encode: mock.MagicMock) -> None:
@@ -881,15 +898,19 @@ class Blake2SerializerSignerErrorTests(TestCase):
 
         signer = Blake2SerializerSigner(self.secret)
 
-        with self.assertRaises(errors.EncodeError):
+        with self.assertRaises(errors.EncodeError) as cm:
             signer.dumps(self.data)
+        self.assertEqual(str(cm.exception), 'data can not be encoded')
+        self.assertIsInstance(cm.exception.__cause__, ValueError)
 
     def test_dumps_invalid_compression_level(self) -> None:
         """Test invalid compression level for dumps."""
         signer = Blake2SerializerSigner(self.secret)
 
-        with self.assertRaises(errors.CompressionError):
+        with self.assertRaises(errors.CompressionError) as cm:
             signer.dumps(self.data, use_compression=True, compression_level=10)
+        self.assertEqual(str(cm.exception), 'data can not be compressed')
+        self.assertIsInstance(cm.exception.__cause__, zlib.error)
 
     def test_wrong_separator_in_b64encoder_alphabet(self) -> None:
         """Test error occurs when the separator is in the b64 encoder alphabet."""

@@ -27,8 +27,8 @@ class Mixin(ABC):
         """
         try:
             return force_bytes(value)
-        except Exception:
-            raise errors.ConversionError('value can not be converted to bytes')
+        except Exception as exc:
+            raise errors.ConversionError('value can not be converted to bytes') from exc
 
 
 class SerializerMixin(Mixin, ABC):
@@ -60,7 +60,7 @@ class SerializerMixin(Mixin, ABC):
         try:
             return self._serializer.serialize(data)
         except Exception as exc:
-            raise errors.SerializationError(exc) from exc
+            raise errors.SerializationError('data can not be serialized') from exc
 
     def _unserialize(self, data: bytes) -> typing.Any:
         """Unserialize given data.
@@ -69,8 +69,8 @@ class SerializerMixin(Mixin, ABC):
         """
         try:
             return self._serializer.unserialize(data)
-        except Exception:
-            raise errors.UnserializationError('data can not be unserialized')
+        except Exception as exc:
+            raise errors.UnserializationError('data can not be unserialized') from exc
 
 
 class CompressorMixin(Mixin, ABC):
@@ -184,7 +184,7 @@ class CompressorMixin(Mixin, ABC):
         try:
             compressed = self._compressor.compress(data, level=level)
         except Exception as exc:
-            raise errors.CompressionError(exc) from exc
+            raise errors.CompressionError('data can not be compressed') from exc
 
         if force or self._is_significantly_compressed(len(data), len(compressed)):
             return self._add_compression_flag(compressed), True
@@ -203,8 +203,8 @@ class CompressorMixin(Mixin, ABC):
         data = self._remove_compression_flag(data)
         try:
             return self._compressor.decompress(data)
-        except Exception:
-            raise errors.DecompressionError('data can not be decompressed')
+        except Exception as exc:
+            raise errors.DecompressionError('data can not be decompressed') from exc
 
 
 class EncoderMixin(Mixin, ABC):
@@ -251,7 +251,7 @@ class EncoderMixin(Mixin, ABC):
         try:
             return self._encoder.encode(data)
         except Exception as exc:
-            raise errors.EncodeError(exc) from exc
+            raise errors.EncodeError('data can not be encoded') from exc
 
     def _decode(self, data: bytes) -> bytes:
         """Decode given encoded data.
@@ -260,5 +260,5 @@ class EncoderMixin(Mixin, ABC):
         """
         try:
             return self._encoder.decode(data)
-        except Exception:
-            raise errors.DecodeError('data can not be decoded')
+        except Exception as exc:
+            raise errors.DecodeError('data can not be decoded') from exc
