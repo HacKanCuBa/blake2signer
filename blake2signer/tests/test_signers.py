@@ -625,13 +625,13 @@ class Blake2SerializerSignerTests(TestCase):
         signer = Blake2SerializerSigner(self.secret)
         data = self.data * 100  # so compression is meaningful
 
-        signed = signer.dumps(data, use_compression=False)
-        signed_compressed = signer.dumps(data, use_compression=True)
+        signed = signer.dumps(data, compress=False)
+        signed_compressed = signer.dumps(data, compress=True)
         self.assertLessEqual(len(signed_compressed), len(signed))
 
         signed_compressed = signer.dumps(
             data,
-            use_compression=True,
+            compress=True,
             compression_level=9,
         )
         self.assertLessEqual(len(signed_compressed), len(signed))
@@ -644,8 +644,8 @@ class Blake2SerializerSignerTests(TestCase):
         signer = Blake2SerializerSigner(self.secret)
         data = token_bytes(10).hex()  # so it can't be compressed
 
-        signed = signer.dumps(data, use_compression=False)
-        signed_not_compressed = signer.dumps(data, use_compression=True)
+        signed = signer.dumps(data, compress=False)
+        signed_not_compressed = signer.dumps(data, compress=True)
         self.assertEqual(len(signed_not_compressed), len(signed))
 
     def test_dumps_loads_force_compression(self) -> None:
@@ -653,17 +653,17 @@ class Blake2SerializerSignerTests(TestCase):
         signer = Blake2SerializerSigner(self.secret)
         data = self.data * 100  # so compression is meaningful
 
-        signed = signer.dumps(data, use_compression=False)
+        signed = signer.dumps(data, compress=False)
         signed_compressed = signer.dumps(data, force_compression=True)
         self.assertLessEqual(len(signed_compressed), len(signed))
 
         unsigned = signer.loads(signed_compressed)
         self.assertEqual(data, unsigned)
 
-        # Check force_compression bypasses use_compression
+        # Check force_compression bypasses compress
         signed_compressed = signer.dumps(
             data,
-            use_compression=False,
+            compress=False,
             force_compression=True,
         )
         self.assertLessEqual(len(signed_compressed), len(signed))
@@ -682,7 +682,7 @@ class Blake2SerializerSignerTests(TestCase):
         unsigned = signer.loads(signer.dumps(self.data))
         self.assertEqual(self.data, unsigned)
 
-        unsigned = signer.loads(signer.dumps(self.data, use_compression=True))
+        unsigned = signer.loads(signer.dumps(self.data, compress=True))
         self.assertEqual(self.data, unsigned)
 
     def test_dumps_loads_with_custom_serializer(self) -> None:  # noqa: C901
@@ -831,8 +831,8 @@ class Blake2SerializerSignerTests(TestCase):
         signer = Blake2SerializerSigner(self.secret, compressor=GzipCompressor)
         data = self.data * 100  # so compression is meaningful
 
-        signed = signer.dumps(data, use_compression=False)
-        signed_compressed = signer.dumps(data, use_compression=True)
+        signed = signer.dumps(data, compress=False)
+        signed_compressed = signer.dumps(data, compress=True)
         self.assertLessEqual(len(signed_compressed), len(signed))
 
         unsigned = signer.loads(signed_compressed)
@@ -1079,7 +1079,7 @@ class Blake2SerializerSignerErrorTests(TestCase):
         signer = Blake2SerializerSigner(self.secret)
 
         with self.assertRaises(errors.CompressionError) as cm:
-            signer.dumps(self.data, use_compression=True)
+            signer.dumps(self.data, compress=True)
         self.assertEqual(str(cm.exception), 'data can not be compressed')
         self.assertIsInstance(cm.exception.__cause__, zlib.error)
 
@@ -1100,7 +1100,7 @@ class Blake2SerializerSignerErrorTests(TestCase):
         signer = Blake2SerializerSigner(self.secret)
 
         with self.assertRaises(errors.CompressionError) as cm:
-            signer.dumps(self.data, use_compression=True, compression_level=10)
+            signer.dumps(self.data, compress=True, compression_level=10)
         self.assertEqual(str(cm.exception), 'data can not be compressed')
         self.assertIsInstance(cm.exception.__cause__, zlib.error)
 

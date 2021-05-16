@@ -329,7 +329,7 @@ class Blake2SerializerSigner(
     .. note:: If compressing data turns out to be detrimental then data won't be
               compressed. If you know that from beforehand and don't need
               compression, you can disable it:
-              `signed: str = signer.dumps(data, use_compression=False)`.
+              `signed: str = signer.dumps(data, compress=False)`.
               Likewise, you can force compression using:
               `signed: str = signer.dumps(data, force_compression=True)`.
 
@@ -425,20 +425,20 @@ class Blake2SerializerSigner(
         This method serializes data, then compresses it and finally encodes it.
 
         :param data: Data to serialize.
-        :keyword use_compression (bool): Compress data after serializing.
+        :keyword compress (bool): Compress data after serializing.
         :keyword compression_level (int): Set the desired compression level when using
                                           compression, where 1 is the fastest and least
                                           compressed and 9 the slowest and most
                                           compressed.
         :keyword force_compression (bool): Force compression even if it would be
                                            detrimental for performance or size. This
-                                           parameter overrides `use_compression`.
+                                           parameter overrides `compress`.
         :keyword serializer_kwargs (dict, optional): Provide keyword arguments for the
                                                      serializer.
 
         :return: Serialized data.
         """
-        use_compression: bool = kwargs['use_compression']
+        compress: bool = kwargs['compress']
         compression_level: int = kwargs['compression_level']
         force_compression: bool = kwargs['force_compression']
         serializer_kwargs: typing.Optional[typing.Dict[str, typing.Any]]
@@ -446,7 +446,7 @@ class Blake2SerializerSigner(
 
         serialized = self._serialize(data, **serializer_kwargs)
 
-        if use_compression or force_compression:
+        if compress or force_compression:
             compressed, _ = self._compress(
                 serialized,
                 level=compression_level,
@@ -483,7 +483,7 @@ class Blake2SerializerSigner(
         self,
         data: typing.Any,
         *,
-        use_compression: bool = True,
+        compress: bool = True,
         compression_level: int = 6,
         force_compression: bool = False,
         serializer_kwargs: typing.Optional[typing.Dict[str, typing.Any]] = None,
@@ -510,17 +510,16 @@ class Blake2SerializerSigner(
         data -> serialize -> [compress] -> [timestamp] -> encode -> sign
 
         :param data: Any serializable object.
-        :param use_compression: [optional] Compress data after serializing it and
-                                decompress it before unserializing. For low entropy
-                                payloads such as human readable text, it's beneficial
-                                from around ~30bytes, and detrimental if smaller.
-                                For high entropy payloads like pseudorandom text,
-                                it's beneficial from around ~300bytes and detrimental
-                                if lower than ~100bytes. You can safely enable it
-                                since a size check is done so if compression turns
-                                detrimental then it won't be used. If you know
-                                from beforehand that data can't be compressed and
-                                don't want to waste resources trying, set it to False.
+        :param compress: [optional] Compress data after serializing it and decompress
+                         it before unserializing. For low entropy payloads such as
+                         human-readable text, it's beneficial from around ~30bytes,
+                         and detrimental if smaller. For high entropy payloads like
+                         pseudorandom text, it's beneficial from around ~300bytes
+                         and detrimental if lower than ~100bytes. You can safely
+                         enable it since a size check is done so if compression turns
+                         detrimental then it won't be used. If you know from
+                         beforehand that data can't be compressed and don't want
+                         to waste resources trying, set it to False.
         :param compression_level: [optional] Set the desired compression level
                                   when using compression, where 1 is the fastest
                                   and least compressed and 9 the slowest and most
@@ -529,7 +528,7 @@ class Blake2SerializerSigner(
                                   compression and decompression.
         :param force_compression: [optional] Force compression even if it would
                                   be detrimental for performance or size. This
-                                  parameter overrides `use_compression`.
+                                  parameter overrides `compress`.
         :param serializer_kwargs: [optional] Provide keyword arguments for the
                                   serializer.
 
@@ -545,7 +544,7 @@ class Blake2SerializerSigner(
         """
         dump = self._dumps(
             data,
-            use_compression=use_compression,
+            compress=compress,
             compression_level=compression_level,
             force_compression=force_compression,
             serializer_kwargs=serializer_kwargs,
@@ -558,7 +557,7 @@ class Blake2SerializerSigner(
         self,
         data: typing.Any,
         *,
-        use_compression: bool = True,
+        compress: bool = True,
         compression_level: int = 6,
         force_compression: bool = False,
         serializer_kwargs: typing.Optional[typing.Dict[str, typing.Any]] = None,
@@ -588,17 +587,16 @@ class Blake2SerializerSigner(
         data -> serialize -> [compress] -> [timestamp] -> encode -> sign
 
         :param data: Any serializable object.
-        :keyword use_compression: [optional] Compress data after serializing it and
-                                decompress it before unserializing. For low entropy
-                                payloads such as human readable text, it's beneficial
-                                from around ~30bytes, and detrimental if smaller.
-                                For high entropy payloads like pseudorandom text,
-                                it's beneficial from around ~300bytes and detrimental
-                                if lower than ~100bytes. You can safely enable it
-                                since a size check is done so if compression turns
-                                detrimental then it won't be used. If you know
-                                from beforehand that data can't be compressed and
-                                don't want to waste resources trying, set it to False.
+        :param compress: [optional] Compress data after serializing it and decompress
+                         it before unserializing. For low entropy payloads such as
+                         human-readable text, it's beneficial from around ~30bytes,
+                         and detrimental if smaller. For high entropy payloads like
+                         pseudorandom text, it's beneficial from around ~300bytes
+                         and detrimental if lower than ~100bytes. You can safely
+                         enable it since a size check is done so if compression turns
+                         detrimental then it won't be used. If you know from
+                         beforehand that data can't be compressed and don't want
+                         to waste resources trying, set it to False.
         :keyword compression_level: [optional] Set the desired compression level
                                   when using compression, where 1 is the fastest
                                   and least compressed and 9 the slowest and most
@@ -607,7 +605,7 @@ class Blake2SerializerSigner(
                                   compression and decompression.
         :keyword force_compression: [optional] Force compression even if it would
                                   be detrimental for performance or size. This
-                                  parameter overrides `use_compression`.
+                                  parameter overrides `compress`.
         :keyword serializer_kwargs: [optional] Provide keyword arguments for the
                                   serializer.
 
@@ -623,7 +621,7 @@ class Blake2SerializerSigner(
         """
         dump = self._dumps(
             data,
-            use_compression=use_compression,
+            compress=compress,
             compression_level=compression_level,
             force_compression=force_compression,
             serializer_kwargs=serializer_kwargs,
@@ -640,7 +638,7 @@ class Blake2SerializerSigner(
         data: typing.Any,
         file: typing.IO,
         *,
-        use_compression: bool = True,
+        compress: bool = True,
         compression_level: int = 6,
         force_compression: bool = False,
         serializer_kwargs: typing.Optional[typing.Dict[str, typing.Any]] = None,
@@ -672,17 +670,16 @@ class Blake2SerializerSigner(
 
         :param data: Any serializable object.
         :param file: A `.write()`-supporting file-like object.
-        :param use_compression: [optional] Compress data after serializing it and
-                                decompress it before unserializing. For low entropy
-                                payloads such as human readable text, it's beneficial
-                                from around ~30bytes, and detrimental if smaller.
-                                For high entropy payloads like pseudorandom text,
-                                it's beneficial from around ~300bytes and detrimental
-                                if lower than ~100bytes. You can safely enable it
-                                since a size check is done so if compression turns
-                                detrimental then it won't be used. If you know
-                                from beforehand that data can't be compressed and
-                                don't want to waste resources trying, set it to False.
+        :param compress: [optional] Compress data after serializing it and decompress
+                         it before unserializing. For low entropy payloads such as
+                         human-readable text, it's beneficial from around ~30bytes,
+                         and detrimental if smaller. For high entropy payloads like
+                         pseudorandom text, it's beneficial from around ~300bytes
+                         and detrimental if lower than ~100bytes. You can safely
+                         enable it since a size check is done so if compression turns
+                         detrimental then it won't be used. If you know from
+                         beforehand that data can't be compressed and don't want
+                         to waste resources trying, set it to False.
         :param compression_level: [optional] Set the desired compression level
                                   when using compression, where 1 is the fastest
                                   and least compressed and 9 the slowest and most
@@ -691,7 +688,7 @@ class Blake2SerializerSigner(
                                   compression and decompression.
         :param force_compression: [optional] Force compression even if it would
                                   be detrimental for performance or size. This
-                                  parameter overrides `use_compression`.
+                                  parameter overrides `compress`.
         :param serializer_kwargs: [optional] Provide keyword arguments for the
                                   serializer.
 
@@ -703,7 +700,7 @@ class Blake2SerializerSigner(
         """
         signed = self.dumps(
             data,
-            use_compression=use_compression,
+            compress=compress,
             compression_level=compression_level,
             force_compression=force_compression,
             serializer_kwargs=serializer_kwargs,

@@ -101,7 +101,7 @@ signed = signer.dumps(data)  # Compression is enabled by default
 # If compressing data turns out to be detrimental then data won't be
 # compressed. If you know that from beforehand and don't need compression, you
 # can disable it:
-# signed = signer.dumps(data, use_compression=False)
+# signed = signer.dumps(data, compress=False)
 # Additionally, you can force compression nevertheless:
 # signed = signer.dumps(data, force_compression=True)
 cookie = {'data': signed}
@@ -168,7 +168,7 @@ signer = Blake2SerializerSigner(  # with timestamp
     secret,
     max_age=timedelta(weeks=1),
 )
-signed = signer.dumps(data, use_compression=False)  # without compression
+signed = signer.dumps(data, compress=False)  # without compression
 print(len(signed))  # 160048
 
 # As a general rule of thumb if you have highly compressible data such
