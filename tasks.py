@@ -86,13 +86,20 @@ def clean(ctx):
 
 @task(
     aliases=['test'],
+    help={
+        'watch': 'run tests continuously with pytest-watch',
+        'seed': 'seed number to repeat a randomization sequence',
+    }
 )
-def tests(ctx, watch=False):
+def tests(ctx, watch=False, seed=0):
     """Run tests."""
     if watch:
         cmd = ['pytest-watch', '--']
     else:
         cmd = ['pytest', '--suppress-no-test-exit-code']
+
+    if seed:
+        cmd.append(f'--randomly-seed={seed}')
 
     ctx.run(' '.join(cmd), pty=True)
 
