@@ -457,9 +457,9 @@ class Blake2SerializerSigner(
 
         Keyword Args:
             compress (bool): Compress data after serializing.
-            compression_level (int): Set the desired compression level when using
-                compression, where 1 is the fastest and least compressed and 9 the
-                slowest and most compressed.
+            compression_level (int, optional): Set the desired compression level
+                when using compression, where 1 is the fastest and least compressed
+                and 9 the slowest and most compressed.
             force_compression (bool): Force compression even if it would be detrimental
                 for performance or size. This parameter overrides `compress`.
             serializer_kwargs (dict, optional): Provide keyword arguments for the
@@ -469,7 +469,7 @@ class Blake2SerializerSigner(
             Serialized data.
         """
         compress: bool = kwargs['compress']
-        compression_level: int = kwargs['compression_level']
+        compression_level: typing.Optional[int] = kwargs.get('compression_level')
         force_compression: bool = kwargs['force_compression']
         serializer_kwargs: typing.Optional[typing.Dict[str, typing.Any]]
         serializer_kwargs = kwargs.get('serializer_kwargs') or {}
@@ -525,7 +525,7 @@ class Blake2SerializerSigner(
         data: typing.Any,
         *,
         compress: bool = True,
-        compression_level: int = 6,
+        compression_level: typing.Optional[int] = None,
         force_compression: bool = False,
         serializer_kwargs: typing.Optional[typing.Dict[str, typing.Any]] = None,
     ) -> str:
@@ -563,8 +563,9 @@ class Blake2SerializerSigner(
                 to waste resources trying, set it to False.
             compression_level (optional): Set the desired compression level when
                 using compression, where 1 is the fastest and least compressed
-                and 9 the slowest and most compressed (defaults to 6). Note that
-                the performance impact is for both compression and decompression.
+                and 9 the slowest and most compressed. The default value depends
+                on the compressor being used. Note that the performance impact is
+                for both compression and decompression.
             force_compression (optional): Force compression even if it would be
                 detrimental for performance or size. This parameter overrides
                 `compress`.
@@ -597,7 +598,7 @@ class Blake2SerializerSigner(
         data: typing.Any,
         *,
         compress: bool = True,
-        compression_level: int = 6,
+        compression_level: typing.Optional[int] = None,
         force_compression: bool = False,
         serializer_kwargs: typing.Optional[typing.Dict[str, typing.Any]] = None,
     ) -> Blake2SignatureDump:
@@ -638,8 +639,9 @@ class Blake2SerializerSigner(
                 to waste resources trying, set it to False.
             compression_level (optional): Set the desired compression level when
                 using compression, where 1 is the fastest and least compressed
-                and 9 the slowest and most compressed (defaults to 6). Note that
-                the performance impact is for both compression and decompression.
+                and 9 the slowest and most compressed. The default value depends
+                on the compressor being used. Note that the performance impact is
+                for both compression and decompression.
             force_compression (optional): Force compression even if it would be
                 detrimental for performance or size. This parameter overrides
                 `compress`.
@@ -676,7 +678,7 @@ class Blake2SerializerSigner(
         file: typing.IO,
         *,
         compress: bool = True,
-        compression_level: int = 6,
+        compression_level: typing.Optional[int] = None,
         force_compression: bool = False,
         serializer_kwargs: typing.Optional[typing.Dict[str, typing.Any]] = None,
     ) -> str:
@@ -719,8 +721,9 @@ class Blake2SerializerSigner(
                 to waste resources trying, set it to False.
             compression_level (optional): Set the desired compression level when
                 using compression, where 1 is the fastest and least compressed
-                and 9 the slowest and most compressed (defaults to 6). Note that
-                the performance impact is for both compression and decompression.
+                and 9 the slowest and most compressed. The default value depends
+                on the compressor being used. Note that the performance impact is
+                for both compression and decompression.
             force_compression (optional): Force compression even if it would be
                 detrimental for performance or size. This parameter overrides
                 `compress`.

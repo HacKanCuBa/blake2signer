@@ -374,7 +374,7 @@ print(data == unsigned)  # True
 
 ### Compressing data
 
-There are several options regarding the compression capabilities of `Blake2SerializerSigner`. By default, it will check if compressing given data is working out positively or not, and may decide to not compress after all. This behaviour can be changed to not compress at all or force the compression nevertheless. The compression level can also be tweaked to your needs.
+There are several options regarding the compression capabilities of `Blake2SerializerSigner`. By default, it will check if compressing given data is working out positively or not, and may decide to not compress after all. This behaviour can be changed to not compress at all or force the compression nevertheless. The [compression level](details.md#compression-level) can also be tweaked to your needs.
 
 ```python
 """Signing a data structure and playing with compression capabilities."""
@@ -421,7 +421,8 @@ print(
 )  # True
 
 # You can also set the desired compression level where 1 is the fastest
-# and least compressed, and 9 the slowest and most compressed (defaults to 6).
+# and least compressed and 9 the slowest and most compressed (the default value
+# is up to the compressor).
 signed = signer.dumps(data, compression_level=9)
 print(len(signed))  # 175
 signed = signer.dumps(data, compression_level=1)
@@ -516,6 +517,11 @@ from blake2signer.interfaces import CompressorInterface
 class Bz2Compressor(CompressorInterface):
     """Bzip2 compressor."""
 
+    @property
+    def default_compression_level(self) -> int:
+        """Get the default compression level."""
+        return 9  # According to https://docs.python.org/3/library/bz2.html#bz2.compress
+    
     def compress(self, data: bytes, *, level: int) -> bytes:
         """Compress given data."""
         return bz2.compress(data, compresslevel=level)
@@ -1125,7 +1131,7 @@ class MyEncoderCompressorSigner(CompressorMixin, Blake2SerializerSignerBase):
     def _dumps(self, data: typing.Any, **kwargs: typing.Any) -> bytes:
         data_bytes = self._force_bytes(data)
 
-        compressed, is_compressed = self._compress(data_bytes, level=6)
+        compressed, is_compressed = self._compress(data_bytes)
 
         encoded = self._encode(compressed)
 

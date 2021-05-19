@@ -120,6 +120,21 @@ class SerializerSignerTestsBase(BaseTests):
         """Test signing and unsigning using an encoder."""
         super().test_sign_unsign_with_encoder(encoder, regex)
 
+    def test_dumps_loads_compression_level_default(self) -> None:
+        """Test dumping and loading with default compression level is correct."""
+        signer = self.signer()
+
+        signed = self.sign(signer, self.data_compressible, compress=False)
+        signed_compressed = self.sign(
+            signer,
+            self.data_compressible,
+            compress=True,
+            compression_level=None,
+        )
+        assert len(signed_compressed) < len(signed)
+
+        assert self.data_compressible == self.unsign(signer, signed_compressed)
+
     def test_dumps_loads_compression_level(self) -> None:
         """Test dumping and loading changing compression level is correct."""
         signer = self.signer()
@@ -563,10 +578,18 @@ class SerializerSignerTestsBase(BaseTests):
 
         with pytest.raises(
                 errors.CompressionError,
-                match='data can not be compressed',
+                match='compression level must be between 1 and 9',
         ) as exc:
             self.sign(signer, self.data, compress=True, compression_level=10)
-        assert isinstance(exc.value.__cause__, zlib.error)
+        assert exc.value.__cause__ is None
+
+        with pytest.raises(
+                errors.CompressionError,
+                match='compression level must be between 1 and 9',
+        ) as exc:
+            # noinspection PyArgumentEqualDefault
+            self.sign(signer, self.data, compress=True, compression_level=0)
+        assert exc.value.__cause__ is None
 
     def test_compression_flag_non_ascii(self) -> None:
         """Test error occurs when the compression flag is non-ascii."""

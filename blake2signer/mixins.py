@@ -204,7 +204,7 @@ class CompressorMixin(Mixin, ABC):
         self,
         data: bytes,
         *,
-        level: int,
+        level: typing.Optional[int] = None,
         force: bool = False,
     ) -> typing.Tuple[bytes, bool]:
         """Compress given data if convenient or forced, otherwise do nothing.
@@ -215,7 +215,8 @@ class CompressorMixin(Mixin, ABC):
 
         Args:
             data: Data to compress.
-            level: Compression level wanted.
+            level (optional): Compression level wanted from 1 (least compressed)
+                to 9 (most compressed) or None for the default.
             force (optional): Force compression without checking if convenient.
 
         Returns:
@@ -225,8 +226,10 @@ class CompressorMixin(Mixin, ABC):
         Raises
             CompressionError: Data can't be compressed.
         """
+        compression_level = self._compressor.get_compression_level(level)
+
         try:
-            compressed = self._compressor.compress(data, level=level)
+            compressed = self._compressor.compress(data, level=compression_level)
         except Exception as exc:
             raise errors.CompressionError('data can not be compressed') from exc
 

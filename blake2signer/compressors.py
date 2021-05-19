@@ -9,6 +9,11 @@ from .interfaces import CompressorInterface
 class ZlibCompressor(CompressorInterface):
     """Zlib compressor."""
 
+    @property
+    def default_compression_level(self) -> int:
+        """Get the default compression level."""
+        return zlib.Z_DEFAULT_COMPRESSION
+
     def compress(self, data: bytes, *, level: int) -> bytes:
         """Compress given data using zlib.
 
@@ -35,6 +40,11 @@ class ZlibCompressor(CompressorInterface):
 
 class GzipCompressor(CompressorInterface):
     """Gzip compressor."""
+
+    @property
+    def default_compression_level(self) -> int:
+        """Get the default compression level."""
+        return 9  # According to https://docs.python.org/3/library/gzip.html
 
     def compress(self, data: bytes, *, level: int) -> bytes:
         """Compress given data using gzip.

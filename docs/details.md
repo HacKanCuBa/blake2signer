@@ -211,3 +211,14 @@ Signers support changing the encoder class (since v2.0.0) and *Blake2SerializerS
     All interfaces live in the `interfaces` submodule.
 
 Check examples on how to use existing [encoders](examples.md#changing-the-encoder), [compressors](examples.md#changing-the-compressor) and [serializers](examples.md#changing-the-serializer), or how to create a [custom serializer](examples.md#using-a-custom-serializer), [encoder](examples.md#using-a-custom-encoder) or [compressor](examples.md#using-a-custom-compressor) or even a [custom serializer signer class](examples.md#creating-a-custom-serializersigner-class).
+
+### Compression level
+
+*Blake2SerializerSigner* can optionally [compress data](examples.md#compressing-data) after serializing it to make the resulting signature shorter. Since v2.1.0, the default compression level depends on the compressor and is no longer hardcoded to 6. For example, Zlib defaults to 6 but Gzip, to 9.
+
+No matter which compressor is used, it will always be a value between 1 and 9, where 1 is the fastest and least compressed and 9 the slowest and most compressed. Should a compressor in particular use a different scale, then a conversion is internally done, so the end user doesn't have to deal with those details, and the interface remains homogeneous.
+
+A high compression level usually implies a big hit to performance, taking more CPU time and/or memory to compress and decompress, but achieving smaller outputs. So if you have a particular constraint then you can set the level according to your constraint and test to see if the result is as expected.
+
+!!! note "No worries"
+    Usually, there's no need to set the compression level to a particular value, and therefore there's no need to worry about it, and it can be left by default. However, if you need to, you can.

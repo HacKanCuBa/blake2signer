@@ -4,6 +4,8 @@ import typing
 from abc import ABC
 from abc import abstractmethod
 
+from . import errors
+
 
 class SerializerInterface(ABC):
     """Serializer interface.
@@ -41,6 +43,45 @@ class CompressorInterface(ABC):
 
     Implement your own compressor inheriting from this class.
     """
+
+    @property
+    @abstractmethod
+    def default_compression_level(self) -> int:
+        """Get the default compression level."""
+
+    def scale_compression_level(self, level: int) -> int:
+        """Scale the compression level to from 1 to 9 to a value for the compressor.
+
+        Override this method if the compressor requires scaling the level.
+
+        Args:
+            level: Desired compression level from 1 to 9.
+
+        Returns:
+            Scaled compression level for the compressor.
+        """
+        return level
+
+    def get_compression_level(self, level: typing.Optional[int]) -> int:
+        """Return compression level for the compressor.
+
+        It correctly converts the scale (if necessary), and the default value
+        for None.
+
+        Args:
+            level: Desired compression level from 1 (least compressed) to 9 (most
+                compressed) or None for the default.
+
+        Returns:
+            Correct compression level for the compressor.
+        """
+        if level is None:
+            return self.default_compression_level
+
+        if level < 1 or level > 9:
+            raise errors.CompressionError('compression level must be between 1 and 9')
+
+        return self.scale_compression_level(level)
 
     @abstractmethod
     def compress(self, data: bytes, *, level: int) -> bytes:
