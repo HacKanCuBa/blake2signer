@@ -113,7 +113,8 @@ class CompressorMixin(Mixin, ABC):
             compressor (optional): Compressor class to use (defaults to a Zlib
                 compressor).
             compression_flag (optional): Character to mark the payload as compressed.
-                It must be ASCII (defaults to ".").
+                It must not belong to the encoder alphabet and be ASCII (defaults
+                to ".").
             compression_ratio (optional): Desired minimal compression ratio, between
                 0 and below 100 (defaults to 5). It is used to calculate when
                 to consider a payload sufficiently compressed to detect detrimental
@@ -173,6 +174,24 @@ class CompressorMixin(Mixin, ABC):
         """Remove the compression flag from given data."""
         return data[len(self._compression_flag):]
 
+    def _remove_compression_flag_if_compressed(
+        self,
+        data: bytes,
+    ) -> typing.Tuple[bytes, bool]:
+        """Remove the compression flag from given data if it is compressed.
+
+        Args:
+            data: Data to process.
+
+        Returns:
+              A tuple of given data without the flag, and a boolean indicating
+              if it is compressed or not.
+        """
+        if self._is_compressed(data):
+            return self._remove_compression_flag(data), True
+
+        return data, False
+
     def _is_significantly_compressed(
         self,
         data_size: int,
@@ -212,21 +231,17 @@ class CompressorMixin(Mixin, ABC):
             raise errors.CompressionError('data can not be compressed') from exc
 
         if force or self._is_significantly_compressed(len(data), len(compressed)):
-            return self._add_compression_flag(compressed), True
+            return compressed, True
 
         # Compression isn't reducing size so do nothing.
         return data, False
 
     def _decompress(self, data: bytes) -> bytes:
-        """Decompress given data if it is compressed, otherwise do nothing.
+        """Decompress given data.
 
         Raises:
             DecompressionError: Data can't be decompressed.
         """
-        if not self._is_compressed(data):
-            return data
-
-        data = self._remove_compression_flag(data)
         try:
             return self._compressor.decompress(data)
         except Exception as exc:

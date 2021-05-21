@@ -32,7 +32,7 @@ Additionally, *Blake2SerializerSigner* supports the following:
 * `max_age`: Use a timestamp signer instead of a regular one to ensure that the signature is not older than this time in seconds.
 * `serializer`: Serializer class to use (defaults to a JSON serializer).
 * `compressor`: Compressor class to use (defaults to a Zlib compressor).
-* `compression_flag`: (New in v2.0.0) Character to mark the payload as compressed. It must be ASCII (defaults to ".").
+* `compression_flag`: (New in v2.0.0) Character to mark the payload as compressed. It must not belong to the encoder alphabet and be ASCII (defaults to `.`).
 * `compression_ratio`: (New in v2.0.0) Desired minimal compression ratio, between 0 and below 100 (defaults to 5). It is used to calculate when to consider a payload sufficiently compressed to detect detrimental compression. By default, if compression achieves less than 5% of size reduction, it is considered detrimental.
 
 ## About salt and personalisation

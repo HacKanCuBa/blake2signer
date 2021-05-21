@@ -543,7 +543,7 @@ print(data == unsigned)  # True
 !!! info "New in v2.0.0"
 
 If you are limited to a certain character range in your signed data transport, you can set the compression flag character to any value needed (as well as [the encoder](#changing-the-encoder) and the [separator character](#changing-the-separator-character)).  
-It is used internally to mark a compressed payload to prevent [zip bombs](https://en.wikipedia.org/wiki/Zip_bomb), and it can be any ASCII character.
+It is used internally to mark a compressed payload to prevent [zip bombs](https://en.wikipedia.org/wiki/Zip_bomb), and it can be any ASCII character, but it must not belong to the encoder alphabet to be able to unequivocally recognize it.
 
 !!! info
     It defaults to a dot (`.`).
@@ -1124,12 +1124,22 @@ class MyEncoderCompressorSigner(CompressorMixin, Blake2SerializerSignerBase):
 
     def _dumps(self, data: typing.Any, **kwargs: typing.Any) -> bytes:
         data_bytes = self._force_bytes(data)
-        compressed, _ = self._compress(data_bytes, level=6)
-        return self._encode(compressed)
+
+        compressed, is_compressed = self._compress(data_bytes, level=6)
+
+        encoded = self._encode(compressed)
+
+        if is_compressed:
+            encoded = self._add_compression_flag(encoded)
+
+        return encoded
 
     def _loads(self, dumped_data: bytes, **kwargs: typing.Any) -> typing.Any:
-        decoded = self._decode(dumped_data)
-        return self._decompress(decoded)
+        data, is_compressed = self._remove_compression_flag_if_compressed(dumped_data)
+
+        decoded = self._decode(data)
+
+        return self._decompress(decoded) if is_compressed else decoded
 
     def dumps(self, data: typing.AnyStr) -> str:
         dump = self._dumps(data)
@@ -1147,7 +1157,7 @@ signer = MyEncoderCompressorSigner(secret)
 data = b'acab' * 100
 signed = signer.dumps(data)
 print(len(signed) < len(data))  # True
-print(signed)  # ....LnicS0xOTEocxYMGAwCnlZi9
+print(signed)  # .....eJxLTE5MShzFgwYDAKeVmL0
 print(signer.loads(signed) == data)  # True
 ```
 

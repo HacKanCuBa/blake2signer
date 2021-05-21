@@ -248,13 +248,39 @@ class SerializerSignerTestsBase(BaseTests):
         """Test that the compression flag can be changed."""
         signer = self.signer(compression_flag=flag)
 
-        signed = self.sign(signer, self.data_compressible)
-        unsigned = signer._proper_unsign(signer._decompose(signed.encode()))
-        undecoded = signer._decode(unsigned)
         if isinstance(flag, bytes):
-            assert undecoded.startswith(flag)
+            assert signer._compression_flag == flag
         else:
-            assert undecoded.startswith(flag.encode())
+            assert signer._compression_flag == flag.encode()
+
+        signed = self.sign(signer, self.data_compressible)
+        if isinstance(flag, bytes):
+            assert flag.decode() in signed
+        else:
+            assert flag in signed
+
+        unsigned = signer._proper_unsign(signer._decompose(signed.encode()))
+        if isinstance(flag, bytes):
+            assert unsigned.startswith(flag)
+        else:
+            assert unsigned.startswith(flag.encode())
+
+    def test_compression_can_not_be_bombed(self) -> None:
+        """Test that a malicious input can't bomb the compression."""
+        bomb_data = b'\x00' * 1048576
+        bomb = zlib.compress(bomb_data)
+
+        assert len(bomb) < len(bomb_data)
+
+        signer = self.signer(serializer=NullSerializer, compressor=ZlibCompressor)
+
+        payload = signer._compression_flag + bomb
+        signed = self.sign(signer, payload, compress=False)
+        # If the bomb worked, then when unsigning the payload would be decompressed
+        # If it failed, then the payload would stay the same, which is what should
+        # happen here
+        unsigned = self.unsign(signer, signed)
+        assert len(payload) == len(unsigned)
 
     def test_compression_ratio_can_be_changed(self) -> None:
         """Test that the compression ratio can be changed."""
@@ -557,6 +583,26 @@ class SerializerSignerTestsBase(BaseTests):
                 match='the compression flag character must have a value',
         ):
             self.signer(compression_flag=b'')
+
+    @pytest.mark.parametrize(
+        ('encoder', 'flag'),
+        (
+            (B64URLEncoder, b'A'),
+            (B32Encoder, b'A'),
+            (HexEncoder, b'A'),
+        ),
+    )
+    def test_compression_flag_in_encoder_alphabet(
+        self,
+        encoder: typing.Type[EncoderInterface],
+        flag: bytes,
+    ) -> None:
+        """Test error occurs when the compression flag is in the encoder alphabet."""
+        with pytest.raises(
+                errors.InvalidOptionError,
+                match='the compression flag character must not belong to the encoder',
+        ):
+            self.signer(compression_flag=flag, encoder=encoder)
 
     def test_compression_ratio_out_of_bounds(self) -> None:
         """Test error occurs when the compression ratio is out of bounds."""

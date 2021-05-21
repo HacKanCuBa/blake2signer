@@ -3,6 +3,7 @@
 import typing
 from datetime import timedelta
 
+from . import errors
 from .bases import Blake2SerializerSignerBase
 from .bases import Blake2Signature
 from .bases import Blake2SignatureDump
@@ -413,7 +414,8 @@ class Blake2SerializerSigner(
             compressor (optional): Compressor class to use (defaults to a Zlib
                 compressor).
             compression_flag (optional): Character to mark the payload as compressed.
-                It must be ASCII (defaults to ".").
+                It must not belong to the encoder alphabet and be ASCII (defaults
+                to ".").
             compression_ratio (optional): Desired minimal compression ratio, between
                 0 and below 100 (defaults to 5). It is used to calculate when
                 to consider a payload sufficiently compressed to detect detrimental
@@ -439,6 +441,11 @@ class Blake2SerializerSigner(
             compression_flag=compression_flag,
             compression_ratio=compression_ratio,
         )
+
+        if self._compression_flag in self._encoder.alphabet:
+            raise errors.InvalidOptionError(
+                'the compression flag character must not belong to the encoder alphabet',
+            )
 
     def _dumps(self, data: typing.Any, **kwargs: typing.Any) -> bytes:
         """Dump data serializing it.
@@ -470,15 +477,19 @@ class Blake2SerializerSigner(
         serialized = self._serialize(data, **serializer_kwargs)
 
         if compress or force_compression:
-            compressed, _ = self._compress(
+            compressed, is_compressed = self._compress(
                 serialized,
                 level=compression_level,
                 force=force_compression,
             )
         else:
-            compressed = serialized
+            compressed, is_compressed = serialized, False
 
-        return self._encode(compressed)
+        encoded = self._encode(compressed)
+        if is_compressed:
+            encoded = self._add_compression_flag(encoded)
+
+        return encoded
 
     def _loads(self, dumped_data: bytes, **kwargs: typing.Any) -> typing.Any:
         """Load serialized data to recover it.
@@ -499,9 +510,11 @@ class Blake2SerializerSigner(
             DecompressionError: Data can't be decompressed.
             UnserializationError: Data can't be unserialized.
         """
-        decoded = self._decode(dumped_data)
+        data, is_compressed = self._remove_compression_flag_if_compressed(dumped_data)
 
-        decompressed = self._decompress(decoded)
+        decoded = self._decode(data)
+
+        decompressed = self._decompress(decoded) if is_compressed else decoded
 
         unserizalized = self._unserialize(decompressed)
 
