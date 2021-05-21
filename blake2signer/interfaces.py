@@ -45,9 +45,9 @@ class EncoderInterface(ABC):
     """
 
     @abstractmethod
-    def encode(self, data: typing.AnyStr) -> bytes:
+    def encode(self, data: bytes) -> bytes:
         """Encode given data."""
 
     @abstractmethod
-    def decode(self, data: typing.AnyStr) -> bytes:
+    def decode(self, data: bytes) -> bytes:
         """Decode given encoded data."""

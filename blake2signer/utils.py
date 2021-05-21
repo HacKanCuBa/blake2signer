@@ -14,13 +14,11 @@ def force_bytes(value: typing.Any) -> bytes:
     return bytes(value)
 
 
-def b64encode(data: typing.AnyStr) -> bytes:
+def b64encode(data: bytes) -> bytes:
     """Encode data as Base 64 URL safe, stripping padding."""
-    return base64.urlsafe_b64encode(force_bytes(data)).rstrip(b'=')
+    return base64.urlsafe_b64encode(data).rstrip(b'=')
 
 
-def b64decode(data: typing.AnyStr) -> bytes:
+def b64decode(data: bytes) -> bytes:
     """Decode data encoded as Base 64 URL safe without padding."""
-    data_b = force_bytes(data)
-
-    return base64.urlsafe_b64decode(data_b + (b'=' * (len(data_b) % 4)))
+    return base64.urlsafe_b64decode(data + (b'=' * (len(data) % 4)))

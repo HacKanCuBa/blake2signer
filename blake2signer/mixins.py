@@ -186,7 +186,7 @@ class EncoderMixin(Mixin, ABC):
 
         super().__init__(*args, **kwargs)  # type: ignore
 
-    def _encode(self, data: typing.AnyStr) -> bytes:
+    def _encode(self, data: bytes) -> bytes:
         """Encode given data.
 
         :raise EncodeError: Data can't be encoded.
@@ -196,7 +196,7 @@ class EncoderMixin(Mixin, ABC):
         except Exception as exc:
             raise errors.EncodeError(exc) from exc
 
-    def _decode(self, data: typing.AnyStr) -> bytes:
+    def _decode(self, data: bytes) -> bytes:
         """Decode given encoded data.
 
         :raise DecodeError: Data can't be decoded.

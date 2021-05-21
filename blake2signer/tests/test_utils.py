@@ -23,16 +23,6 @@ class TestUtilsBase64(TestCase):
         decoded = utils.b64decode(b'YWJj')
         self.assertEqual(decoded, b'abc')
 
-    def test_b64decode_accepts_strings(self) -> None:
-        """Test b64decode accepts strings correctly."""
-        decoded = utils.b64decode('YWJj')
-        self.assertEqual(decoded, b'abc')
-
-    def test_b64encode_accepts_strings(self) -> None:
-        """Test b64encode accepts strings correctly."""
-        encoded = utils.b64encode('abc')
-        self.assertEqual(encoded, b'YWJj')
-
     def test_b64decode_works_with_padding(self) -> None:
         """Test b64decode accepts padded value correctly."""
         decoded = utils.b64decode(b'YWJj==')
