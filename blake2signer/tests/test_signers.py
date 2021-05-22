@@ -480,6 +480,22 @@ class Blake2TimestampSignerErrorTests(TestCase):
             Blake2TimestampSigner(self.secret, separator=b'\x87')
         self.assertIn('separator character must be ASCII', str(cm.exception))
 
+    @mock.patch('blake2signer.bases.time')
+    def test_sign_unsign_timestamp_future(self, mock_time: mock.MagicMock) -> None:
+        """Test signing in the future, then unsigning, causes an exception."""
+        timestamp = int(datetime.now().timestamp())
+        mock_time.return_value = timestamp
+        signer = Blake2TimestampSigner(self.secret)
+
+        signed = signer.sign(self.data)
+
+        # Back to the future
+        mock_time.return_value -= 10
+        with self.assertRaises(errors.ExpiredSignatureError) as cm:
+            signer.unsign(signed, max_age=5)
+        self.assertIn('< 0 seconds', str(cm.exception))
+        self.assertEqual(cm.exception.timestamp.timestamp(), timestamp)
+
 
 # noinspection PyArgumentEqualDefault
 class Blake2SerializerSignerTests(TestCase):

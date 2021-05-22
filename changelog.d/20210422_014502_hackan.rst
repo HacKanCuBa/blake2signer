@@ -1,0 +1,4 @@
+Security
+--------
+
+- Prevent timestamped signatures "from the future" to pass as correct by checking the signature age to be bigger than 0.
