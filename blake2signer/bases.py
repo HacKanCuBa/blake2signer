@@ -159,6 +159,9 @@ class Base(Mixin, ABC):
 
     def _validate_separator(self, separator: typing.Union[str, bytes]) -> bytes:
         """Validate the separator value and return it clean."""
+        if not separator:
+            raise errors.InvalidOptionError('the separator character must have a value')
+
         if not separator.isascii():
             raise errors.InvalidOptionError('the separator character must be ASCII')
 

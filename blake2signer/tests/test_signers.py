@@ -242,6 +242,15 @@ class Blake2SignerErrorTests(TestCase):
             Blake2Signer(self.secret, separator=b'\x87')
         self.assertIn('separator character must be ASCII', str(cm.exception))
 
+    def test_wrong_separator_empty(self) -> None:
+        """Test error occurs when the separator is empty."""
+        with self.assertRaises(errors.InvalidOptionError) as cm:
+            Blake2Signer(self.secret, separator=b'')
+        self.assertIn(
+            'the separator character must have a value',
+            str(cm.exception),
+        )
+
 
 # noinspection PyArgumentEqualDefault
 class Blake2TimestampSignerTests(TestCase):
@@ -759,3 +768,12 @@ class Blake2SerializerSignerErrorTests(TestCase):
         with self.assertRaises(errors.InvalidOptionError) as cm:
             Blake2SerializerSigner(self.secret, compression_ratio=100)
         self.assertIn('compression ratio must be', str(cm.exception))
+
+    def test_wrong_compression_flag_empty(self) -> None:
+        """Test error occurs when the compression flag is empty."""
+        with self.assertRaises(errors.InvalidOptionError) as cm:
+            Blake2SerializerSigner(self.secret, compression_flag=b'')
+        self.assertIn(
+            'the compression flag character must have a value',
+            str(cm.exception),
+        )

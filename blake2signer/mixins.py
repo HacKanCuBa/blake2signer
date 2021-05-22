@@ -115,6 +115,10 @@ class CompressorMixin(Mixin, ABC):
 
     def _validate_comp_flag(self, flag: typing.Union[str, bytes]) -> bytes:
         """Validate the compression flag value and return it clean."""
+        if not flag:
+            raise errors.InvalidOptionError(
+                'the compression flag character must have a value',
+            )
 
         if not flag.isascii():
             raise errors.InvalidOptionError(

@@ -1,0 +1,4 @@
+Added
+-----
+
+- Add check to ensure that the separator and compressor flag are not empty.
