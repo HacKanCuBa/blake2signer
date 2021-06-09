@@ -1,6 +1,7 @@
 """Bases: base classes for signers."""
 
 import hashlib
+import os
 import typing
 from abc import ABC
 from abc import abstractmethod
@@ -8,7 +9,6 @@ from dataclasses import dataclass
 from datetime import timedelta
 from enum import Enum
 from secrets import compare_digest
-from secrets import token_bytes
 from time import time
 
 from . import errors
@@ -357,7 +357,7 @@ class Blake2SignerBase(EncoderMixin, Base, ABC):
         if self._deterministic:
             return b''
 
-        salt = token_bytes(self._salt_size)
+        salt = os.urandom(self._salt_size)
         # Produce an encoded salt to use it as is, so we don't have to deal with
         # decoding it when unsigning. The only downside is that we loose a few
         # bits but it's tolerable since we are using the maximum allowed size.
