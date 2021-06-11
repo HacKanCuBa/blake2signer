@@ -1,4 +1,0 @@
-Added
------
-
-- Add signature timestamp to `ExpiredSignatureError` exception in new `timestamp` parameter as an aware datetime object.

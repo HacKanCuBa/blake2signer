@@ -1,4 +1,0 @@
-Added
------
-
-- Add new base32 encoder.

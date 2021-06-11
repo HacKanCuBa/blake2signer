@@ -1,4 +1,0 @@
-Changed
--------
-
-- Set default digest size for all signers to 16 bytes, so the output and functioning is more homogeneous.

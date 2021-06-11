@@ -1,4 +1,0 @@
-Changed
--------
-
-- Make compression flag and ratio an instance attribute.

@@ -1,4 +1,0 @@
-Added
------
-
-- Add check to ensure that the encoder alphabet is ASCII and not empty.

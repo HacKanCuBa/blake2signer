@@ -1,4 +1,0 @@
-Changed
--------
-
-- Marginally improve performance, around ~4% less time, to sign and unsign by removing unneeded calls to `force_bytes` when encoding/decoding.

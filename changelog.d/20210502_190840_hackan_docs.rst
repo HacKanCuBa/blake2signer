@@ -1,4 +1,0 @@
-Added
------
-
-- Add documentation with mkdocs, and a nice title with logo (many thanks to Erus).

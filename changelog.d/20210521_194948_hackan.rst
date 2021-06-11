@@ -1,4 +1,0 @@
-Security
---------
-
-- Fix a potential vulnerability when the `NullSerializer` was used and the user could sign arbitrary data, then a malicious user could sign a zip bomb that when unsigned could cause at best a controlled `DecompressionError` exception or at worst a DoS or other unknown result (depends heavily on the compressor used). This scenario is not default and probably very hard to achieve (it can't be produced with the `JSONSerializer` but it could perhaps be produced by some other custom serializer too), but nevertheless the possibility was there.

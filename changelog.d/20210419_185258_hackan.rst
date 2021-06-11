@@ -1,4 +1,0 @@
-Changed
--------
-
-- Make separator an instance attribute.

@@ -1,4 +1,0 @@
-Security
---------
-
-- Create a fuzzing script using `pythonfuzz` to uncover unexpected bugs.

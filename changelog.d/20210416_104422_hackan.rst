@@ -1,4 +1,0 @@
-Added
------
-
-- Add new gzip compressor.

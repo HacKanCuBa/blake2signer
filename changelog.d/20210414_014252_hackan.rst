@@ -1,4 +1,0 @@
-Changed
--------
-
-- Split classes between mixins and interfaces; also serializers, compressors and encoders, which are implementations of interfaces. This smooths the way to have several different implementors and to actually be able to change the entire encoding in the future (currently the signature is always b64 URL safe encoded even if the encoder is changed in Blake2SerializerSigner).

@@ -1,4 +1,0 @@
-Added
------
-
-- Add check to ensure that the separator does not belong to the encoder alphabet.

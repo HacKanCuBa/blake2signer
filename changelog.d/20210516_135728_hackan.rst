@@ -1,4 +1,0 @@
-Changed
--------
-
-- Recover cause in all exceptions for easier debugging. This was not done before on purpose to hide information in case a misconfiguration in the implementor application would expose said information to the public, but the benefits of having a cause traceback to the original exception are too many to not have it.

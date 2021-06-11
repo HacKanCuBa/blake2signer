@@ -1,4 +1,0 @@
-Added
------
-
-- Add check to ensure that the separator and compressor flag are ASCII characters to prevent encoding errors when converting from bytes to string.

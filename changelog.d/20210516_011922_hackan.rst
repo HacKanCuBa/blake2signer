@@ -1,4 +1,0 @@
-Changed
--------
-
-- Rename `use_compression` to `compress` because it's shorter and easier to write, and more tab-autocompletion friendly.
