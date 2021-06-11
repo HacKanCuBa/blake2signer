@@ -232,6 +232,7 @@ publish test:
 publish:
   stage: publish
   script:
+    - poetry config pypi-token.pypi "$POETRY_PYPI_TOKEN_PYPI"
     - poetry publish --build
     - sha256sum dist/*
     - sha512sum dist/*
