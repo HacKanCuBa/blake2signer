@@ -196,7 +196,7 @@ Signers support changing the encoder class (since v2.0.0) and *Blake2SerializerS
 * Encoders
     * Base64 URL safe encoder: uses only lowercase and uppercase English alphabet letters, numbers, underscore (`_`) and hyphen (`-`).
     * Base32 encoder: uses only uppercase English alphabet letters, and the numbers 2 to 7.
-    * Hex/Base16 encoder: uses only numbers, and the uppercase English alphabet letters from A to F. 
+    * Hex/Base16 encoder: uses only numbers, and the uppercase English alphabet letters from A to F.
 * Serializers
     * JSON serializer: serializes most Python basic types into a string in [JSON](https://www.json.org/json-en.html).
     * Null serializer: doesn't serialize, but otherwise converts given input to bytes.

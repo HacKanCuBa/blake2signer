@@ -343,10 +343,10 @@ Unfortunately, extracting cryptographically secure pseudorandom data in Python i
 
         print('Non-deterministic signature')
         timings['Non-deterministic signature'] = %timeit -o -r 10 signer.unsign(signer.sign(data))
-    
+
         print('Deterministic signature')
         timings['Deterministic signature'] = %timeit -o -r 10 deterministic_signer.unsign(deterministic_signer.sign(data))
-    
+
         print()
         print('Timing'.ljust(35), '| Best Abs Time | Measure | Comparison')
         print('-' * 35, '|', '-' * 13, '|', '-' * 7 ,'|', '-' * 27)

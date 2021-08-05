@@ -179,6 +179,7 @@ You may not want all that `Blake2SerializerSigner` does and instead require the 
 import json
 
 from blake2signer import Blake2Signer
+from blake2signer.serializers import JSONSerializer
 
 secret = b'ZnVja3RoZXBvbGljZQ'
 data = {
@@ -197,6 +198,11 @@ print(signed.decode())  # ....{"username": "hackan", "id": 1, "is_admin": true}
 
 unsigned = signer.unsign(signed)
 print(serialized_data == unsigned)  # True
+
+# Alternatively, use the JSONSerializer (it uses compact encoding)
+serialized_data = JSONSerializer().serialize(data)
+signed = signer.sign(serialized_data)
+print(signed.decode())  # ....{"username":"hackan","id":1,"is_admin":true}
 
 # New in v2.0.0
 # The signature can be split in parts, don't do it "by hand"
@@ -253,32 +259,32 @@ You can use a custom JSON encoder to serialize values that are not supported by 
 
     ```python
     """Sample of custom JSON encoder for v2+."""
-    
+
     from decimal import Decimal
     from json import JSONEncoder
-    
+
     from blake2signer import Blake2SerializerSigner
-    
-    
+
+
     class CustomJSONEncoder(JSONEncoder):
-    
+
         def default(self, o):
             if isinstance(o, Decimal):
                 return str(o)
             elif isinstance(o, bytes):
                 return o.decode()
-    
+
             return super().default(o)
-    
-    
+
+
     secret = 'que-paso-con-Tehuel'
     data = [1, b'2', Decimal('3.4')]
-    
+
     signer = Blake2SerializerSigner(secret)
     # New in v2.0.0
     # You can pass any keyword argument to the serializer directly from `dumps`
     signed = signer.dumps(data, serializer_kwargs={'cls': CustomJSONEncoder})
-    
+
     unsigned = signer.loads(signed)
     print(unsigned)  # [1, '2', '3.4']
     ```
@@ -286,40 +292,40 @@ You can use a custom JSON encoder to serialize values that are not supported by 
 === "v1"
 
     For versions older than v2, you need to create a custom serializer from the JSONSerializer:
-    
+
     ```python
     """Sample of custom JSON encoder for versions < v2."""
-    
+
     import typing
     from decimal import Decimal
     from json import JSONEncoder
-    
+
     from blake2signer import Blake2SerializerSigner
     from blake2signer.serializers import JSONSerializer
-    
-    
+
+
     class CustomJSONEncoder(JSONEncoder):
-    
+
         def default(self, o):
             if isinstance(o, Decimal):
                 return str(o)
             elif isinstance(o, bytes):
                 return o.decode()
-    
+
             return super().default(o)
-    
-    
+
+
     class MyJSONSerializer(JSONSerializer):
-    
+
         def serialize(self, data: typing.Any, **kwargs: typing.Any) -> bytes:
             return super().serialize(data, cls=CustomJSONEncoder, **kwargs)
-    
-    
+
+
     secret = 'que-paso-con-Tehuel'
     data = [1, b'2', Decimal('3.4')]
-    
+
     signer = Blake2SerializerSigner(secret, serializer=MyJSONSerializer)
-    
+
     unsigned = signer.loads(signer.dumps(data))
     print(unsigned)  # [1, '2', '3.4']
     ```
@@ -521,7 +527,7 @@ class Bz2Compressor(CompressorInterface):
     def default_compression_level(self) -> int:  # New in 2.1.0
         """Get the default compression level."""
         return 9  # According to https://docs.python.org/3/library/bz2.html#bz2.compress
-    
+
     def compress(self, data: bytes, *, level: int) -> bytes:
         """Compress given data."""
         return bz2.compress(data, compresslevel=level)
