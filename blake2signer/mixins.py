@@ -67,7 +67,7 @@ class SerializerMixin(Mixin, ABC):
         personalisation += self._serializer.__class__.__name__.encode()
         kwargs['personalisation'] = personalisation
 
-        super().__init__(*args, **kwargs)  # type: ignore
+        super().__init__(*args, **kwargs)
 
     def _serialize(self, data: typing.Any, **kwargs: typing.Any) -> bytes:
         """Serialize given data.  Additional kwargs are passed to the serializer.
@@ -134,7 +134,7 @@ class CompressorMixin(Mixin, ABC):
         self._compression_flag: bytes = self._validate_comp_flag(compression_flag)
         self._compression_ratio: float = self._validate_comp_ratio(compression_ratio)
 
-        super().__init__(*args, **kwargs)  # type: ignore
+        super().__init__(*args, **kwargs)
 
     def _validate_comp_flag(self, flag: typing.Union[str, bytes]) -> bytes:
         """Validate the compression flag value and return it clean."""
@@ -280,7 +280,7 @@ class EncoderMixin(Mixin, ABC):
         personalisation += self._encoder.__class__.__name__.encode()
         kwargs['personalisation'] = personalisation
 
-        super().__init__(*args, **kwargs)  # type: ignore
+        super().__init__(*args, **kwargs)
 
     @staticmethod
     def _validate_encoder(
