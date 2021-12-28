@@ -1,4 +1,4 @@
-image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.6"
+image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.12"
 
 stages:
   - setup
@@ -25,34 +25,40 @@ variables:
     - main
     - tags
 
-poetry cache py3.9:
-  extends: .poetry cache
-  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.6-3.9"
-  cache:
-    key: "py39-${CI_COMMIT_REF_SLUG}"
-
 poetry cache py3.7:
   extends: .poetry cache
-  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.6-3.7"
+  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.12-3.7"
   cache:
     key: "py37-${CI_COMMIT_REF_SLUG}"
 
 poetry cache py3.8:
   extends: .poetry cache
-  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.6-3.8"
+  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.12-3.8"
   cache:
     key: "py38-${CI_COMMIT_REF_SLUG}"
 
-poetry cache py3.10rc:
+poetry cache py3.9:
   extends: .poetry cache
-  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.6-3.10rc"
+  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.12-3.9"
+  cache:
+    key: "py39-${CI_COMMIT_REF_SLUG}"
+
+poetry cache py3.10:
+  extends: .poetry cache
+  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.12-3.10"
+  cache:
+    key: "py310-${CI_COMMIT_REF_SLUG}"
+
+poetry cache py3.11rc:
+  extends: .poetry cache
+  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.12-3.11rc"
   allow_failure: true
   cache:
-    key: "py310rc-${CI_COMMIT_REF_SLUG}"
+    key: "py311rc-${CI_COMMIT_REF_SLUG}"
 
 poetry cache pypy3.7:
   extends: .poetry cache
-  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.6-3.7pypy"
+  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.12-3.7pypy"
   script:
     # Running `poetry install` fails because `mypy` uses `typed_ast` which doesn't
     # build in PyPy and probably never will, see:
@@ -64,7 +70,7 @@ poetry cache pypy3.7:
 
 poetry cache stackless3.7:
   extends: .poetry cache
-  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.6-3.7stackless"
+  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.12-3.7stackless"
   cache:
     key: "stackless37-${CI_COMMIT_REF_SLUG}"
   allow_failure: true
@@ -72,14 +78,14 @@ poetry cache stackless3.7:
 python lint:
   stage: static_analysis
   needs:
-    - poetry cache py3.9
+    - poetry cache py3.10
   script:
     - time poetry run inv reformat
     - changes="$(git status --porcelain=v2 2>/dev/null)"
     - if [ -n "$changes" ]; then printf "Code is not properly formatted\n%s" "$changes"; exit 1; fi
     - time poetry run inv lint
   cache:
-    key: "py39-${CI_COMMIT_REF_SLUG}"
+    key: "py310-${CI_COMMIT_REF_SLUG}"
     policy: pull
     paths:
       - .cache/poetry/
@@ -90,12 +96,12 @@ python lint:
 packages security:
   stage: static_analysis
   needs:
-    - poetry cache py3.9
+    - poetry cache py3.10
   script:
     - time poetry export -f requirements.txt -o requirements.txt --dev
     - time poetry run safety check --full-report -r requirements.txt
   cache:
-    key: "py39-${CI_COMMIT_REF_SLUG}"
+    key: "py310-${CI_COMMIT_REF_SLUG}"
     policy: pull
     paths:
       - .cache/poetry/
@@ -116,29 +122,9 @@ packages security:
     - main
     - tags
 
-tests py3.9:
-  extends: .tests
-  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.6-3.9"
-  needs:
-    - poetry cache py3.9
-    - python lint
-    - packages security
-  cache:
-    key: "py39-${CI_COMMIT_REF_SLUG}"
-
-tests py3.8:
-  extends: .tests
-  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.6-3.8"
-  needs:
-    - poetry cache py3.8
-    - python lint
-    - packages security
-  cache:
-    key: "py38-${CI_COMMIT_REF_SLUG}"
-
 tests py3.7:
   extends: .tests
-  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.6-3.7"
+  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.12-3.7"
   needs:
     - poetry cache py3.7
     - python lint
@@ -146,20 +132,50 @@ tests py3.7:
   cache:
     key: "py37-${CI_COMMIT_REF_SLUG}"
 
-tests py3.10:
+tests py3.8:
   extends: .tests
-  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.6-3.10rc"
+  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.12-3.8"
   needs:
-    - poetry cache py3.10rc
+    - poetry cache py3.8
     - python lint
     - packages security
   cache:
-    key: "py310rc-${CI_COMMIT_REF_SLUG}"
+    key: "py38-${CI_COMMIT_REF_SLUG}"
+
+tests py3.9:
+  extends: .tests
+  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.12-3.9"
+  needs:
+    - poetry cache py3.9
+    - python lint
+    - packages security
+  cache:
+    key: "py39-${CI_COMMIT_REF_SLUG}"
+
+tests py3.10:
+  extends: .tests
+  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.12-3.10"
+  needs:
+    - poetry cache py3.10
+    - python lint
+    - packages security
+  cache:
+    key: "py310-${CI_COMMIT_REF_SLUG}"
+
+tests py3.11rc:
+  extends: .tests
+  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.12-3.11rc"
+  needs:
+    - poetry cache py3.11rc
+    - python lint
+    - packages security
+  cache:
+    key: "py311rc-${CI_COMMIT_REF_SLUG}"
   allow_failure: true
 
 tests pypy3.7:
   extends: .tests
-  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.6-3.7pypy"
+  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.12-3.7pypy"
   needs:
     - poetry cache pypy3.7
     - python lint
@@ -170,7 +186,7 @@ tests pypy3.7:
 
 tests stackless3.7:
   extends: .tests
-  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.6-3.7stackless"
+  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.12-3.7stackless"
   needs:
     - poetry cache stackless3.7
     - python lint

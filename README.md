@@ -56,7 +56,8 @@ Versions currently tested (check the [pipelines](https://gitlab.com/hackancuba/b
 * CPython 3.7
 * CPython 3.8
 * CPython 3.9
-* CPython 3.10rc
+* CPython 3.10
+* CPython 3.11rc
 * [PyPy](https://www.pypy.org) 3.7
     * If you are contributing to this project under PyPy, [read the contrib notes first](CONTRIB.md#working-under-pypy).
 * [Stackless](https://github.com/stackless-dev/stackless/wiki) 3.7
