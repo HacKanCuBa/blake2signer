@@ -68,6 +68,18 @@ poetry cache pypy3.7:
     key: "pypy37-${CI_COMMIT_REF_SLUG}"
   allow_failure: true
 
+poetry cache pypy3.8:
+  extends: .poetry cache
+  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.12-3.8pypy"
+  script:
+    # Running `poetry install` fails because `mypy` uses `typed_ast` which doesn't
+    # build in PyPy and probably never will, see:
+    # https://github.com/python/typed_ast/issues/111
+    - time poetry remove --no-ansi --dev mypy  # Runs install by itself
+  cache:
+    key: "pypy38-${CI_COMMIT_REF_SLUG}"
+  allow_failure: true
+
 poetry cache stackless3.7:
   extends: .poetry cache
   image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.12-3.7stackless"
@@ -182,6 +194,17 @@ tests pypy3.7:
     - packages security
   cache:
     key: "pypy37-${CI_COMMIT_REF_SLUG}"
+  allow_failure: true
+
+tests pypy3.8:
+  extends: .tests
+  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.12-3.8pypy"
+  needs:
+    - poetry cache pypy3.8
+    - python lint
+    - packages security
+  cache:
+    key: "pypy38-${CI_COMMIT_REF_SLUG}"
   allow_failure: true
 
 tests stackless3.7:
