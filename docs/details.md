@@ -37,7 +37,7 @@ Additionally, *Blake2SerializerSigner* supports the following:
 
 ## About salt and personalisation
 
-On all signers a secure pseudorandom salt of the maximum allowed size for the hasher is generated for each signature internally and can't be manually set (salted signatures helps to prevent breakage of a low-entropy key), meaning that every produced signature is non-deterministic so even if the payload doesn't change each signature will be different and unique.
+On all signers a secure pseudorandom salt of the maximum allowed size for the hasher is generated for each signature internally and can't be manually set (salted signatures helps to prevent breakage of a low-entropy key), meaning that every produced signature is non-deterministic so even if the payload doesn't change each signature will be different and unique. This, however, has a [performance cost](performance.md#randomness-is-expensive): non-deterministic signatures are a bit more expensive than deterministic ones.
 
 ??? example "Checking non-deterministic signatures"
     ```python

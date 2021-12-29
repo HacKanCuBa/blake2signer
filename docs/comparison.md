@@ -297,7 +297,10 @@ Regarding **pyjwt** (2.3.0), I found this lib to be *quite faster* when compared
     To include BLAKE3 in the tests, install the package [`blake3`](https://pypi.org/project/blake3/).
 
 ```python
-"""Timing comparison."""
+"""Timing comparison.
+
+This will take a while to execute, go grab a coffee or something :)
+"""
 
 import json
 from hashlib import blake2b
@@ -472,7 +475,9 @@ settings.configure()  # Initialize Django
 secret = b'1' * 16
 
 blake2signer = Blake2Signer(secret)
+blake2signer_d = Blake2Signer(secret, deterministic=True)
 blake2signer_b2s = Blake2Signer(secret, hasher='blake2s')
+blake2signer_b2s_d = Blake2Signer(secret, hasher='blake2s', deterministic=True)
 itdsigner_b2 = Signer(secret, digest_method=blake2b)
 itdsigner_b2s = Signer(secret, digest_method=blake2s)
 itdsigner_s1 = Signer(secret, digest_method=sha1)
@@ -486,7 +491,9 @@ djsigner_s256 = signing.Signer(secret, algorithm='sha256')
 djsigner_s384 = signing.Signer(secret, algorithm='sha384')
 djsigner_s512 = signing.Signer(secret, algorithm='sha512')
 blake2serializer = Blake2SerializerSigner(secret)
+blake2serializer_d = Blake2SerializerSigner(secret, deterministic=True)
 blake2serializer_b2s = Blake2SerializerSigner(secret, hasher='blake2s')
+blake2serializer_b2s_d = Blake2SerializerSigner(secret, hasher='blake2s', deterministic=True)
 itdserializer_b2 = URLSafeSerializer(secret, signer_kwargs={'digest_method': blake2b})
 itdserializer_b2s = URLSafeSerializer(secret, signer_kwargs={'digest_method': blake2s})
 
@@ -497,7 +504,9 @@ except MissingDependencyError:
     print('Note: `blake3` (https://pypi.org/project/blake3) is not installed, BLAKE3 tests disabled')
     print()
 else:
+    blake2signer_b3_d = Blake2Signer(secret, hasher='blake3', deterministic=True)
     blake2serializer_b3 = Blake2SerializerSigner(secret, hasher='blake3')
+    blake2serializer_b3_d = Blake2SerializerSigner(secret, hasher='blake3', deterministic=True)
     has_blake3 = True
 
 # regular and big payloads
@@ -513,15 +522,27 @@ for data in ({'payload': [{'a': 'b'}, 1] * 6}, {'payload': [{'a': 'b'}, 1] * 1_0
     print()
 
     # Using ipython:
+    print('Blake2Signer(blake2b, determ)')
+    signers['Blake2Signer(blake2b, determ)'] = %timeit -o -r 10 blake2signer_d.unsign(blake2signer_d.sign(data_b))
+    print()
+
     print('Blake2Signer(blake2b)')
     signers['Blake2Signer(blake2b)'] = %timeit -o -r 10 blake2signer.unsign(blake2signer.sign(data_b))
     print()
 
+    print('Blake2Signer(blake2s, determ)')
+    signers['Blake2Signer(blake2s, determ)'] = %timeit -o -r 10 blake2signer_b2s_d.unsign(blake2signer_b2s_d.sign(data_b))
+    print()
+    
     print('Blake2Signer(blake2s)')
     signers['Blake2Signer(blake2s)'] = %timeit -o -r 10 blake2signer_b2s.unsign(blake2signer_b2s.sign(data_b))
     print()
 
     if has_blake3:
+        print('Blake2Signer(blake3, determ)')
+        signers['Blake2Signer(blake3, determ)'] = %timeit -o -r 10 blake2signer_b3_d.unsign(blake2signer_b3_d.sign(data_b))
+        print()
+
         print('Blake2Signer(blake3)')
         signers['Blake2Signer(blake3)'] = %timeit -o -r 10 blake2signer_b3.unsign(blake2signer_b3.sign(data_b))
         print()
@@ -582,8 +603,16 @@ for data in ({'payload': [{'a': 'b'}, 1] * 6}, {'payload': [{'a': 'b'}, 1] * 1_0
     signers['DjangoSigner(sha512)'] = %timeit -o -r 10 djsigner_s512.unsign(djsigner_s512.sign(data_s))
     print()
 
+    print('Blake2SerializerSigner(blake2b, determ)')
+    serializers['Blake2SerializerSigner(blake2b, determ)'] = %timeit -o -r 10 blake2serializer_d.loads(blake2serializer_d.dumps(data))
+    print()
+
     print('Blake2SerializerSigner(blake2b)')
     serializers['Blake2SerializerSigner(blake2b)'] = %timeit -o -r 10 blake2serializer.loads(blake2serializer.dumps(data))
+    print()
+
+    print('Blake2SerializerSigner(blake2s, determ)')
+    serializers['Blake2SerializerSigner(blake2s, determ)'] = %timeit -o -r 10 blake2serializer_b2s_d.loads(blake2serializer_b2s_d.dumps(data))
     print()
 
     print('Blake2SerializerSigner(blake2s)')
@@ -591,6 +620,10 @@ for data in ({'payload': [{'a': 'b'}, 1] * 6}, {'payload': [{'a': 'b'}, 1] * 1_0
     print()
 
     if has_blake3:
+        print('Blake2SerializerSigner(blake3, determ)')
+        serializers['Blake2SerializerSigner(blake3, determ)'] = %timeit -o -r 10 blake2serializer_b3_d.loads(blake2serializer_b3_d.dumps(data))
+        print()
+
         print('Blake2SerializerSigner(blake3)')
         serializers['Blake2SerializerSigner(blake3)'] = %timeit -o -r 10 blake2serializer_b3.loads(blake2serializer_b3.dumps(data))
         print()
@@ -621,7 +654,7 @@ for data in ({'payload': [{'a': 'b'}, 1] * 6}, {'payload': [{'a': 'b'}, 1] * 1_0
 
     print('Signer'.ljust(40), '| Best Abs Time | Measure | Comparison')
     print('-' * 40, '|', '-' * 13, '|', '-' * 7, '|', '-' * 27)
-    baseline = signers['Blake2Signer(blake2b)'].best
+    baseline = signers['Blake2Signer(blake2b, determ)'].best
     for timing in signers:
         ok = (signers[timing].best / signers[timing].stdev) > 60
         print_row(timing, signers[timing].best, ok, baseline)
