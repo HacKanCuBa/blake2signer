@@ -86,7 +86,7 @@ I choose to stick with [semver](https://semver.org/), which is compatible with [
 Once everything is ready for release, follow these steps:
 
 1. Create a new release branch from `develop`: `git flow release start <M.m.p>`
-1. Edit `pyproject.toml` and change `version` (you can use `poetry major|minor|patch` accordingly to one-up said version part).
+1. Edit `pyproject.toml` and change `version` (you can use `poetry version major|minor|patch` accordingly to one-up said version part).
 1. Edit `blake2signer/__init__.py` and change `__version__`: `__version__ = '<M.m.p>'`.
 1. Collect changelog fragments: `scriv collect`.
 1. Edit the changelog to properly indicate the version.
