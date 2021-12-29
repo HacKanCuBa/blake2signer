@@ -518,7 +518,7 @@ class Bz2Compressor(CompressorInterface):
     """Bzip2 compressor."""
 
     @property
-    def default_compression_level(self) -> int:
+    def default_compression_level(self) -> int:  # New in 2.1.0
         """Get the default compression level."""
         return 9  # According to https://docs.python.org/3/library/bz2.html#bz2.compress
     

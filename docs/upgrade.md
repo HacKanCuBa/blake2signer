@@ -1,5 +1,47 @@
 # Upgrade guide
 
+## To v2.1
+
+The default compression level was hardcoded to 6 no matter which compressor was being used. This has changed so that the corresponding default compression level for the compressor is used.
+
+If you were using the Zlib compressor (default), then there's no change for you. However, if you were using the Gzip compressor, the default level will now be 9 instead of 6. To continue using 6 as compression level, change the line calling the corresponding method (dump, dumps or dumps_parts) and use the parameter `compression_level=6`:
+
+```python
+from blake2signer import Blake2SerializerSigner
+
+
+secret = b'secure-secret-that-nobody-knows!'
+data = {'user_id': 1, 'is_admin': True, 'username': 'hackan'}
+
+signer = Blake2SerializerSigner(
+    secret,
+    personalisation=b'some-signer',
+)
+# ...
+signed = signer.dumps(data, compression_level=6)  # Add the compression_level parameter
+```
+
+See the [examples](examples.md#compressing-data) for more information.
+
+Moreover, if you have created a custom compressor, then you need to add the `default_compression_level` property:
+
+```python
+from blake2signer.interfaces import CompressorInterface
+
+
+class MyCompressor(CompressorInterface):
+    """My compressor."""
+
+    @property
+    def default_compression_level(self) -> int:
+        """Get the default compression level."""
+        return 8
+
+    ...
+```
+
+See the [examples](examples.md#using-a-custom-compressor) for more information.
+
 ## To v2
 
 Generally speaking, *v2 broke the public API a bit*, so most projects using v1 *could probably* work as-is with v2. However, the private API changed **a lot**.

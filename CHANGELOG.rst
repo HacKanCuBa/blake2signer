@@ -1,4 +1,12 @@
 
+2.1.0 - 2021-12-28
+==================
+
+Changed
+-------
+
+- Unhardcode default compression level, which was hardcoded to 6. That value was set for Zlib and remain there since the old times. Make the default `None` so we can let the compressor set the right value.
+
 2.0.0 - 2021-06-11
 ==================
 
