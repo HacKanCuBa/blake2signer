@@ -359,7 +359,10 @@ Unfortunately, extracting cryptographically secure pseudorandom data in Python i
 
 ## BLAKE versions
 
-Different BLAKE versions and modes can perform better or worse depending on the hardware they're running on. For example, BLAKE2b is optimized for 64b platforms whereas BLAKE2s, for 8-32b platforms (read more about them in their [official site](https://blake2.net/)).
+Different BLAKE versions and modes can perform better or worse depending on the hardware they're running on. For example, BLAKE2b is optimized for 64b platforms whereas BLAKE2s, for 8-32b platforms (read more about them in their [official site](https://blake2.net/)). On the other hand, BLAKE3 is general purpose and designed to be as fast as possible, and it certainly succeeds on being several times faster than BLAKE2 (read more in its [official site](https://github.com/BLAKE3-team/BLAKE3-specs)).
+
+!!! info "BLAKE3"
+    In my trials, BLAKE3 turned out to be slower for small payloads than BLAKE2. It could be related to the particular implementation, or it could be designed like that. I will update this information if it changes in the future (it is still very new).
 
 You should test your implementation to see which hasher performs better.
 

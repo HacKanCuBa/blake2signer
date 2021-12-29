@@ -7,6 +7,9 @@ import pytest
 from .bases import BaseTests
 from .bases import Signature
 from .bases import Signer
+from .. import errors
+from ..hashers import HasherChoice
+from ..hashers import has_blake3
 from ..signers import Blake2Signer
 
 
@@ -59,13 +62,30 @@ class TestsBlake2Signer(BaseTests):
         """Unsign signature with the signer."""
         return signer.unsign_parts(signature)
 
+    @pytest.mark.xfail(
+        not has_blake3(),
+        reason='blake3 is not installed',
+        raises=errors.MissingDependencyError,
+    )
+    @pytest.mark.parametrize(
+        'hasher',
+        (
+            HasherChoice.blake2b,
+            HasherChoice.blake2s,
+            HasherChoice.blake3,
+        ),
+    )
     @pytest.mark.parametrize(
         'data',
         ('datadata', b'datadata'),
     )
-    def test_data_can_be_string_or_bytes(self, data: typing.AnyStr) -> None:
+    def test_data_can_be_string_or_bytes(
+        self,
+        data: typing.AnyStr,
+        hasher: HasherChoice,
+    ) -> None:
         """Test that data can be either bytes or string."""
-        signer = self.signer()
+        signer = self.signer(hasher=hasher)
 
         unsigned = self.unsign(signer, self.sign(signer, data))
         if isinstance(data, bytes):

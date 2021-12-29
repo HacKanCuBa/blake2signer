@@ -57,6 +57,12 @@ print(unsigned)  # {'user_id': 1, 'is_admin': True, 'username': 'hackan'}
 
 Sign cookies in a FastAPI/Starlette middleware.
 
+!!! example "A better example"
+    Even though this code does work as-is, there's a better, easier to implement example of cookie signing middleware as a [snippet](https://gitlab.com/hackancuba/blake2signer/-/snippets/2236491)!
+
+!!! tip "There's a package for this, too"
+    Check out the `asgi-signing-middleware` [package](https://pypi.org/project/asgi-signing-middleware/) which does this, and more :)
+
 ```python
 """Sample use case: sign cookies in a FastAPI/Starlette middleware."""
 
@@ -942,6 +948,33 @@ print(data == unsigned)  # True
     * `Blake2SerializerSigner(secret, hasher=Blake2SerializerSigner.Hashers.blake2s)`
     * `Blake2SerializerSigner(secret, hasher='blake2s')`
 
+### Using BLAKE3
+
+!!! info "New in v2.2.0"
+
+You can use BLAKE3 if you have the [`blake3`](https://pypi.org/project/blake3/) package installed. Check the [comparison against BLAKE2](performance.md#blake-versions).
+
+!!! info "This can be done in every signer"
+
+```python
+"""Signing with BLAKE3 (the same goes for every signer!)."""
+
+from blake2signer import Blake2Signer
+
+secret = b'civil disobedience is necessary'
+data = b'remember Aaron Swartz'
+
+signer = Blake2Signer(
+    secret,
+    hasher=Blake2Signer.Hashers.blake3,  # 'blake3'
+)
+signed = signer.sign(data)
+print(signed)
+
+unsigned = signer.unsign(signed)
+print(data == unsigned)  # True
+```
+
 ## Changing the encoder
 
 There are three [encoders provided by this package](details.md#encoders-serializers-and-compressors): a Base64 URL safe encoder (default), a Base 32 encoder and a Base 16/Hex encoder.
@@ -1062,7 +1095,7 @@ print(data == signer.unsign(signed))  # True
 
 ## Changing the digest size
 
-One advantage of Blake2 is that it is very flexible and tweakable, and one of the things we can tweak is its digest size. This means that the output size of the signer can be changed for shorter or longer signatures: longer ones are more secure given that they are almost impossible to bruteforce. It is set to 16 bytes by default, which is a good compromise between security and length.
+One advantage of BLAKE2+ is that it is very flexible and tweakable, and one of the things we can tweak is its digest size. This means that the output size of the signer can be changed for shorter or longer signatures: longer ones are more secure given that they are almost impossible to bruteforce. It is set to 16 bytes by default, which is a good compromise between security and length.
 
 !!! note
     A minimum size of 16 bytes is enforced, but [it can be changed](#changing-the-digest-size-limit).

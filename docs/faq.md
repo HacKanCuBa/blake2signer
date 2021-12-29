@@ -14,7 +14,7 @@ Yes, it has a stable API and is ready for production. It will greatly benefit of
 
 ## Will this package support other versions of BLAKE?
 
-Sure thing. The latest version is 3, but it hasn't made its way to the Python core yet. There is an [excellent package](https://pypi.org/project/blake3/) available, so I'm planning to support its usage in the near future.
+Sure thing. The latest version is 3, but it hasn't made its way to the Python core yet. However, since v2.2.0 if you have the [`blake3`](https://pypi.org/project/blake3/) package installed, [you can use it](examples.md#using-blake3).
 
 ## Has this package been audited?
 

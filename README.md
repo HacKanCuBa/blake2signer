@@ -7,7 +7,7 @@
 
 # ![Logo](https://assets.gitlab-static.net/uploads/-/system/project/avatar/21560006/icon_d_dark.png?width=40) Blake2Signer
 
-The goal of this project is to provide a simple and straightforward way to securely sign data using [BLAKE2 in keyed hashing mode](https://docs.python.org/3/library/hashlib.html#blake2).
+The goal of this project is to provide a simple and straightforward way to securely sign data using [BLAKE in keyed hashing mode](https://docs.python.org/3/library/hashlib.html#keyed-hashing).
 
 ## Why would I need to use it?
 
@@ -45,11 +45,17 @@ This package is hosted on [PyPi](https://pypi.org/project/blake2signer) so just:
 * `poetry add blake2signer`
 * `pipenv install blake2signer`
 
-You can check the [releases page](https://gitlab.com/hackancuba/blake2signer/-/releases) for package hashes and signatures.
+You can check the [releases' page](https://gitlab.com/hackancuba/blake2signer/-/releases) for package hashes and signatures.
+
+Note: if you want to use BLAKE3, you need to install the [`blake3`](https://pypi.org/project/blake3/) package, until it arrives to core (which may or may not happen). Alternatively, you can install this package with extras:
+
+* `python3 -m pip install blake2signer[blake3]`
+* `poetry add blake2signer[blake3]`
+* `pipenv install blake2signer[blake3]`
 
 ### Requirements
 
-Only Python is required, this module doesn't have dependencies besides those used for development.
+Only Python is required, this module doesn't have dependencies besides those used for development, and the optional `blake3`.
 
 Versions currently tested (check the [pipelines](https://gitlab.com/hackancuba/blake2signer/-/pipelines)):
 

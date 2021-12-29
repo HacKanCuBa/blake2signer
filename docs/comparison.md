@@ -278,17 +278,23 @@ Following is the performance comparison of this lib against [It's Dangerous](htt
     Take into account that the only significant performance comparison exists when blake2b or blake2s is used as hashing algorithm, otherwise the algorithm performance may outweigh the implementation. Other algorithms are noted here to be taken into consideration against the BLAKE2 algorithm and not against this library in particular.  
     A reference function that uses blake2b directly is used to compare against it: this lib can't be faster than that.
 
-Regarding **itsdangerous** (1.1.0), I found this lib to be *marginally faster* when compared to it using blake2b, *somewhat faster* regarding sha256, 384 and 512 and *slower* regarding sha1.
+Regarding **itsdangerous** (2.0.1), I found this lib to be *marginally faster* when compared to it using blake2b, *somewhat faster* regarding sha256, 384 and 512 and *slower* regarding sha1.
 
-Regarding **django** (3.2.1), I found this lib to be *quite faster* when compared to it using blake2b, sha256, sha384 and sha512 and *slower* regarding sha1. Note that its Signer doesn't handle arbitrary bytes well (it breaks raising `BadSignature` if you use `data_b` below, so it needs `data_s`).
+Regarding **django** (4.0), I found this lib to be *quite faster* when compared to it using blake2b, sha256, sha384 and sha512 and *slower* regarding sha1. Note that its Signer doesn't handle arbitrary bytes well (it breaks raising `BadSignature` if you use `data_b` below, so it needs `data_s`).
 
-Regarding **pyjwt** (2.1.0), I found this lib to be *quite faster* when compared to it using blake2b (hack) and sha256 (hs256).
+Regarding **pyjwt** (2.3.0), I found this lib to be *quite faster* when compared to it using blake2b (hack) and sha256 (hs256).
+
+!!! tip "Install requirements"
+    `python3 -m pip install blake2signer blake3>=0.2 pyjwt~=2.3 django~=4.0 itsdangerous~=2.0`
 
 !!! note
     The standard deviation presented on each evaluation should be at least two orders of magnitude lower than the mean for appropriate results. As a simple reference, for an Intel i7-6820HQ @ 2.70GHz × 8 with 16 GB memory the mean is in `ms` and the std dev should be in `us`.
 
 !!! warning
     Careful running these tests under PyPy as-is! My machine froze because the memory was exhausted. Try first with a few executions like `-n 10`.
+
+!!! info
+    To include BLAKE3 in the tests, install the package [`blake3`](https://pypi.org/project/blake3/).
 
 ```python
 """Timing comparison."""
@@ -311,6 +317,7 @@ from itsdangerous import URLSafeSerializer
 
 from blake2signer import Blake2SerializerSigner
 from blake2signer import Blake2Signer
+from blake2signer.errors import MissingDependencyError
 
 
 def format_time(
@@ -483,6 +490,16 @@ blake2serializer_b2s = Blake2SerializerSigner(secret, hasher='blake2s')
 itdserializer_b2 = URLSafeSerializer(secret, signer_kwargs={'digest_method': blake2b})
 itdserializer_b2s = URLSafeSerializer(secret, signer_kwargs={'digest_method': blake2s})
 
+try:
+    blake2signer_b3 = Blake2Signer(secret, hasher='blake3')
+except MissingDependencyError:
+    has_blake3 = False
+    print('Note: `blake3` (https://pypi.org/project/blake3) is not installed, BLAKE3 tests disabled')
+    print()
+else:
+    blake2serializer_b3 = Blake2SerializerSigner(secret, hasher='blake3')
+    has_blake3 = True
+
 # regular and big payloads
 for data in ({'payload': [{'a': 'b'}, 1] * 6}, {'payload': [{'a': 'b'}, 1] * 1_000}):
     data_s = json.dumps(data)
@@ -503,6 +520,11 @@ for data in ({'payload': [{'a': 'b'}, 1] * 6}, {'payload': [{'a': 'b'}, 1] * 1_0
     print('Blake2Signer(blake2s)')
     signers['Blake2Signer(blake2s)'] = %timeit -o -r 10 blake2signer_b2s.unsign(blake2signer_b2s.sign(data_b))
     print()
+
+    if has_blake3:
+        print('Blake2Signer(blake3)')
+        signers['Blake2Signer(blake3)'] = %timeit -o -r 10 blake2signer_b3.unsign(blake2signer_b3.sign(data_b))
+        print()
 
     print('Blake2b(sentinel)')
     signers['Blake2(sentinel)'] = %timeit -o -r 10 blake2b_unsign(blake2b_sign(data_b, secret), secret)
@@ -567,6 +589,11 @@ for data in ({'payload': [{'a': 'b'}, 1] * 6}, {'payload': [{'a': 'b'}, 1] * 1_0
     print('Blake2SerializerSigner(blake2s)')
     serializers['Blake2SerializerSigner(blake2s)'] = %timeit -o -r 10 blake2serializer_b2s.loads(blake2serializer_b2s.dumps(data))
     print()
+
+    if has_blake3:
+        print('Blake2SerializerSigner(blake3)')
+        serializers['Blake2SerializerSigner(blake3)'] = %timeit -o -r 10 blake2serializer_b3.loads(blake2serializer_b3.dumps(data))
+        print()
 
     print('ItsDangerousURLSafeSerializer(blake2b)')
     serializers['ItsDangerousURLSafeSerializer(blake2b)'] = %timeit -o -r 10 itdserializer_b2.loads(itdserializer_b2.dumps(data))

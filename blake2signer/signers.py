@@ -21,7 +21,7 @@ from .serializers import JSONSerializer
 
 
 class Blake2Signer(Blake2SignerBase):
-    """BLAKE2 in keyed hashing mode for signing data.
+    """BLAKE in keyed hashing mode for signing data.
 
     Example:
         >>> data = b'facundo castro presente'
@@ -162,7 +162,7 @@ class Blake2Signer(Blake2SignerBase):
 
 
 class Blake2TimestampSigner(Blake2TimestampSignerBase):
-    """BLAKE2 in keyed hashing mode for signing data with timestamp.
+    """BLAKE in keyed hashing mode for signing data with timestamp.
 
     Example:
         >>> data = b'facundo castro presente'
@@ -325,9 +325,9 @@ class Blake2SerializerSigner(
         CompressorMixin,
         Blake2SerializerSignerBase,
 ):
-    """BLAKE2 for signing and optionally timestamping serialized data.
+    """BLAKE for signing and optionally timestamping serialized data.
 
-    It uses BLAKE2 in keyed hashing mode, and it can handle data serialization,
+    It uses BLAKE in keyed hashing mode, and it can handle data serialization,
     compression and encoding.
 
     Example:
@@ -376,27 +376,27 @@ class Blake2SerializerSigner(
         compression_flag: typing.Union[str, bytes] = b'.',
         compression_ratio: typing.Union[int, float] = 5.0,
     ) -> None:
-        """Serialize, sign and verify serialized signed data using BLAKE2.
+        """Serialize, sign and verify serialized signed data using BLAKE.
 
-        It uses BLAKE2 in keyed hashing mode, and it can handle data serialization,
+        It uses BLAKE in keyed hashing mode, and it can handle data serialization,
         compression and encoding.
 
         Setting `max_age` will produce a timestamped signed stream.
 
         Args:
-            secret: Secret value which will be derived using BLAKE2 to
-                produce the signing key. The minimum secret size is enforced to
-                16 bytes and there is no maximum since the key will be derived to
-                the maximum supported size.
+            secret: Secret value which will be derived using BLAKE to produce the
+                signing key. The minimum secret size is enforced to 16 bytes and
+                there is no maximum.
             max_age (optional): Use a timestamp signer instead of a regular one
                 to ensure that the signature is not older than this time in seconds.
             personalisation (optional): Personalisation string to force the hash
                 function to produce different digests for the same input. It is
-                derived using BLAKE2 to ensure it fits the hasher limits, so it
+                derived using BLAKE to ensure it fits the hasher limits, so it
                 has no practical size limit. It defaults to the class name.
             digest_size (optional): Size of output signature (digest) in bytes
                 (defaults to 16 bytes). The minimum size is enforced to 16 bytes.
-            hasher (optional): Hash function to use: blake2b (default) or blake2s.
+            hasher (optional): Hash function to use: blake2b (default), blake2s
+                or blake3.
             deterministic (optional): Define if signatures are deterministic or
                 non-deterministic (default). Non-deterministic sigs are preferred,
                 and achieved through the use of a random salt. For deterministic

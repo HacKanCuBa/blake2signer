@@ -51,6 +51,7 @@ nav:
   - 'faq.md'
   - Code References:
     - 'signers.md'
+    - 'hashers.md'
     - 'errors.md'
     - 'serializers.md'
     - 'compressors.md'

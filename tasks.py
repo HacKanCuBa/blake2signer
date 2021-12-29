@@ -12,25 +12,29 @@ def flake8(ctx):
     """Run flake8 with proper exclusions."""
     ctx.run(f'flake8 --exclude tests blake2signer/', echo=True)
     ctx.run(f'flake8 --ignore=S101,R701,C901 blake2signer/tests/', echo=True)
+    ctx.run(f'flake8 --ignore=S101,R701,C901 tests/', echo=True)
 
 
 @task
 def pydocstyle(ctx):
     """Run pydocstyle with proper exclusions."""
     ctx.run('pydocstyle --explain blake2signer/', echo=True)
+    ctx.run('pydocstyle --explain tests/', echo=True)
 
 
 @task
 def bandit(ctx):
     """Run bandit with proper exclusions."""
-    ctx.run(f'bandit -i -r -x tests blake2signer/', echo=True)
+    ctx.run(f'bandit -i -r -x blake2signer/tests blake2signer/', echo=True)
     ctx.run(f'bandit -i -r -s B101 blake2signer/tests/', echo=True)
+    ctx.run(f'bandit -i -r -s B101 tests/', echo=True)
 
 
 @task
 def mypy(ctx):
     """Hint code with mypy."""
     ctx.run(f'mypy blake2signer/', echo=True, pty=True)
+    ctx.run(f'mypy tests/', echo=True, pty=True)
 
 
 @task
@@ -43,14 +47,16 @@ def yapf(ctx, diff=False):
         cmd.append('-i')
 
     cmd.append('blake2signer/')
+    cmd.append('tests/')
     ctx.run(' '.join(cmd))
 
 
 @task
 def trailing_commas(ctx):
     """Add missing trailing commas or remove it if necessary."""
-    cmd = f'find blake2signer/ -type f -name "*.py" -exec add-trailing-comma "{{}}" \\+'
-    ctx.run(cmd, echo=True, pty=True, warn=True)
+    opts = f'-type f -name "*.py" -exec add-trailing-comma "{{}}" \\+'
+    ctx.run('find blake2signer/ ' + opts, echo=True, pty=True, warn=True)
+    ctx.run('find tests/ ' + opts, echo=True, pty=True, warn=True)
 
 
 # noinspection PyUnusedLocal
@@ -91,7 +97,7 @@ def clean(ctx):
         'seed': 'seed number to repeat a randomization sequence',
     }
 )
-def tests(ctx, watch=False, seed=0):
+def tests(ctx, watch=False, seed=0, coverage=True):
     """Run tests."""
     if watch:
         cmd = ['pytest-watch', '--']
@@ -101,7 +107,16 @@ def tests(ctx, watch=False, seed=0):
     if seed:
         cmd.append(f'--randomly-seed={seed}')
 
-    ctx.run(' '.join(cmd), pty=True)
+    if not coverage:
+        cmd.append('--no-cov')
+
+    cmd0 = cmd + ['--ignore tests']
+    cmd1 = cmd + ['--ignore blake2signer/tests']
+    if coverage:
+        cmd1.append('--cov-append')
+
+    ctx.run(' '.join(cmd0), pty=True, echo=True)
+    ctx.run(' '.join(cmd1), pty=True, echo=True)
 
 
 @task

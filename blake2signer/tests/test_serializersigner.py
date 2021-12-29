@@ -21,6 +21,8 @@ from ..compressors import ZlibCompressor
 from ..encoders import B32Encoder
 from ..encoders import B64URLEncoder
 from ..encoders import HexEncoder
+from ..hashers import HasherChoice
+from ..hashers import has_blake3
 from ..interfaces import CompressorInterface
 from ..interfaces import EncoderInterface
 from ..serializers import JSONSerializer
@@ -80,6 +82,19 @@ class SerializerSignerTestsBase(BaseTests):
         """Unsign signature with the signer."""
         return signer.loads_parts(signature)
 
+    @pytest.mark.xfail(
+        not has_blake3(),
+        reason='blake3 is not installed',
+        raises=errors.MissingDependencyError,
+    )
+    @pytest.mark.parametrize(
+        'hasher',
+        (
+            HasherChoice.blake2b,
+            HasherChoice.blake2s,
+            HasherChoice.blake3,
+        ),
+    )
     @pytest.mark.parametrize(
         'data',
         (
@@ -94,9 +109,13 @@ class SerializerSignerTestsBase(BaseTests):
             {},
         ),
     )
-    def test_dumps_loads_default(self, data: typing.Any) -> None:
+    def test_dumps_loads_default(
+        self,
+        data: typing.Any,
+        hasher: HasherChoice,
+    ) -> None:
         """Test dumping and loading with defaults is correct."""
-        signer = self.signer()
+        signer = self.signer(hasher=hasher)
 
         signed = self.sign(signer, data)
         assert isinstance(signed, str)
@@ -104,6 +123,19 @@ class SerializerSignerTestsBase(BaseTests):
         unsigned = self.unsign(signer, signed)
         assert data == unsigned
 
+    @pytest.mark.xfail(
+        not has_blake3(),
+        reason='blake3 is not installed',
+        raises=errors.MissingDependencyError,
+    )
+    @pytest.mark.parametrize(
+        'hasher',
+        (
+            HasherChoice.blake2b,
+            HasherChoice.blake2s,
+            HasherChoice.blake3,
+        ),
+    )
     @pytest.mark.parametrize(
         ('encoder', 'regex'),
         (
@@ -116,13 +148,27 @@ class SerializerSignerTestsBase(BaseTests):
         self,
         encoder: typing.Type[EncoderInterface],
         regex: str,
+        hasher: HasherChoice,
     ) -> None:
         """Test signing and unsigning using an encoder."""
-        super().test_sign_unsign_with_encoder(encoder, regex)
+        super().test_sign_unsign_with_encoder(encoder, regex, hasher)
 
-    def test_dumps_loads_compression_level_default(self) -> None:
+    @pytest.mark.xfail(
+        not has_blake3(),
+        reason='blake3 is not installed',
+        raises=errors.MissingDependencyError,
+    )
+    @pytest.mark.parametrize(
+        'hasher',
+        (
+            HasherChoice.blake2b,
+            HasherChoice.blake2s,
+            HasherChoice.blake3,
+        ),
+    )
+    def test_dumps_loads_compression_level_default(self, hasher: HasherChoice) -> None:
         """Test dumping and loading with default compression level is correct."""
-        signer = self.signer()
+        signer = self.signer(hasher=hasher)
 
         signed = self.sign(signer, self.data_compressible, compress=False)
         signed_compressed = self.sign(
@@ -135,9 +181,22 @@ class SerializerSignerTestsBase(BaseTests):
 
         assert self.data_compressible == self.unsign(signer, signed_compressed)
 
-    def test_dumps_loads_compression_level(self) -> None:
+    @pytest.mark.xfail(
+        not has_blake3(),
+        reason='blake3 is not installed',
+        raises=errors.MissingDependencyError,
+    )
+    @pytest.mark.parametrize(
+        'hasher',
+        (
+            HasherChoice.blake2b,
+            HasherChoice.blake2s,
+            HasherChoice.blake3,
+        ),
+    )
+    def test_dumps_loads_compression_level(self, hasher: HasherChoice) -> None:
         """Test dumping and loading changing compression level is correct."""
-        signer = self.signer()
+        signer = self.signer(hasher=hasher)
 
         signed = self.sign(signer, self.data_compressible, compress=False)
         signed_compressed1 = self.sign(
@@ -157,9 +216,25 @@ class SerializerSignerTestsBase(BaseTests):
         assert self.data_compressible == self.unsign(signer, signed_compressed1)
         assert self.data_compressible == self.unsign(signer, signed_compressed2)
 
-    def test_dumps_loads_auto_compression_incompressible(self) -> None:
+    @pytest.mark.xfail(
+        not has_blake3(),
+        reason='blake3 is not installed',
+        raises=errors.MissingDependencyError,
+    )
+    @pytest.mark.parametrize(
+        'hasher',
+        (
+            HasherChoice.blake2b,
+            HasherChoice.blake2s,
+            HasherChoice.blake3,
+        ),
+    )
+    def test_dumps_loads_auto_compression_incompressible(
+        self,
+        hasher: HasherChoice,
+    ) -> None:
         """Test dumping and loading with auto compression is correct."""
-        signer = self.signer()
+        signer = self.signer(hasher=hasher)
 
         signed = self.sign(signer, self.data_incompressible, compress=False)
         signed_not_compressed = self.sign(
@@ -169,9 +244,22 @@ class SerializerSignerTestsBase(BaseTests):
         )
         assert len(signed_not_compressed) == len(signed)
 
-    def test_dumps_loads_force_compression(self) -> None:
+    @pytest.mark.xfail(
+        not has_blake3(),
+        reason='blake3 is not installed',
+        raises=errors.MissingDependencyError,
+    )
+    @pytest.mark.parametrize(
+        'hasher',
+        (
+            HasherChoice.blake2b,
+            HasherChoice.blake2s,
+            HasherChoice.blake3,
+        ),
+    )
+    def test_dumps_loads_force_compression(self, hasher: HasherChoice) -> None:
         """Test dumping and loading forcing compression is correct."""
-        signer = self.signer()
+        signer = self.signer(hasher=hasher)
 
         signed = self.sign(signer, self.data_compressible, compress=False)
         signed_compressed = self.sign(
@@ -183,9 +271,25 @@ class SerializerSignerTestsBase(BaseTests):
 
         assert self.data_compressible == self.unsign(signer, signed_compressed)
 
-    def test_dumps_force_compression_bypasses_compress(self) -> None:
+    @pytest.mark.xfail(
+        not has_blake3(),
+        reason='blake3 is not installed',
+        raises=errors.MissingDependencyError,
+    )
+    @pytest.mark.parametrize(
+        'hasher',
+        (
+            HasherChoice.blake2b,
+            HasherChoice.blake2s,
+            HasherChoice.blake3,
+        ),
+    )
+    def test_dumps_force_compression_bypasses_compress(
+        self,
+        hasher: HasherChoice,
+    ) -> None:
         """Test dumping and loading forcing compression bypasses compress."""
-        signer = self.signer()
+        signer = self.signer(hasher=hasher)
 
         signed = self.sign(signer, self.data_compressible, compress=False)
         signed_compressed = self.sign(
@@ -196,9 +300,25 @@ class SerializerSignerTestsBase(BaseTests):
         )
         assert len(signed_compressed) < len(signed)
 
-    def test_dumps_force_compression_bypasses_compress_detrimental(self) -> None:
+    @pytest.mark.xfail(
+        not has_blake3(),
+        reason='blake3 is not installed',
+        raises=errors.MissingDependencyError,
+    )
+    @pytest.mark.parametrize(
+        'hasher',
+        (
+            HasherChoice.blake2b,
+            HasherChoice.blake2s,
+            HasherChoice.blake3,
+        ),
+    )
+    def test_dumps_force_compression_bypasses_compress_detrimental(
+        self,
+        hasher: HasherChoice,
+    ) -> None:
         """Test dumps forcing compression bypasses compress and is detrimental."""
-        signer = self.signer()
+        signer = self.signer(hasher=hasher)
 
         signed = self.sign(signer, self.data_incompressible, compress=False)
         signed_compressed = self.sign(
@@ -223,7 +343,23 @@ class SerializerSignerTestsBase(BaseTests):
 
         self.mix_signers_sign_unsign(signer1, signer2)
 
-    def test_dumps_loads_with_custom_serializer(self) -> None:  # noqa: C901
+    @pytest.mark.xfail(
+        not has_blake3(),
+        reason='blake3 is not installed',
+        raises=errors.MissingDependencyError,
+    )
+    @pytest.mark.parametrize(
+        'hasher',
+        (
+            HasherChoice.blake2b,
+            HasherChoice.blake2s,
+            HasherChoice.blake3,
+        ),
+    )
+    def test_dumps_loads_with_custom_serializer(  # noqa: C901
+            self,
+            hasher: HasherChoice,
+    ) -> None:
         """Test dumping and loading using a custom serializer."""
 
         class Justice:
@@ -250,18 +386,32 @@ class SerializerSignerTestsBase(BaseTests):
                 return super().serialize(data, cls=CustomJSONEncoder, **kwargs)
 
         obj = Justice('acab')
-        signer = self.signer(serializer=MyJSONSerializer)
+        signer = self.signer(serializer=MyJSONSerializer, hasher=hasher)
 
         unsigned = self.unsign(signer, self.sign(signer, obj))
         assert obj.a == unsigned
 
+    @pytest.mark.xfail(
+        not has_blake3(),
+        reason='blake3 is not installed',
+        raises=errors.MissingDependencyError,
+    )
+    @pytest.mark.parametrize(
+        'hasher',
+        (
+            HasherChoice.blake2b,
+            HasherChoice.blake2s,
+            HasherChoice.blake3,
+        ),
+    )
     @pytest.mark.parametrize('flag', ('!', b'!'))
     def test_compression_flag_can_be_changed(
         self,
         flag: typing.Union[str, bytes],
+        hasher: HasherChoice,
     ) -> None:
         """Test that the compression flag can be changed."""
-        signer = self.signer(compression_flag=flag)
+        signer = self.signer(compression_flag=flag, hasher=hasher)
 
         if isinstance(flag, bytes):
             assert signer._compression_flag == flag
@@ -280,14 +430,31 @@ class SerializerSignerTestsBase(BaseTests):
         else:
             assert unsigned.startswith(flag.encode())
 
-    def test_compression_can_not_be_bombed(self) -> None:
+    @pytest.mark.xfail(
+        not has_blake3(),
+        reason='blake3 is not installed',
+        raises=errors.MissingDependencyError,
+    )
+    @pytest.mark.parametrize(
+        'hasher',
+        (
+            HasherChoice.blake2b,
+            HasherChoice.blake2s,
+            HasherChoice.blake3,
+        ),
+    )
+    def test_compression_can_not_be_bombed(self, hasher: HasherChoice) -> None:
         """Test that a malicious input can't bomb the compression."""
         bomb_data = b'\x00' * 1048576
         bomb = zlib.compress(bomb_data)
 
         assert len(bomb) < len(bomb_data)
 
-        signer = self.signer(serializer=NullSerializer, compressor=ZlibCompressor)
+        signer = self.signer(
+            serializer=NullSerializer,
+            compressor=ZlibCompressor,
+            hasher=hasher,
+        )
 
         payload = signer._compression_flag + bomb
         signed = self.sign(signer, payload, compress=False)
@@ -297,17 +464,43 @@ class SerializerSignerTestsBase(BaseTests):
         unsigned = self.unsign(signer, signed)
         assert len(payload) == len(unsigned)
 
-    def test_compression_ratio_can_be_changed(self) -> None:
+    @pytest.mark.xfail(
+        not has_blake3(),
+        reason='blake3 is not installed',
+        raises=errors.MissingDependencyError,
+    )
+    @pytest.mark.parametrize(
+        'hasher',
+        (
+            HasherChoice.blake2b,
+            HasherChoice.blake2s,
+            HasherChoice.blake3,
+        ),
+    )
+    def test_compression_ratio_can_be_changed(self, hasher: HasherChoice) -> None:
         """Test that the compression ratio can be changed."""
         data = 'datadatadatadata'  # Only somewhat compressible
-        signer1 = self.signer(compression_ratio=10)
-        signer2 = self.signer(compression_ratio=20)
+        signer1 = self.signer(compression_ratio=10, hasher=hasher)
+        signer2 = self.signer(compression_ratio=20, hasher=hasher)
 
         signed1 = self.sign(signer1, data, compress=True)  # Compressed
         signed2 = self.sign(signer2, data, compress=True)  # Not compressed
 
         assert len(signed1) < len(signed2)
 
+    @pytest.mark.xfail(
+        not has_blake3(),
+        reason='blake3 is not installed',
+        raises=errors.MissingDependencyError,
+    )
+    @pytest.mark.parametrize(
+        'hasher',
+        (
+            HasherChoice.blake2b,
+            HasherChoice.blake2s,
+            HasherChoice.blake3,
+        ),
+    )
     @pytest.mark.parametrize(
         'compressor',
         (
@@ -318,9 +511,10 @@ class SerializerSignerTestsBase(BaseTests):
     def test_dumps_loads_with_compressor(
         self,
         compressor: typing.Type[CompressorInterface],
+        hasher: HasherChoice,
     ) -> None:
         """Test dumping and loading using a compressor."""
-        signer = self.signer(compressor=compressor)
+        signer = self.signer(compressor=compressor, hasher=hasher)
 
         signed = self.sign(signer, self.data_compressible, compress=False)
         signed_compressed = self.sign(signer, self.data_compressible, compress=True)
@@ -329,13 +523,30 @@ class SerializerSignerTestsBase(BaseTests):
         unsigned = self.unsign(signer, signed_compressed)
         assert self.data_compressible == unsigned
 
+    @pytest.mark.xfail(
+        not has_blake3(),
+        reason='blake3 is not installed',
+        raises=errors.MissingDependencyError,
+    )
+    @pytest.mark.parametrize(
+        'hasher',
+        (
+            HasherChoice.blake2b,
+            HasherChoice.blake2s,
+            HasherChoice.blake3,
+        ),
+    )
     @pytest.mark.parametrize(
         'data',
         ('datadata', b'datadata'),
     )
-    def test_dumps_loads_with_null_serializer(self, data: typing.AnyStr) -> None:
+    def test_dumps_loads_with_null_serializer(
+        self,
+        data: typing.AnyStr,
+        hasher: HasherChoice,
+    ) -> None:
         """Test dumping and loading using the null serializer."""
-        signer = self.signer(serializer=NullSerializer)
+        signer = self.signer(serializer=NullSerializer, hasher=hasher)
 
         signed = self.sign(signer, data)
         assert isinstance(signed, str)
@@ -347,6 +558,19 @@ class SerializerSignerTestsBase(BaseTests):
         else:
             assert data == unsigned.decode()
 
+    @pytest.mark.xfail(
+        not has_blake3(),
+        reason='blake3 is not installed',
+        raises=errors.MissingDependencyError,
+    )
+    @pytest.mark.parametrize(
+        'hasher',
+        (
+            HasherChoice.blake2b,
+            HasherChoice.blake2s,
+            HasherChoice.blake3,
+        ),
+    )
     @pytest.mark.parametrize(
         'file_class',
         (
@@ -354,10 +578,14 @@ class SerializerSignerTestsBase(BaseTests):
             io.BytesIO,
         ),
     )
-    def test_dump_load_file(self, file_class: typing.Type[typing.IO]) -> None:
+    def test_dump_load_file(
+        self,
+        file_class: typing.Type[typing.IO],
+        hasher: HasherChoice,
+    ) -> None:
         """Test dumping and loading to/from a file."""
         file = file_class()
-        signer = self.signer()
+        signer = self.signer(hasher=hasher)
 
         signed = signer.dump(self.data, file)
         assert file.tell() == len(signed)
@@ -369,6 +597,19 @@ class SerializerSignerTestsBase(BaseTests):
         assert file.tell() == len(signed)
         assert self.data == unsigned
 
+    @pytest.mark.xfail(
+        not has_blake3(),
+        reason='blake3 is not installed',
+        raises=errors.MissingDependencyError,
+    )
+    @pytest.mark.parametrize(
+        'hasher',
+        (
+            HasherChoice.blake2b,
+            HasherChoice.blake2s,
+            HasherChoice.blake3,
+        ),
+    )
     @pytest.mark.parametrize(
         'file_class',
         (
@@ -379,10 +620,11 @@ class SerializerSignerTestsBase(BaseTests):
     def test_dump_load_file_with_null_serializer(
         self,
         file_class: typing.Type[typing.IO],
+        hasher: HasherChoice,
     ) -> None:
         """Test dumping and loading to/from a file."""
         file = file_class()
-        signer = self.signer(serializer=NullSerializer)
+        signer = self.signer(serializer=NullSerializer, hasher=hasher)
         data = self.data.encode()
 
         signed = signer.dump(data, file)
@@ -395,6 +637,19 @@ class SerializerSignerTestsBase(BaseTests):
         assert file.tell() == len(signed)
         assert data == unsigned
 
+    @pytest.mark.xfail(
+        not has_blake3(),
+        reason='blake3 is not installed',
+        raises=errors.MissingDependencyError,
+    )
+    @pytest.mark.parametrize(
+        'hasher',
+        (
+            HasherChoice.blake2b,
+            HasherChoice.blake2s,
+            HasherChoice.blake3,
+        ),
+    )
     @pytest.mark.parametrize(
         ('file_class', 'initial_data'),
         (
@@ -406,6 +661,7 @@ class SerializerSignerTestsBase(BaseTests):
         self,
         file_class: typing.Type[typing.IO],
         initial_data: typing.Union[str, bytes],
+        hasher: HasherChoice,
     ) -> None:
         """Test dumping and loading to/from a file that contains data.
 
@@ -415,7 +671,7 @@ class SerializerSignerTestsBase(BaseTests):
         file = file_class()
         file.write(initial_data)
         initial_pos = file.tell()
-        signer = self.signer()
+        signer = self.signer(hasher=hasher)
 
         signed = signer.dump(self.data, file)
         assert file.tell() == (len(initial_data) + len(signed))
@@ -425,9 +681,26 @@ class SerializerSignerTestsBase(BaseTests):
         assert file.tell() == (len(initial_data) + len(signed))
         assert self.data == unsigned
 
-    def test_dumps_serializer_kwargs(self) -> None:
+    @pytest.mark.xfail(
+        not has_blake3(),
+        reason='blake3 is not installed',
+        raises=errors.MissingDependencyError,
+    )
+    @pytest.mark.parametrize(
+        'hasher',
+        (
+            HasherChoice.blake2b,
+            HasherChoice.blake2s,
+            HasherChoice.blake3,
+        ),
+    )
+    def test_dumps_serializer_kwargs(self, hasher: HasherChoice) -> None:
         """Test dumping using serializer kwargs."""
-        signer = self.signer(deterministic=True, serializer=JSONSerializer)
+        signer = self.signer(
+            deterministic=True,
+            serializer=JSONSerializer,
+            hasher=hasher,
+        )
         data = self.data + '\x87'
 
         signed1 = self.sign(
@@ -449,12 +722,29 @@ class SerializerSignerTestsBase(BaseTests):
         )
         assert signed1 != signed2  # Change due only to the serializer options
 
-    def test_dump_serializer_kwargs(self) -> None:
+    @pytest.mark.xfail(
+        not has_blake3(),
+        reason='blake3 is not installed',
+        raises=errors.MissingDependencyError,
+    )
+    @pytest.mark.parametrize(
+        'hasher',
+        (
+            HasherChoice.blake2b,
+            HasherChoice.blake2s,
+            HasherChoice.blake3,
+        ),
+    )
+    def test_dump_serializer_kwargs(self, hasher: HasherChoice) -> None:
         """Test dumping to file using serializer kwargs."""
         file1 = io.StringIO()
         file1_1 = io.StringIO()
         file2 = io.StringIO()
-        signer = self.signer(deterministic=True, serializer=JSONSerializer)
+        signer = self.signer(
+            deterministic=True,
+            serializer=JSONSerializer,
+            hasher=hasher,
+        )
         data = self.data + '\x87'
 
         signer.dump(
@@ -480,9 +770,22 @@ class SerializerSignerTestsBase(BaseTests):
         file2.seek(0)
         assert file1.read() != file2.read()  # Change due only to the serializer options
 
-    def test_dumps_unserializable_data(self) -> None:
+    @pytest.mark.xfail(
+        not has_blake3(),
+        reason='blake3 is not installed',
+        raises=errors.MissingDependencyError,
+    )
+    @pytest.mark.parametrize(
+        'hasher',
+        (
+            HasherChoice.blake2b,
+            HasherChoice.blake2s,
+            HasherChoice.blake3,
+        ),
+    )
+    def test_dumps_unserializable_data(self, hasher: HasherChoice) -> None:
         """Test dumps unserializable data fails correctly."""
-        signer = self.signer(serializer=JSONSerializer)
+        signer = self.signer(serializer=JSONSerializer, hasher=hasher)
 
         with pytest.raises(
                 errors.SerializationError,
@@ -491,9 +794,22 @@ class SerializerSignerTestsBase(BaseTests):
             self.sign(signer, self.data.encode())  # Any non JSON encodable type
         assert exc.value.__cause__ is not None
 
-    def test_loads_wrong_data(self) -> None:
+    @pytest.mark.xfail(
+        not has_blake3(),
+        reason='blake3 is not installed',
+        raises=errors.MissingDependencyError,
+    )
+    @pytest.mark.parametrize(
+        'hasher',
+        (
+            HasherChoice.blake2b,
+            HasherChoice.blake2s,
+            HasherChoice.blake3,
+        ),
+    )
+    def test_loads_wrong_data(self, hasher: HasherChoice) -> None:
         """Test loads wrong data."""
-        signer = self.signer()
+        signer = self.signer(hasher=hasher)
 
         with pytest.raises(
                 errors.ConversionError,
@@ -502,11 +818,28 @@ class SerializerSignerTestsBase(BaseTests):
             self.unsign(signer, 1.0)  # type: ignore
         assert exc.value.__cause__ is not None
 
+    @pytest.mark.xfail(
+        not has_blake3(),
+        reason='blake3 is not installed',
+        raises=errors.MissingDependencyError,
+    )
+    @pytest.mark.parametrize(
+        'hasher',
+        (
+            HasherChoice.blake2b,
+            HasherChoice.blake2s,
+            HasherChoice.blake3,
+        ),
+    )
     @mock.patch('blake2signer.utils.base64.urlsafe_b64decode')
-    def test_loads_decode_error(self, mock_b64decode: mock.MagicMock) -> None:
+    def test_loads_decode_error(
+        self,
+        mock_b64decode: mock.MagicMock,
+        hasher: HasherChoice,
+    ) -> None:
         """Test loads wrong data causing decoding error."""
         mock_b64decode.side_effect = ValueError
-        signer = self.signer(encoder=B64URLEncoder)
+        signer = self.signer(encoder=B64URLEncoder, hasher=hasher)
 
         signed = self.sign(signer, self.data)
         with pytest.raises(
@@ -516,11 +849,28 @@ class SerializerSignerTestsBase(BaseTests):
             self.unsign(signer, signed)
         assert isinstance(exc.value.__cause__, ValueError)
 
+    @pytest.mark.xfail(
+        not has_blake3(),
+        reason='blake3 is not installed',
+        raises=errors.MissingDependencyError,
+    )
+    @pytest.mark.parametrize(
+        'hasher',
+        (
+            HasherChoice.blake2b,
+            HasherChoice.blake2s,
+            HasherChoice.blake3,
+        ),
+    )
     @mock.patch('blake2signer.compressors.zlib.decompress')
-    def test_loads_decompression_error(self, mock_decompress: mock.MagicMock) -> None:
+    def test_loads_decompression_error(
+        self,
+        mock_decompress: mock.MagicMock,
+        hasher: HasherChoice,
+    ) -> None:
         """Test loads wrong data causing decompression error."""
         mock_decompress.side_effect = zlib.error
-        signer = self.signer(compressor=ZlibCompressor)
+        signer = self.signer(compressor=ZlibCompressor, hasher=hasher)
 
         signed = self.sign(signer, self.data_compressible, compress=True)
         with pytest.raises(
@@ -530,11 +880,28 @@ class SerializerSignerTestsBase(BaseTests):
             self.unsign(signer, signed)
         assert isinstance(exc.value.__cause__, zlib.error)
 
+    @pytest.mark.xfail(
+        not has_blake3(),
+        reason='blake3 is not installed',
+        raises=errors.MissingDependencyError,
+    )
+    @pytest.mark.parametrize(
+        'hasher',
+        (
+            HasherChoice.blake2b,
+            HasherChoice.blake2s,
+            HasherChoice.blake3,
+        ),
+    )
     @mock.patch('blake2signer.serializers.json.loads')
-    def test_loads_unserialization_error(self, mock_json_loads: mock.MagicMock) -> None:
+    def test_loads_unserialization_error(
+        self,
+        mock_json_loads: mock.MagicMock,
+        hasher: HasherChoice,
+    ) -> None:
         """Test loads wrong data causing unserialization error."""
         mock_json_loads.side_effect = ValueError
-        signer = self.signer(serializer=JSONSerializer)
+        signer = self.signer(serializer=JSONSerializer, hasher=hasher)
 
         signed = self.sign(signer, self.data)
         with pytest.raises(
@@ -544,12 +911,29 @@ class SerializerSignerTestsBase(BaseTests):
             self.unsign(signer, signed)
         assert isinstance(exc.value.__cause__, ValueError)
 
+    @pytest.mark.xfail(
+        not has_blake3(),
+        reason='blake3 is not installed',
+        raises=errors.MissingDependencyError,
+    )
+    @pytest.mark.parametrize(
+        'hasher',
+        (
+            HasherChoice.blake2b,
+            HasherChoice.blake2s,
+            HasherChoice.blake3,
+        ),
+    )
     @mock.patch('blake2signer.compressors.zlib.compress')
-    def test_dumps_compression_error(self, mock_zlib_compress: mock.MagicMock) -> None:
+    def test_dumps_compression_error(
+        self,
+        mock_zlib_compress: mock.MagicMock,
+        hasher: HasherChoice,
+    ) -> None:
         """Test compression error while dumping."""
         mock_zlib_compress.side_effect = zlib.error
 
-        signer = self.signer(compressor=ZlibCompressor)
+        signer = self.signer(compressor=ZlibCompressor, hasher=hasher)
 
         with pytest.raises(
                 errors.CompressionError,
@@ -558,12 +942,29 @@ class SerializerSignerTestsBase(BaseTests):
             self.sign(signer, self.data_compressible, compress=True)
         assert isinstance(exc.value.__cause__, zlib.error)
 
+    @pytest.mark.xfail(
+        not has_blake3(),
+        reason='blake3 is not installed',
+        raises=errors.MissingDependencyError,
+    )
+    @pytest.mark.parametrize(
+        'hasher',
+        (
+            HasherChoice.blake2b,
+            HasherChoice.blake2s,
+            HasherChoice.blake3,
+        ),
+    )
     @mock.patch('blake2signer.encoders.b64encode')
-    def test_dumps_encoding_error(self, mock_b64encode: mock.MagicMock) -> None:
+    def test_dumps_encoding_error(
+        self,
+        mock_b64encode: mock.MagicMock,
+        hasher: HasherChoice,
+    ) -> None:
         """Test encoding error while dumping."""
         mock_b64encode.side_effect = ValueError
 
-        signer = self.signer(encoder=B64URLEncoder)
+        signer = self.signer(encoder=B64URLEncoder, hasher=hasher)
 
         with pytest.raises(
                 errors.EncodeError,
@@ -572,9 +973,25 @@ class SerializerSignerTestsBase(BaseTests):
             self.sign(signer, self.data)
         assert isinstance(exc.value.__cause__, ValueError)
 
-    def test_dumps_invalid_compression_level(self) -> None:
+    @pytest.mark.xfail(
+        not has_blake3(),
+        reason='blake3 is not installed',
+        raises=errors.MissingDependencyError,
+    )
+    @pytest.mark.parametrize(
+        'hasher',
+        (
+            HasherChoice.blake2b,
+            HasherChoice.blake2s,
+            HasherChoice.blake3,
+        ),
+    )
+    def test_dumps_invalid_compression_level(
+        self,
+        hasher: HasherChoice,
+    ) -> None:
         """Test invalid compression level for dumps."""
-        signer = self.signer(compressor=ZlibCompressor)
+        signer = self.signer(compressor=ZlibCompressor, hasher=hasher)
 
         with pytest.raises(
                 errors.CompressionError,
@@ -591,22 +1008,61 @@ class SerializerSignerTestsBase(BaseTests):
             self.sign(signer, self.data, compress=True, compression_level=0)
         assert exc.value.__cause__ is None
 
-    def test_compression_flag_non_ascii(self) -> None:
+    @pytest.mark.xfail(
+        not has_blake3(),
+        reason='blake3 is not installed',
+        raises=errors.MissingDependencyError,
+    )
+    @pytest.mark.parametrize(
+        'hasher',
+        (
+            HasherChoice.blake2b,
+            HasherChoice.blake2s,
+            HasherChoice.blake3,
+        ),
+    )
+    def test_compression_flag_non_ascii(self, hasher: HasherChoice) -> None:
         """Test error occurs when the compression flag is non-ascii."""
         with pytest.raises(
                 errors.InvalidOptionError,
                 match='compression flag character must be ASCII',
         ):
-            self.signer(compression_flag=b'\x87')
+            self.signer(compression_flag=b'\x87', hasher=hasher)
 
-    def test_compression_flag_empty(self) -> None:
+    @pytest.mark.xfail(
+        not has_blake3(),
+        reason='blake3 is not installed',
+        raises=errors.MissingDependencyError,
+    )
+    @pytest.mark.parametrize(
+        'hasher',
+        (
+            HasherChoice.blake2b,
+            HasherChoice.blake2s,
+            HasherChoice.blake3,
+        ),
+    )
+    def test_compression_flag_empty(self, hasher: HasherChoice) -> None:
         """Test error occurs when the compression flag is empty."""
         with pytest.raises(
                 errors.InvalidOptionError,
                 match='the compression flag character must have a value',
         ):
-            self.signer(compression_flag=b'')
+            self.signer(compression_flag=b'', hasher=hasher)
 
+    @pytest.mark.xfail(
+        not has_blake3(),
+        reason='blake3 is not installed',
+        raises=errors.MissingDependencyError,
+    )
+    @pytest.mark.parametrize(
+        'hasher',
+        (
+            HasherChoice.blake2b,
+            HasherChoice.blake2s,
+            HasherChoice.blake3,
+        ),
+    )
     @pytest.mark.parametrize(
         ('encoder', 'flag'),
         (
@@ -619,33 +1075,60 @@ class SerializerSignerTestsBase(BaseTests):
         self,
         encoder: typing.Type[EncoderInterface],
         flag: bytes,
+        hasher: HasherChoice,
     ) -> None:
         """Test error occurs when the compression flag is in the encoder alphabet."""
         with pytest.raises(
                 errors.InvalidOptionError,
                 match='the compression flag character must not belong to the encoder',
         ):
-            self.signer(compression_flag=flag, encoder=encoder)
+            self.signer(compression_flag=flag, encoder=encoder, hasher=hasher)
 
-    def test_compression_ratio_out_of_bounds(self) -> None:
+    @pytest.mark.xfail(
+        not has_blake3(),
+        reason='blake3 is not installed',
+        raises=errors.MissingDependencyError,
+    )
+    @pytest.mark.parametrize(
+        'hasher',
+        (
+            HasherChoice.blake2b,
+            HasherChoice.blake2s,
+            HasherChoice.blake3,
+        ),
+    )
+    def test_compression_ratio_out_of_bounds(self, hasher: HasherChoice) -> None:
         """Test error occurs when the compression ratio is out of bounds."""
         with pytest.raises(
                 errors.InvalidOptionError,
                 match='compression ratio must be',
         ):
-            self.signer(compression_ratio=-1)
+            self.signer(compression_ratio=-1, hasher=hasher)
 
         with pytest.raises(
                 errors.InvalidOptionError,
                 match='compression ratio must be',
         ):
-            self.signer(compression_ratio=100)
+            self.signer(compression_ratio=100, hasher=hasher)
 
-    def test_load_file_error(self) -> None:
+    @pytest.mark.xfail(
+        not has_blake3(),
+        reason='blake3 is not installed',
+        raises=errors.MissingDependencyError,
+    )
+    @pytest.mark.parametrize(
+        'hasher',
+        (
+            HasherChoice.blake2b,
+            HasherChoice.blake2s,
+            HasherChoice.blake3,
+        ),
+    )
+    def test_load_file_error(self, hasher: HasherChoice) -> None:
         """Test error occurring during reading from a file."""
         file = mock.MagicMock()
         file.read.side_effect = TimeoutError
-        signer = self.signer()
+        signer = self.signer(hasher=hasher)
 
         with pytest.raises(
                 errors.FileError,
@@ -653,11 +1136,24 @@ class SerializerSignerTestsBase(BaseTests):
         ):
             signer.load(file)
 
-    def test_dump_file_error(self) -> None:
+    @pytest.mark.xfail(
+        not has_blake3(),
+        reason='blake3 is not installed',
+        raises=errors.MissingDependencyError,
+    )
+    @pytest.mark.parametrize(
+        'hasher',
+        (
+            HasherChoice.blake2b,
+            HasherChoice.blake2s,
+            HasherChoice.blake3,
+        ),
+    )
+    def test_dump_file_error(self, hasher: HasherChoice) -> None:
         """Test error occurring during writing to a file."""
         file = mock.MagicMock()
         file.write.side_effect = PermissionError
-        signer = self.signer()
+        signer = self.signer(hasher=hasher)
 
         with pytest.raises(
                 errors.FileError,
@@ -665,10 +1161,23 @@ class SerializerSignerTestsBase(BaseTests):
         ):
             signer.dump(self.data, file)
 
-    def test_dump_file_binary_conversion_error(self) -> None:
+    @pytest.mark.xfail(
+        not has_blake3(),
+        reason='blake3 is not installed',
+        raises=errors.MissingDependencyError,
+    )
+    @pytest.mark.parametrize(
+        'hasher',
+        (
+            HasherChoice.blake2b,
+            HasherChoice.blake2s,
+            HasherChoice.blake3,
+        ),
+    )
+    def test_dump_file_binary_conversion_error(self, hasher: HasherChoice) -> None:
         """Test error occurring during _write when file is in binary mode."""
         file = io.BytesIO()
-        signer = self.signer()
+        signer = self.signer(hasher=hasher)
 
         with pytest.raises(
                 errors.ConversionError,
@@ -692,6 +1201,19 @@ class TestsBlake2SerializerSignerTimestamp(
         kwargs.setdefault('max_age', 5)
         return super().signer(secret, **kwargs)
 
+    @pytest.mark.xfail(
+        not has_blake3(),
+        reason='blake3 is not installed',
+        raises=errors.MissingDependencyError,
+    )
+    @pytest.mark.parametrize(
+        'hasher',
+        (
+            HasherChoice.blake2b,
+            HasherChoice.blake2s,
+            HasherChoice.blake3,
+        ),
+    )
     @pytest.mark.parametrize(
         'max_age',
         (None, 2, 2.5, timedelta(hours=2)),
@@ -701,11 +1223,12 @@ class TestsBlake2SerializerSignerTimestamp(
         self,
         mock_time: mock.MagicMock,
         max_age: typing.Union[None, int, float, timedelta],
+        hasher: HasherChoice,
     ) -> None:
         """Test that max age can be changed correctly."""
         timestamp = int(time())
         mock_time.return_value = timestamp
-        signer = self.signer(max_age=max_age)
+        signer = self.signer(max_age=max_age, hasher=hasher)
 
         signed = self.sign(signer, self.data)
         assert self.data == self.unsign(signer, signed)

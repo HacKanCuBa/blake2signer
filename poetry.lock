@@ -30,17 +30,17 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 
 [[package]]
 name = "attrs"
-version = "21.3.0"
+version = "21.4.0"
 description = "Classes Without Boilerplate"
 category = "dev"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 
 [package.extras]
-dev = ["cloudpickle", "coverage[toml] (>=5.0.2)", "hypothesis", "pympler", "pytest (>=4.3.0)", "six", "mypy", "pytest-mypy-plugins", "zope.interface", "furo", "sphinx", "sphinx-notfound-page", "pre-commit"]
+dev = ["coverage[toml] (>=5.0.2)", "hypothesis", "pympler", "pytest (>=4.3.0)", "six", "mypy", "pytest-mypy-plugins", "zope.interface", "furo", "sphinx", "sphinx-notfound-page", "pre-commit", "cloudpickle"]
 docs = ["furo", "sphinx", "zope.interface", "sphinx-notfound-page"]
-tests = ["cloudpickle", "coverage[toml] (>=5.0.2)", "hypothesis", "pympler", "pytest (>=4.3.0)", "six", "mypy", "pytest-mypy-plugins", "zope.interface"]
-tests_no_zope = ["cloudpickle", "coverage[toml] (>=5.0.2)", "hypothesis", "pympler", "pytest (>=4.3.0)", "six", "mypy", "pytest-mypy-plugins"]
+tests = ["coverage[toml] (>=5.0.2)", "hypothesis", "pympler", "pytest (>=4.3.0)", "six", "mypy", "pytest-mypy-plugins", "zope.interface", "cloudpickle"]
+tests_no_zope = ["coverage[toml] (>=5.0.2)", "hypothesis", "pympler", "pytest (>=4.3.0)", "six", "mypy", "pytest-mypy-plugins", "cloudpickle"]
 
 [[package]]
 name = "bandit"
@@ -55,6 +55,14 @@ colorama = {version = ">=0.3.9", markers = "platform_system == \"Windows\""}
 GitPython = ">=1.0.1"
 PyYAML = ">=5.3.1"
 stevedore = ">=1.20.0"
+
+[[package]]
+name = "blake3"
+version = "0.2.1"
+description = "Python bindings for the Rust blake3 crate"
+category = "main"
+optional = false
+python-versions = "*"
 
 [[package]]
 name = "cached-property"
@@ -1006,6 +1014,14 @@ optional = false
 python-versions = ">=3.6"
 
 [[package]]
+name = "types-setuptools"
+version = "57.4.5"
+description = "Typing stubs for setuptools"
+category = "dev"
+optional = false
+python-versions = "*"
+
+[[package]]
 name = "typing-extensions"
 version = "4.0.1"
 description = "Backported and Experimental Type Hints for Python 3.6+"
@@ -1057,10 +1073,13 @@ python-versions = ">=3.6"
 docs = ["sphinx", "jaraco.packaging (>=8.2)", "rst.linker (>=1.9)"]
 testing = ["pytest (>=4.6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytest-cov", "pytest-enabler (>=1.0.1)", "jaraco.itertools", "func-timeout", "pytest-black (>=0.3.7)", "pytest-mypy"]
 
+[extras]
+blake3 = ["blake3"]
+
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "61fedacf656ebcf1151b65a209aad71e41e6e9fb3851509d5d237e891946ac3d"
+content-hash = "336b1b79452cf34079d369fd966f62539c100c2c88d428b491b4ded86f14527b"
 
 [metadata.files]
 add-trailing-comma = [
@@ -1076,12 +1095,38 @@ atomicwrites = [
     {file = "atomicwrites-1.4.0.tar.gz", hash = "sha256:ae70396ad1a434f9c7046fd2dd196fc04b12f9e91ffb859164193be8b6168a7a"},
 ]
 attrs = [
-    {file = "attrs-21.3.0-py2.py3-none-any.whl", hash = "sha256:8f7335278dedd26b58c38e006338242cc0977f06d51579b2b8b87b9b33bff66c"},
-    {file = "attrs-21.3.0.tar.gz", hash = "sha256:50f3c9b216dc9021042f71b392859a773b904ce1a029077f58f6598272432045"},
+    {file = "attrs-21.4.0-py2.py3-none-any.whl", hash = "sha256:2d27e3784d7a565d36ab851fe94887c5eccd6a463168875832a1be79c82828b4"},
+    {file = "attrs-21.4.0.tar.gz", hash = "sha256:626ba8234211db98e869df76230a137c4c40a12d72445c45d5f5b716f076e2fd"},
 ]
 bandit = [
     {file = "bandit-1.7.1-py3-none-any.whl", hash = "sha256:f5acd838e59c038a159b5c621cf0f8270b279e884eadd7b782d7491c02add0d4"},
     {file = "bandit-1.7.1.tar.gz", hash = "sha256:a81b00b5436e6880fa8ad6799bc830e02032047713cbb143a12939ac67eb756c"},
+]
+blake3 = [
+    {file = "blake3-0.2.1-cp310-cp310-macosx_10_7_x86_64.whl", hash = "sha256:228fd623d69ab67d82a420ce3b0ab5fd575ed9db215ca7e0a10d9417bbaedbcf"},
+    {file = "blake3-0.2.1-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:500d20efef13bcd7974240341eada92b1c640b31a51973e5166c51e00220fe32"},
+    {file = "blake3-0.2.1-cp310-cp310-manylinux_2_5_x86_64.manylinux1_x86_64.whl", hash = "sha256:c4d1a317c1937e7ddaba4c8d5316f2c08b56ef7591662496f523a96848969022"},
+    {file = "blake3-0.2.1-cp310-none-win32.whl", hash = "sha256:0500592524e2180c094aca77fd505cf727ce77a4d50ddd816a58c3def31aa7c3"},
+    {file = "blake3-0.2.1-cp310-none-win_amd64.whl", hash = "sha256:df90be81df4ac76e9cdbc4cc327caad08502b3cd61bcf3f6323445ac91d0abbe"},
+    {file = "blake3-0.2.1-cp36-cp36m-macosx_10_7_x86_64.whl", hash = "sha256:de1c8eaa0f17628869e4fa3a2fdd119845950d6c786c67b723267c1988d6b25c"},
+    {file = "blake3-0.2.1-cp36-cp36m-manylinux_2_5_x86_64.manylinux1_x86_64.whl", hash = "sha256:868bff669115ffbeec6e759a89c228648aa58a6fcef8589342de6cb6b9ed8ca9"},
+    {file = "blake3-0.2.1-cp36-none-win32.whl", hash = "sha256:6ea193219f38a37e838a61485df5f549ac151d3a8dbd41d9e3ebd894f5296b19"},
+    {file = "blake3-0.2.1-cp36-none-win_amd64.whl", hash = "sha256:1311f0091cb152c9ec1c2273d64b1c3d166bb0b513734ebcb24329370c4fc08a"},
+    {file = "blake3-0.2.1-cp37-cp37m-macosx_10_7_x86_64.whl", hash = "sha256:abab5b261f32b02a0b42bb5474a7268fe199391961952c38195fd4f357a6e8b0"},
+    {file = "blake3-0.2.1-cp37-cp37m-manylinux_2_5_x86_64.manylinux1_x86_64.whl", hash = "sha256:34b04ef213b78014cef91d9360e29fcaab130dee7fc1e5450add2e4a1fd3e907"},
+    {file = "blake3-0.2.1-cp37-none-win32.whl", hash = "sha256:233eb4125a17908e6d0c733f76c0e4b6cf01ec59aaa1d7810853173749fa9d33"},
+    {file = "blake3-0.2.1-cp37-none-win_amd64.whl", hash = "sha256:136d02fa9c8a14e1894cc4e0865bd98d9f5a41baf2b9b500b3d6690134f951fc"},
+    {file = "blake3-0.2.1-cp38-cp38-macosx_10_7_x86_64.whl", hash = "sha256:41789806873d196be059ace27ab0f5565db20dc74c6da53d29fbd424b87ee271"},
+    {file = "blake3-0.2.1-cp38-cp38-macosx_11_0_arm64.whl", hash = "sha256:3715da23b9555429e15f6b26718a70456f089456e6e1929949808caa383d0cb4"},
+    {file = "blake3-0.2.1-cp38-cp38-manylinux_2_5_x86_64.manylinux1_x86_64.whl", hash = "sha256:16352ab67bdf9da2ba1c92232aabc56a9fd7bfc06ae2ad4d550c777400cfdbc0"},
+    {file = "blake3-0.2.1-cp38-none-win32.whl", hash = "sha256:990631b705a069e485409cc6376495893786b202e80c8bd5e75a936445106654"},
+    {file = "blake3-0.2.1-cp38-none-win_amd64.whl", hash = "sha256:ac01bd4541df763fce1ba3ffa1af1a0fdb39eba73cfbbff02a4108736a7fbc27"},
+    {file = "blake3-0.2.1-cp39-cp39-macosx_10_7_x86_64.whl", hash = "sha256:ebb98db430271fa9814063636f3cbcaf964223d05a1134da8eb8d0af8868ff16"},
+    {file = "blake3-0.2.1-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:19f4e5c8eb0660c48b3f0dc70138ab26a7373d083dbdf27e701b81e2096d0cb4"},
+    {file = "blake3-0.2.1-cp39-cp39-manylinux_2_5_x86_64.manylinux1_x86_64.whl", hash = "sha256:5dd0bff49a63839dc649872368b93a51d09098efc9485c84ae910d74058a5dc4"},
+    {file = "blake3-0.2.1-cp39-none-win32.whl", hash = "sha256:381e8ea6403f4c300abb19a009ca643016f57951cc72ec2f74be49642b209a1b"},
+    {file = "blake3-0.2.1-cp39-none-win_amd64.whl", hash = "sha256:355e0a89a569d7f2148a421117a2fb611f3c2e977a9772d46f56ed8e0b75ca84"},
+    {file = "blake3-0.2.1.tar.gz", hash = "sha256:e298e7c8e56ab37a1942b9c595f15f72695b5a31c4e8ac9957fc8e4df14a3109"},
 ]
 cached-property = [
     {file = "cached-property-1.5.2.tar.gz", hash = "sha256:9fa5755838eecbb2d234c3aa390bd80fbd3ac6b6869109bfc1b499f7bd89a130"},
@@ -1584,6 +1629,10 @@ typed-ast = [
     {file = "typed_ast-1.5.1-cp39-cp39-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_12_x86_64.manylinux2010_x86_64.whl", hash = "sha256:a2b8d7007f6280e36fa42652df47087ac7b0a7d7f09f9468f07792ba646aac2d"},
     {file = "typed_ast-1.5.1-cp39-cp39-win_amd64.whl", hash = "sha256:b6d17f37f6edd879141e64a5db17b67488cfeffeedad8c5cec0392305e9bc775"},
     {file = "typed_ast-1.5.1.tar.gz", hash = "sha256:484137cab8ecf47e137260daa20bafbba5f4e3ec7fda1c1e69ab299b75fa81c5"},
+]
+types-setuptools = [
+    {file = "types-setuptools-57.4.5.tar.gz", hash = "sha256:a4600efdca68a33204ad9c083fd9966d63aee61a7d007e912b6afc6ff57d6e02"},
+    {file = "types_setuptools-57.4.5-py3-none-any.whl", hash = "sha256:920a7c1ee120025e939a1707f8fd09a1266edbf7848eae7b8de7c5909a824cc8"},
 ]
 typing-extensions = [
     {file = "typing_extensions-4.0.1-py3-none-any.whl", hash = "sha256:7f001e5ac290a0c0401508864c7ec868be4e701886d5b573a9528ed3973d9d3b"},

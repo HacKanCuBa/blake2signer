@@ -19,10 +19,10 @@ This module provides three signer classes:
 
 All [signers](signers.md) share the following instantiation parameters:
 
-* `secret`: Secret value (which will be derived using BLAKE2) to produce the signing key (the minimum size required is 16 bytes, no size limit).
-* `personalisation`: Personalisation string (which will be derived using BLAKE2) to force the hash function to produce different digests for the same input (no size limit).
+* `secret`: Secret value which will be derived using BLAKE to produce the signing key. The minimum secret size is enforced to 16 bytes and there is no maximum.
+* `personalisation`: Personalisation string (which will be derived using BLAKE) to force the hash function to produce different digests for the same input (no size limit).
 * `digest_size`: Size of output signature (digest) in bytes (since v2.0.0 it defaults to 16, which is the minimum size allowed).
-* `hasher`: Hash function to use, either `blake2b` (default) or `blake2s`; the first one is optimized for 64b platforms, and the second, for 8-32b platforms (read more about them in their [official site](https://blake2.net/)).
+* `hasher`: Hash function to use, `blake2b` (default), `blake2s`, or since v2.2.0, `blake3`; the first one is optimized for 64b platforms; the second, for 8-32b platforms (read more about them in their [official site](https://blake2.net/)) and the third, for any platform (read more in the [official site](https://github.com/BLAKE3-team/BLAKE3-specs)).
 * `deterministic`: (New in v1.2.0) Define if signatures are deterministic or non-deterministic (default). Non-deterministic sigs are preferred, and achieved through the use of a random salt (it can't be changed or set). For deterministic sigs, no salt is used: this means that for the same payload, the same sig is obtained (the advantage is that the sig is shorter).
 * `separator`: (New in v2.0.0) Character to separate the signature, the timestamp and the payload. It must not belong to the encoder alphabet and be ASCII (defaults to `.`).
 * `encoder`: (New in v2.0.0) Encoder class to use (defaults to a Base64 URL safe encoder). Note that `Blake2Signer` and `Blake2TimestampSigner` only encodes the signature, whereas `Blake2SerializerSigner` encodes everything.

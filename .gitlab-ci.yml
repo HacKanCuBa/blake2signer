@@ -15,7 +15,7 @@ variables:
 .poetry cache:
   stage: setup
   script:
-    - time poetry install --remove-untracked --no-ansi
+    - time poetry install --no-ansi --remove-untracked
   cache:
     key: "python-${CI_COMMIT_REF_SLUG}"  # Prevent cache poisoning
     policy: pull-push
@@ -52,6 +52,20 @@ poetry cache py3.10:
 poetry cache py3.11rc:
   extends: .poetry cache
   image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.12-3.11rc"
+  script:
+    # ToDo: there's no blake3 wheel yet for 3.11, remove this when there's one.
+    # Check if we need to install everything or just check for changes in the package lock
+    - set -euo pipefail
+    - if poetry env info -p; then
+        echo "We have a cached venv";
+      else
+        echo "No cache, installing everything...";
+        apt-get update && apt-get install -y curl;
+        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs > rustup.sh;
+        sh rustup.sh -v -y;
+        source $HOME/.cargo/env;
+      fi;
+    - time poetry install --no-ansi --remove-untracked
   allow_failure: true
   cache:
     key: "py311rc-${CI_COMMIT_REF_SLUG}"
@@ -60,25 +74,38 @@ poetry cache pypy3.7:
   extends: .poetry cache
   image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.12-3.7pypy"
   script:
+    # ToDo: there's no blake3 wheel yet for PyPy3.7, remove this when there's one (if ever).
+    # Check if we need to install everything or just check for changes in the package lock
+    # Note that creating the virtualenv with poetry makes the installation of blake3 fail
+    # for some reason, so I used some tricks to use venv instead.
+    - set -euo pipefail
+    - if poetry env info -p; then
+        echo "We have a cached venv";
+      else
+        echo "No cache, installing everything...";
+        apt-get update && apt-get install -y curl;
+        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs > rustup.sh;
+        sh rustup.sh -v -y;
+        source $HOME/.cargo/env;
+        poetry env use "$(which python3)";
+        venvpath="$(poetry env info -p)";
+        rm -rf "$venvpath";
+        python3 -m venv "$venvpath";
+      fi;
     # Running `poetry install` fails because `mypy` uses `typed_ast` which doesn't
     # build in PyPy and probably never will, see:
     # https://github.com/python/typed_ast/issues/111
     - time poetry remove --no-ansi --dev mypy  # Runs install by itself
+    - time poetry install --no-ansi --remove-untracked
   cache:
     key: "pypy37-${CI_COMMIT_REF_SLUG}"
   allow_failure: true
 
 poetry cache pypy3.8:
-  extends: .poetry cache
+  extends: poetry cache pypy3.7
   image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.12-3.8pypy"
-  script:
-    # Running `poetry install` fails because `mypy` uses `typed_ast` which doesn't
-    # build in PyPy and probably never will, see:
-    # https://github.com/python/typed_ast/issues/111
-    - time poetry remove --no-ansi --dev mypy  # Runs install by itself
   cache:
     key: "pypy38-${CI_COMMIT_REF_SLUG}"
-  allow_failure: true
 
 poetry cache stackless3.7:
   extends: .poetry cache
@@ -188,6 +215,10 @@ tests py3.11rc:
     - poetry cache py3.11rc
     - python lint
     - packages security
+  script:
+    # ToDo: Invoke is not working in Python 3.11, see https://github.com/pyinvoke/invoke/issues/833
+    - poetry run pytest --suppress-no-test-exit-code --ignore tests
+    - poetry run pytest --suppress-no-test-exit-code --ignore blake2signer/tests --cov-append
   cache:
     key: "py311rc-${CI_COMMIT_REF_SLUG}"
   allow_failure: true
@@ -222,7 +253,7 @@ tests stackless3.7:
     - python lint
     - packages security
   script:
-    - time poetry run pytest --no-cov  # with coverage is segfaulting for some reason
+    - time poetry run inv tests --no-coverage  # with coverage is segfaulting for some reason
   cache:
     key: "stackless37-${CI_COMMIT_REF_SLUG}"
   allow_failure: true
@@ -235,7 +266,7 @@ tests stackless3.8:
     - python lint
     - packages security
   script:
-    - time poetry run pytest --no-cov  # with coverage is segfaulting for some reason
+    - time poetry run inv tests --no-coverage  # with coverage is segfaulting for some reason
   cache:
     key: "stackless38-${CI_COMMIT_REF_SLUG}"
   allow_failure: true

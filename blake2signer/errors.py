@@ -8,6 +8,9 @@ Note:
             |-- InvalidOptionError: given option value is out of bounds, has the wrong
             |                       format or type.
             |
+            |-- MissingDependencyError: a required dependency is not installed.
+            |
+            |
             |-- DataError: generic data error.
                     |
                     |-- SignedDataError: error that occurred for *signed data*.
@@ -60,6 +63,13 @@ class InvalidOptionError(SignerError):
 
     Means that given value is out of bounds or has the wrong format or type for
     the option.
+    """
+
+
+class MissingDependencyError(SignerError):
+    """Missing dependency error.
+
+    Means that a required dependency is not installed.
     """
 
 

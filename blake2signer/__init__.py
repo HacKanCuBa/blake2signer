@@ -7,12 +7,12 @@
 # and share modifications under the terms of that license, even with
 # proprietary code. Attribution is not required to share but is
 # appreciated.
-"""Blake2Signer: use Blake2 in keyed hashing mode to sign and verify signed data.
+"""Blake2Signer: use BLAKE in keyed hashing mode to sign and verify signed data.
 
 The goal of this module is to provide a simple way to securely sign data and the
-main use case is to sign cookies, using Blake2 in keyed hashing mode (read more
-about that in https://docs.python.org/3/library/hashlib.html#blake2). There are
-much better packages for other or more general use cases, such as itsdangerous,
+main use case is to sign cookies, using BLAKE in keyed hashing mode (read more
+about that in https://docs.python.org/3/library/hashlib.html#keyed-hashing). There
+are much better packages for other or more general use cases, such as itsdangerous,
 Django's Signer, pypaseto, pyjwt, etc. Refer to them if you find this module
 lacking features and/or create an issue in the repo to request for it.
 

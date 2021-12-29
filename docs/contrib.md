@@ -49,6 +49,11 @@ Start your local dev environment by activating the virtualenv. I recommend using
 
 After that, install dependencies with `poetry install --remove-untracked`.
 
+### Special considerations
+
+When working with BLAKE3, please import the `blake3` function from the `hashers` submodule: `from blake2signer.hashers import blake3` instead of importing it directly from its package. This is due to the fact that the package is optional, and it may not be installed.  
+That module handles it properly and will raise an exception when the function is called without the package installed.
+
 ### Making PRs
 
 Write your code. Then create a changelog fragment using `scriv create` with a short description of your changes in the corresponding category (added, changed, fixed, etc.).  

@@ -15,6 +15,10 @@ from ..bases import HasherChoice
 from ..encoders import B32Encoder
 from ..encoders import B64URLEncoder
 from ..encoders import HexEncoder
+from ..hashers import BLAKE2Hasher
+from ..hashers import BLAKE3Hasher
+from ..hashers import BLAKEHasher
+from ..hashers import has_blake3
 from ..interfaces import EncoderInterface
 from ..signers import Blake2SerializerSigner
 from ..signers import Blake2Signer
@@ -251,7 +255,8 @@ class BaseTests(ABC):
         signer = self.signer()
 
         assert isinstance(signer, self.signer_class)
-        assert signer._hasher == hashlib.blake2b
+        assert isinstance(signer._hasher, BLAKE2Hasher)
+        assert signer._hasher._hasher == hashlib.blake2b
 
         signed = self.sign(signer, self.data)
         assert isinstance(signed, self.signature_type)
@@ -264,28 +269,29 @@ class BaseTests(ABC):
             assert isinstance(signature, Blake2Signature)
         assert self.unsign_parts(signer, signature) == self.data
 
+    @pytest.mark.xfail(
+        not has_blake3(),
+        reason='blake3 is not installed',
+        raises=errors.MissingDependencyError,
+    )
     @pytest.mark.parametrize(
-        ('hasher', 'expected'),
+        ('hasher', 'hasher_class'),
         (
-            (HasherChoice.blake2b, hashlib.blake2b),
-            (HasherChoice.blake2s, hashlib.blake2s),
-            ('blake2b', hashlib.blake2b),
-            ('blake2s', hashlib.blake2s),
+            (HasherChoice.blake2b, BLAKE2Hasher),
+            (HasherChoice.blake2s, BLAKE2Hasher),
+            (HasherChoice.blake3, BLAKE3Hasher),
         ),
     )
     def test_hasher_can_be_changed(
         self,
-        hasher: typing.Union[HasherChoice, str],
-        expected: typing.Union[
-            typing.Type[hashlib.blake2b],
-            typing.Type[hashlib.blake2s],
-        ],
+        hasher: HasherChoice,
+        hasher_class: typing.Type[BLAKEHasher],
     ) -> None:
         """Test that the hasher can be changed and works correctly."""
         signer = self.signer(hasher=hasher)
 
         assert isinstance(signer, self.signer_class)
-        assert signer._hasher is expected
+        assert isinstance(signer._hasher, hasher_class)
 
         signed = self.sign(signer, self.data)
         assert isinstance(signed, self.signature_type)
@@ -325,23 +331,62 @@ class BaseTests(ABC):
 
         assert self.unsign_parts(signer, signature) == self.data
 
-    def test_sign_unsign_with_person(self) -> None:
+    @pytest.mark.xfail(
+        not has_blake3(),
+        reason='blake3 is not installed',
+        raises=errors.MissingDependencyError,
+    )
+    @pytest.mark.parametrize(
+        'hasher',
+        (
+            HasherChoice.blake2b,
+            HasherChoice.blake2s,
+            HasherChoice.blake3,
+        ),
+    )
+    def test_sign_unsign_with_person(self, hasher: HasherChoice) -> None:
         """Test signing and unsigning using person is correct."""
-        signer = self.signer(personalisation=self.person)
+        signer = self.signer(personalisation=self.person, hasher=hasher)
 
         assert self.data == self.unsign(signer, self.sign(signer, self.data))
 
-    def test_sign_unsign_with_different_person(self) -> None:
+    @pytest.mark.xfail(
+        not has_blake3(),
+        reason='blake3 is not installed',
+        raises=errors.MissingDependencyError,
+    )
+    @pytest.mark.parametrize(
+        'hasher',
+        (
+            HasherChoice.blake2b,
+            HasherChoice.blake2s,
+            HasherChoice.blake3,
+        ),
+    )
+    def test_sign_unsign_with_different_person(self, hasher: HasherChoice) -> None:
         """Test signing and unsigning using different person fails correctly."""
-        signer1 = self.signer(personalisation=self.person)
-        signer2 = self.signer(personalisation=self.person * 2)
+        signer1 = self.signer(personalisation=self.person, hasher=hasher)
+        signer2 = self.signer(personalisation=self.person * 2, hasher=hasher)
 
         self.mix_signers_sign_unsign(signer1, signer2)
 
-    def test_sign_unsign_with_different_encoder(self) -> None:
+    @pytest.mark.xfail(
+        not has_blake3(),
+        reason='blake3 is not installed',
+        raises=errors.MissingDependencyError,
+    )
+    @pytest.mark.parametrize(
+        'hasher',
+        (
+            HasherChoice.blake2b,
+            HasherChoice.blake2s,
+            HasherChoice.blake3,
+        ),
+    )
+    def test_sign_unsign_with_different_encoder(self, hasher: HasherChoice) -> None:
         """Test signing and unsigning using different encoder fails correctly."""
-        signer1 = self.signer(encoder=B64URLEncoder)
-        signer2 = self.signer(encoder=B32Encoder)
+        signer1 = self.signer(encoder=B64URLEncoder, hasher=hasher)
+        signer2 = self.signer(encoder=B32Encoder, hasher=hasher)
 
         self.mix_signers_sign_unsign(signer1, signer2)
 
@@ -397,9 +442,22 @@ class BaseTests(ABC):
         else:
             assert data == unsigned.decode()
 
-    def test_sign_is_unique_non_deterministic(self) -> None:
+    @pytest.mark.xfail(
+        not has_blake3(),
+        reason='blake3 is not installed',
+        raises=errors.MissingDependencyError,
+    )
+    @pytest.mark.parametrize(
+        'hasher',
+        (
+            HasherChoice.blake2b,
+            HasherChoice.blake2s,
+            HasherChoice.blake3,
+        ),
+    )
+    def test_sign_is_unique_non_deterministic(self, hasher: HasherChoice) -> None:
         """Test that each signing is unique because of salt."""
-        signer = self.signer(deterministic=False)
+        signer = self.signer(deterministic=False, hasher=hasher)
 
         signed1 = self.sign(signer, self.data)
         signed2 = self.sign(signer, self.data)
@@ -415,9 +473,22 @@ class BaseTests(ABC):
         unsigned2 = self.unsign(signer, signed2)
         assert self.data == unsigned2
 
-    def test_sign_unsign_deterministic(self) -> None:
+    @pytest.mark.xfail(
+        not has_blake3(),
+        reason='blake3 is not installed',
+        raises=errors.MissingDependencyError,
+    )
+    @pytest.mark.parametrize(
+        'hasher',
+        (
+            HasherChoice.blake2b,
+            HasherChoice.blake2s,
+            HasherChoice.blake3,
+        ),
+    )
+    def test_sign_unsign_deterministic(self, hasher: HasherChoice) -> None:
         """Test sign and unsign with a deterministic signature."""
-        signer = self.signer(deterministic=True)
+        signer = self.signer(deterministic=True, hasher=hasher)
 
         signed1 = self.sign(signer, self.data)
         signed2 = self.sign(signer, self.data)
@@ -426,9 +497,22 @@ class BaseTests(ABC):
         unsigned = self.unsign(signer, signed1)
         assert self.data == unsigned
 
-    def test_sign_parts_is_unique_non_deterministic(self) -> None:
+    @pytest.mark.xfail(
+        not has_blake3(),
+        reason='blake3 is not installed',
+        raises=errors.MissingDependencyError,
+    )
+    @pytest.mark.parametrize(
+        'hasher',
+        (
+            HasherChoice.blake2b,
+            HasherChoice.blake2s,
+            HasherChoice.blake3,
+        ),
+    )
+    def test_sign_parts_is_unique_non_deterministic(self, hasher: HasherChoice) -> None:
         """Test that each signing in parts is unique because of salt."""
-        signer = self.signer(deterministic=False)
+        signer = self.signer(deterministic=False, hasher=hasher)
 
         signature1 = self.sign_parts(signer, self.data)
         signature2 = self.sign_parts(signer, self.data)
@@ -440,9 +524,22 @@ class BaseTests(ABC):
         unsigned = self.unsign_parts(signer, signature2)
         assert self.data == unsigned
 
-    def test_sign_unsign_parts_deterministic(self) -> None:
+    @pytest.mark.xfail(
+        not has_blake3(),
+        reason='blake3 is not installed',
+        raises=errors.MissingDependencyError,
+    )
+    @pytest.mark.parametrize(
+        'hasher',
+        (
+            HasherChoice.blake2b,
+            HasherChoice.blake2s,
+            HasherChoice.blake3,
+        ),
+    )
+    def test_sign_unsign_parts_deterministic(self, hasher: HasherChoice) -> None:
         """Test signing and unsigning in parts deterministically."""
-        signer = self.signer(deterministic=True)
+        signer = self.signer(deterministic=True, hasher=hasher)
 
         signature1 = self.sign_parts(signer, self.data)
         signature2 = self.sign_parts(signer, self.data)
@@ -451,10 +548,27 @@ class BaseTests(ABC):
         unsigned = self.unsign_parts(signer, signature1)
         assert self.data == unsigned
 
+    @pytest.mark.xfail(
+        not has_blake3(),
+        reason='blake3 is not installed',
+        raises=errors.MissingDependencyError,
+    )
+    @pytest.mark.parametrize(
+        'hasher',
+        (
+            HasherChoice.blake2b,
+            HasherChoice.blake2s,
+            HasherChoice.blake3,
+        ),
+    )
     @pytest.mark.parametrize('separator', (':', b':'))
-    def test_separator_can_be_changed(self, separator: typing.Union[str, bytes]) -> None:
+    def test_separator_can_be_changed(
+        self,
+        separator: typing.Union[str, bytes],
+        hasher: HasherChoice,
+    ) -> None:
         """Test that the separator can be changed."""
-        signer = self.signer(separator=separator)
+        signer = self.signer(separator=separator, hasher=hasher)
 
         signed = self.sign(signer, self.data)
         if isinstance(separator, self.signature_type):
@@ -464,6 +578,19 @@ class BaseTests(ABC):
         else:
             assert separator.encode() in signed
 
+    @pytest.mark.xfail(
+        not has_blake3(),
+        reason='blake3 is not installed',
+        raises=errors.MissingDependencyError,
+    )
+    @pytest.mark.parametrize(
+        'hasher',
+        (
+            HasherChoice.blake2b,
+            HasherChoice.blake2s,
+            HasherChoice.blake3,
+        ),
+    )
     @pytest.mark.parametrize(
         ('encoder', 'regex'),
         (
@@ -476,10 +603,11 @@ class BaseTests(ABC):
         self,
         encoder: typing.Type[EncoderInterface],
         regex: str,
+        hasher: HasherChoice,
     ) -> None:
         """Test signing and unsigning using an encoder."""
         data = 'datadata' if self.signature_type is str else b'datadata'
-        signer = self.signer(encoder=encoder)
+        signer = self.signer(encoder=encoder, hasher=hasher)
 
         signed = self.sign(signer, data)
         assert re.match(
@@ -490,9 +618,22 @@ class BaseTests(ABC):
         unsigned = self.unsign(signer, signed)
         assert data == unsigned
 
-    def test_sign_unsign_parts_both_sig_containers(self) -> None:
+    @pytest.mark.xfail(
+        not has_blake3(),
+        reason='blake3 is not installed',
+        raises=errors.MissingDependencyError,
+    )
+    @pytest.mark.parametrize(
+        'hasher',
+        (
+            HasherChoice.blake2b,
+            HasherChoice.blake2s,
+            HasherChoice.blake3,
+        ),
+    )
+    def test_sign_unsign_parts_both_sig_containers(self, hasher: HasherChoice) -> None:
         """Test signing and unsigning in parts accepting both signature containers."""
-        signer = self.signer()
+        signer = self.signer(hasher=hasher)
 
         signature = self.sign_parts(signer, self.data)
         if self.signature_type is str:
@@ -513,19 +654,28 @@ class BaseTests(ABC):
         unsigned = self.unsign_parts(signer, other_signature)
         assert self.data == unsigned
 
-    def test_secret_too_short(self) -> None:
+    @pytest.mark.parametrize(
+        'hasher',
+        (
+            HasherChoice.blake2b,
+            HasherChoice.blake2s,
+            HasherChoice.blake3,
+        ),
+    )
+    def test_secret_too_short(self, hasher: HasherChoice) -> None:
         """Test secret too short."""
         with pytest.raises(
                 errors.InvalidOptionError,
                 match='secret should be longer than',
         ):
-            self.signer(b's' * (self.signer_class.MIN_SECRET_SIZE - 1))
+            self.signer(b's' * (self.signer_class.MIN_SECRET_SIZE - 1), hasher=hasher)
 
     @pytest.mark.parametrize(
         'hasher',
         (
             HasherChoice.blake2b,
             HasherChoice.blake2s,
+            HasherChoice.blake3,
         ),
     )
     def test_digest_too_small(self, hasher: HasherChoice) -> None:
@@ -537,7 +687,7 @@ class BaseTests(ABC):
         for digest_size in sizes:
             with pytest.raises(
                     errors.InvalidOptionError,
-                    match='digest_size should be between',
+                    match='digest_size should be',
             ):
                 self.signer(hasher=hasher, digest_size=digest_size)
 
@@ -546,6 +696,7 @@ class BaseTests(ABC):
         (
             HasherChoice.blake2b,
             HasherChoice.blake2s,
+            # blake3 has no digest limit
         ),
     )
     def test_digest_too_large(self, hasher: HasherChoice) -> None:
@@ -553,21 +704,64 @@ class BaseTests(ABC):
         digest_size = getattr(hashlib, hasher.value).MAX_DIGEST_SIZE + 1
         with pytest.raises(
                 errors.InvalidOptionError,
-                match='digest_size should be between',
+                match='digest_size should be',
         ):
             self.signer(hasher=hasher, digest_size=digest_size)
 
-    def test_unsign_no_separator(self) -> None:
+    @pytest.mark.xfail(
+        not has_blake3(),
+        reason='blake3 is not installed',
+        raises=errors.MissingDependencyError,
+    )
+    def test_blake3_no_digest_size_limit(self) -> None:
+        """Test that BLAKE3 has no digest size limit."""
+        signer = self.signer(
+            self.secret,
+            digest_size=1_000,
+            hasher=self.signer_class.Hashers.blake3,
+        )
+
+        signed = self.sign(signer, self.data)
+        assert len(signed) > 1_000
+        assert self.data == self.unsign(signer, signed)
+
+    @pytest.mark.xfail(
+        not has_blake3(),
+        reason='blake3 is not installed',
+        raises=errors.MissingDependencyError,
+    )
+    @pytest.mark.parametrize(
+        'hasher',
+        (
+            HasherChoice.blake2b,
+            HasherChoice.blake2s,
+            HasherChoice.blake3,
+        ),
+    )
+    def test_unsign_no_separator(self, hasher: HasherChoice) -> None:
         """Test unsign with wrong data without separator."""
-        signer = self.signer()
+        signer = self.signer(hasher=hasher)
 
         with pytest.raises(errors.SignatureError, match='separator not found') as exc:
             self.unsign(signer, b'12345678')
         assert exc.value.__cause__ is None
 
-    def test_unsign_short_data_without_signature(self) -> None:
+    @pytest.mark.xfail(
+        not has_blake3(),
+        reason='blake3 is not installed',
+        raises=errors.MissingDependencyError,
+    )
+    @pytest.mark.parametrize(
+        'hasher',
+        (
+            HasherChoice.blake2b,
+            HasherChoice.blake2s,
+            HasherChoice.blake3,
+        ),
+    )
+    def test_unsign_short_data_without_signature(self, hasher: HasherChoice) -> None:
         """Test unsign with very short data without signature."""
-        signer = self.signer()
+        signer = self.signer(hasher=hasher)
 
         with pytest.raises(
                 errors.SignatureError,
@@ -586,9 +780,22 @@ class BaseTests(ABC):
             self.unsign(signer, b'.12345678')
         assert exc.value.__cause__ is None
 
-    def test_unsign_wrong_signature(self) -> None:
+    @pytest.mark.xfail(
+        not has_blake3(),
+        reason='blake3 is not installed',
+        raises=errors.MissingDependencyError,
+    )
+    @pytest.mark.parametrize(
+        'hasher',
+        (
+            HasherChoice.blake2b,
+            HasherChoice.blake2s,
+            HasherChoice.blake3,
+        ),
+    )
+    def test_unsign_wrong_signature(self, hasher: HasherChoice) -> None:
         """Test unsign with wrong signed data."""
-        signer = self.signer()
+        signer = self.signer(hasher=hasher)
 
         with pytest.raises(
                 errors.InvalidSignatureError,
@@ -613,6 +820,19 @@ class BaseTests(ABC):
             self.unsign(signer, signed[:-1])
         assert exc.value.__cause__ is None
 
+    @pytest.mark.xfail(
+        not has_blake3(),
+        reason='blake3 is not installed',
+        raises=errors.MissingDependencyError,
+    )
+    @pytest.mark.parametrize(
+        'hasher',
+        (
+            HasherChoice.blake2b,
+            HasherChoice.blake2s,
+            HasherChoice.blake3,
+        ),
+    )
     @pytest.mark.parametrize(
         ('encoder', 'separator'),
         (
@@ -625,31 +845,71 @@ class BaseTests(ABC):
         self,
         encoder: typing.Type[EncoderInterface],
         separator: bytes,
+        hasher: HasherChoice,
     ) -> None:
         """Test error occurs when the separator is in the encoder alphabet."""
         with pytest.raises(
                 errors.InvalidOptionError,
                 match='separator character must not belong to the encoder',
         ):
-            self.signer(separator=separator, encoder=encoder)
+            self.signer(separator=separator, encoder=encoder, hasher=hasher)
 
-    def test_separator_non_ascii(self) -> None:
+    @pytest.mark.xfail(
+        not has_blake3(),
+        reason='blake3 is not installed',
+        raises=errors.MissingDependencyError,
+    )
+    @pytest.mark.parametrize(
+        'hasher',
+        (
+            HasherChoice.blake2b,
+            HasherChoice.blake2s,
+            HasherChoice.blake3,
+        ),
+    )
+    def test_separator_non_ascii(self, hasher: HasherChoice) -> None:
         """Test error occurs when the separator is non-ascii."""
         with pytest.raises(
                 errors.InvalidOptionError,
                 match='separator character must be ASCII',
         ):
-            self.signer(separator=b'\x87')
+            self.signer(separator=b'\x87', hasher=hasher)
 
-    def test_separator_empty(self) -> None:
+    @pytest.mark.xfail(
+        not has_blake3(),
+        reason='blake3 is not installed',
+        raises=errors.MissingDependencyError,
+    )
+    @pytest.mark.parametrize(
+        'hasher',
+        (
+            HasherChoice.blake2b,
+            HasherChoice.blake2s,
+            HasherChoice.blake3,
+        ),
+    )
+    def test_separator_empty(self, hasher: HasherChoice) -> None:
         """Test error occurs when the separator is empty."""
         with pytest.raises(
                 errors.InvalidOptionError,
                 match='the separator character must have a value',
         ):
-            self.signer(separator=b'')
+            self.signer(separator=b'', hasher=hasher)
 
-    def test_custom_encoder_non_ascii_alphabet(self) -> None:
+    @pytest.mark.xfail(
+        not has_blake3(),
+        reason='blake3 is not installed',
+        raises=errors.MissingDependencyError,
+    )
+    @pytest.mark.parametrize(
+        'hasher',
+        (
+            HasherChoice.blake2b,
+            HasherChoice.blake2s,
+            HasherChoice.blake3,
+        ),
+    )
+    def test_custom_encoder_non_ascii_alphabet(self, hasher: HasherChoice) -> None:
         """Test encoder having a non-ASCII alphabet raises exception."""
 
         class Encoder(EncoderInterface):
@@ -672,9 +932,22 @@ class BaseTests(ABC):
                 errors.InvalidOptionError,
                 match='encoder alphabet must be ASCII',
         ):
-            self.signer(encoder=Encoder)
+            self.signer(encoder=Encoder, hasher=hasher)
 
-    def test_custom_encoder_empty_alphabet(self) -> None:
+    @pytest.mark.xfail(
+        not has_blake3(),
+        reason='blake3 is not installed',
+        raises=errors.MissingDependencyError,
+    )
+    @pytest.mark.parametrize(
+        'hasher',
+        (
+            HasherChoice.blake2b,
+            HasherChoice.blake2s,
+            HasherChoice.blake3,
+        ),
+    )
+    def test_custom_encoder_empty_alphabet(self, hasher: HasherChoice) -> None:
         """Test encoder having an empty alphabet raises exception."""
 
         class Encoder(EncoderInterface):
@@ -697,32 +970,65 @@ class BaseTests(ABC):
                 errors.InvalidOptionError,
                 match='encoder alphabet must have a value',
         ):
-            self.signer(encoder=Encoder)
+            self.signer(encoder=Encoder, hasher=hasher)
 
+    @pytest.mark.xfail(
+        not has_blake3(),
+        reason='blake3 is not installed',
+        raises=errors.MissingDependencyError,
+    )
+    @pytest.mark.parametrize(
+        'hasher',
+        (
+            HasherChoice.blake2b,
+            HasherChoice.blake2s,
+            HasherChoice.blake3,
+        ),
+    )
     def test_minimum_digest_size_can_be_changed(
         self,
         signer_min_digest_size_changed,
+        hasher: HasherChoice,
     ) -> None:
         """Test that the min digest size limit can be changed."""
-        signer = signer_min_digest_size_changed(self.secret, digest_size=8)
+        signer = signer_min_digest_size_changed(
+            self.secret,
+            digest_size=8,
+            hasher=hasher,
+        )
 
         assert self.data == self.unsign(signer, self.sign(signer, self.data))
 
         with pytest.raises(
                 errors.InvalidOptionError,
-                match='digest_size should be between',
+                match='digest_size should be',
         ):
             signer_min_digest_size_changed(
                 self.secret,
                 digest_size=signer_min_digest_size_changed.MIN_DIGEST_SIZE - 1,
+                hasher=hasher,
             )
 
+    @pytest.mark.xfail(
+        not has_blake3(),
+        reason='blake3 is not installed',
+        raises=errors.MissingDependencyError,
+    )
+    @pytest.mark.parametrize(
+        'hasher',
+        (
+            HasherChoice.blake2b,
+            HasherChoice.blake2s,
+            HasherChoice.blake3,
+        ),
+    )
     def test_minimum_secret_size_can_be_changed(
         self,
         signer_min_secret_size_changed,
+        hasher: HasherChoice,
     ) -> None:
         """Test that the min secret size limit can be changed."""
-        signer = signer_min_secret_size_changed(b'12345678')
+        signer = signer_min_secret_size_changed(b'12345678', hasher=hasher)
 
         assert self.data == self.unsign(signer, self.sign(signer, self.data))
 
@@ -732,4 +1038,5 @@ class BaseTests(ABC):
         ):
             signer_min_secret_size_changed(
                 b's' * (signer_min_secret_size_changed.MIN_SECRET_SIZE - 1),
+                hasher=hasher,
             )

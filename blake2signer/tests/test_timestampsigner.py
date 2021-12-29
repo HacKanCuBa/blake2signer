@@ -13,6 +13,8 @@ from .bases import Signature
 from .bases import Signer
 from .test_signer import TestsBlake2Signer
 from .. import errors
+from ..hashers import HasherChoice
+from ..hashers import has_blake3
 from ..signers import Blake2Signer
 from ..signers import Blake2TimestampSigner
 
@@ -20,43 +22,125 @@ from ..signers import Blake2TimestampSigner
 class TimestampSignerTestsBase(BaseTests, ABC):
     """Base to test a timestamp signer."""
 
+    @pytest.mark.xfail(
+        not has_blake3(),
+        reason='blake3 is not installed',
+        raises=errors.MissingDependencyError,
+    )
+    @pytest.mark.parametrize(
+        'hasher',
+        (
+            HasherChoice.blake2b,
+            HasherChoice.blake2s,
+            HasherChoice.blake3,
+        ),
+    )
     @mock.patch('blake2signer.bases.time')
-    def test_sign_unsign_deterministic(self, mock_time: mock.MagicMock) -> None:
+    def test_sign_unsign_deterministic(
+        self,
+        mock_time: mock.MagicMock,
+        hasher: HasherChoice,
+    ) -> None:
         """Test sign and unsign with a deterministic signature."""
         mock_time.return_value = time()
 
-        super().test_sign_unsign_deterministic()
+        super().test_sign_unsign_deterministic(hasher)
 
+    @pytest.mark.xfail(
+        not has_blake3(),
+        reason='blake3 is not installed',
+        raises=errors.MissingDependencyError,
+    )
+    @pytest.mark.parametrize(
+        'hasher',
+        (
+            HasherChoice.blake2b,
+            HasherChoice.blake2s,
+            HasherChoice.blake3,
+        ),
+    )
     @mock.patch('blake2signer.bases.time')
-    def test_sign_unsign_parts_deterministic(self, mock_time: mock.MagicMock) -> None:
+    def test_sign_unsign_parts_deterministic(
+        self,
+        mock_time: mock.MagicMock,
+        hasher: HasherChoice,
+    ) -> None:
         """Test signing and unsigning in parts deterministically."""
         mock_time.return_value = time()
 
-        super().test_sign_unsign_parts_deterministic()
+        super().test_sign_unsign_parts_deterministic(hasher)
 
+    @pytest.mark.xfail(
+        not has_blake3(),
+        reason='blake3 is not installed',
+        raises=errors.MissingDependencyError,
+    )
+    @pytest.mark.parametrize(
+        'hasher',
+        (
+            HasherChoice.blake2b,
+            HasherChoice.blake2s,
+            HasherChoice.blake3,
+        ),
+    )
     @mock.patch('blake2signer.bases.time')
-    def test_sign_is_unique_non_deterministic(self, mock_time: mock.MagicMock) -> None:
+    def test_sign_is_unique_non_deterministic(
+        self,
+        mock_time: mock.MagicMock,
+        hasher: HasherChoice,
+    ) -> None:
         """Test that each signing is unique because of salt."""
         mock_time.return_value = time()
 
-        super().test_sign_is_unique_non_deterministic()
+        super().test_sign_is_unique_non_deterministic(hasher)
 
+    @pytest.mark.xfail(
+        not has_blake3(),
+        reason='blake3 is not installed',
+        raises=errors.MissingDependencyError,
+    )
+    @pytest.mark.parametrize(
+        'hasher',
+        (
+            HasherChoice.blake2b,
+            HasherChoice.blake2s,
+            HasherChoice.blake3,
+        ),
+    )
     @mock.patch('blake2signer.bases.time')
     def test_sign_parts_is_unique_non_deterministic(
         self,
         mock_time: mock.MagicMock,
+        hasher: HasherChoice,
     ) -> None:
         """Test that each signing in parts is unique because of salt."""
         mock_time.return_value = time()
 
-        super().test_sign_parts_is_unique_non_deterministic()
+        super().test_sign_parts_is_unique_non_deterministic(hasher)
 
+    @pytest.mark.xfail(
+        not has_blake3(),
+        reason='blake3 is not installed',
+        raises=errors.MissingDependencyError,
+    )
+    @pytest.mark.parametrize(
+        'hasher',
+        (
+            HasherChoice.blake2b,
+            HasherChoice.blake2s,
+            HasherChoice.blake3,
+        ),
+    )
     @mock.patch('blake2signer.bases.time')
-    def test_sign_unsign_timestamp_expired(self, mock_time: mock.MagicMock) -> None:
+    def test_sign_unsign_timestamp_expired(
+        self,
+        mock_time: mock.MagicMock,
+        hasher: HasherChoice,
+    ) -> None:
         """Test unsigning with timestamp is correct."""
         timestamp = int(time())
         mock_time.return_value = timestamp
-        signer = self.signer(self.secret)
+        signer = self.signer(self.secret, hasher=hasher)
 
         signed = self.sign(signer, self.data)
 
@@ -69,12 +153,29 @@ class TimestampSignerTestsBase(BaseTests, ABC):
         assert exc.value.__cause__ is None
         assert exc.value.timestamp.timestamp() == timestamp
 
+    @pytest.mark.xfail(
+        not has_blake3(),
+        reason='blake3 is not installed',
+        raises=errors.MissingDependencyError,
+    )
+    @pytest.mark.parametrize(
+        'hasher',
+        (
+            HasherChoice.blake2b,
+            HasherChoice.blake2s,
+            HasherChoice.blake3,
+        ),
+    )
     @mock.patch('blake2signer.bases.time')
-    def test_sign_unsign_timestamp_future(self, mock_time: mock.MagicMock) -> None:
+    def test_sign_unsign_timestamp_future(
+        self,
+        mock_time: mock.MagicMock,
+        hasher: HasherChoice,
+    ) -> None:
         """Test signing in the future, then unsigning, causes an exception."""
         timestamp = int(time())
         mock_time.return_value = timestamp
-        signer = self.signer()
+        signer = self.signer(hasher=hasher)
         signed = self.sign(signer, self.data)
 
         # Back to the future
@@ -86,9 +187,22 @@ class TimestampSignerTestsBase(BaseTests, ABC):
             self.unsign(signer, signed, max_age=5)
         assert timestamp == exc.value.timestamp.timestamp()
 
-    def test_unsign_wrong_data_without_timestamp(self) -> None:
+    @pytest.mark.xfail(
+        not has_blake3(),
+        reason='blake3 is not installed',
+        raises=errors.MissingDependencyError,
+    )
+    @pytest.mark.parametrize(
+        'hasher',
+        (
+            HasherChoice.blake2b,
+            HasherChoice.blake2s,
+            HasherChoice.blake3,
+        ),
+    )
+    def test_unsign_wrong_data_without_timestamp(self, hasher: HasherChoice) -> None:
         """Test unsign wrong data."""
-        signer = self.signer()
+        signer = self.signer(hasher=hasher)
 
         trick_signed = self.trick_sign(signer, self.data)
         with pytest.raises(
@@ -109,9 +223,22 @@ class TimestampSignerTestsBase(BaseTests, ABC):
             self.unsign(signer, trick_signed, max_age=1)
         assert exc.value.__cause__ is None
 
-    def test_unsign_wrong_timestamped_data(self) -> None:
+    @pytest.mark.xfail(
+        not has_blake3(),
+        reason='blake3 is not installed',
+        raises=errors.MissingDependencyError,
+    )
+    @pytest.mark.parametrize(
+        'hasher',
+        (
+            HasherChoice.blake2b,
+            HasherChoice.blake2s,
+            HasherChoice.blake3,
+        ),
+    )
+    def test_unsign_wrong_timestamped_data(self, hasher: HasherChoice) -> None:
         """Test unsign wrong timestamped data."""
-        signer = self.signer()
+        signer = self.signer(hasher=hasher)
 
         trick_signed = self.trick_sign(
             signer,
@@ -121,14 +248,31 @@ class TimestampSignerTestsBase(BaseTests, ABC):
             self.unsign(signer, trick_signed)
         assert exc.value.__cause__ is not None
 
+    @pytest.mark.xfail(
+        not has_blake3(),
+        reason='blake3 is not installed',
+        raises=errors.MissingDependencyError,
+    )
+    @pytest.mark.parametrize(
+        'hasher',
+        (
+            HasherChoice.blake2b,
+            HasherChoice.blake2s,
+            HasherChoice.blake3,
+        ),
+    )
     @mock.patch('blake2signer.bases.time')
-    def test_sign_timestamp_overflow(self, mock_time: mock.MagicMock) -> None:
+    def test_sign_timestamp_overflow(
+        self,
+        mock_time: mock.MagicMock,
+        hasher: HasherChoice,
+    ) -> None:
         """Test signing with timestamp after 2106 which causes an integer overflow.
 
         With 4 unsigned bytes we can represent up to 2106-02-07 3:28:15.
         """
         mock_time.return_value = int.from_bytes(b'\xff' * 4, 'big', signed=False) + 1
-        signer = self.signer()
+        signer = self.signer(hasher=hasher)
 
         with pytest.raises(RuntimeError):
             self.sign(signer, self.data)
@@ -175,6 +319,19 @@ class TestsBlake2TimestampSigner(TimestampSignerTestsBase, TestsBlake2Signer):
         kwargs.setdefault('max_age', 5)
         return signer.unsign_parts(signature, **kwargs)
 
+    @pytest.mark.xfail(
+        not has_blake3(),
+        reason='blake3 is not installed',
+        raises=errors.MissingDependencyError,
+    )
+    @pytest.mark.parametrize(
+        'hasher',
+        (
+            HasherChoice.blake2b,
+            HasherChoice.blake2s,
+            HasherChoice.blake3,
+        ),
+    )
     @pytest.mark.parametrize(
         'max_age',
         (2, 2.5, timedelta(hours=2)),
@@ -184,11 +341,12 @@ class TestsBlake2TimestampSigner(TimestampSignerTestsBase, TestsBlake2Signer):
         self,
         mock_time: mock.MagicMock,
         max_age: typing.Union[int, float, timedelta],
+        hasher: HasherChoice,
     ) -> None:
         """Test that max age can be changed correctly."""
         timestamp = int(time())
         mock_time.return_value = timestamp
-        signer = self.signer()
+        signer = self.signer(hasher=hasher)
 
         signed = self.sign(signer, self.data)
         assert self.data == self.unsign(signer, signed, max_age=max_age)
