@@ -19,6 +19,8 @@ class ZlibCompressor(CompressorInterface):
 
         Args:
             data: Data to compress.
+
+        Keyword Args:
             level: Desired compression level.
 
         Returns:
@@ -51,6 +53,8 @@ class GzipCompressor(CompressorInterface):
 
         Args:
             data: Data to compress.
+
+        Keyword Args:
             level: Desired compression level.
 
         Returns:

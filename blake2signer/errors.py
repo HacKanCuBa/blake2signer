@@ -131,6 +131,8 @@ class ExpiredSignatureError(InvalidSignatureError):
 
         Args:
             *args: Additional positional arguments, see `Exception.__init__`.
+
+        Keyword Args:
             timestamp: An aware datetime object indicating when the signature was done.
 
         Returns:

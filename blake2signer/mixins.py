@@ -54,6 +54,8 @@ class SerializerMixin(Mixin, ABC):
 
         Args:
             *args: Additional positional arguments.
+
+        Keyword Args:
             serializer (optional): Serializer class to use (defaults to a JSON
                 serializer).
             **kwargs: Additional keyword only arguments.
@@ -110,6 +112,8 @@ class CompressorMixin(Mixin, ABC):
 
         Args:
             *args: Additional positional arguments.
+
+        Keyword Args:
             compressor (optional): Compressor class to use (defaults to a Zlib
                 compressor).
             compression_flag (optional): Character to mark the payload as compressed.
@@ -215,6 +219,8 @@ class CompressorMixin(Mixin, ABC):
 
         Args:
             data: Data to compress.
+
+        Keyword Args:
             level (optional): Compression level wanted from 1 (least compressed)
                 to 9 (most compressed) or None for the default.
             force (optional): Force compression without checking if convenient.
@@ -267,6 +273,8 @@ class EncoderMixin(Mixin, ABC):
 
         Args:
             *args: Additional positional arguments.
+
+        Keyword Args:
             encoder (optional): Encoder class to use (defaults to a Base64 URL
                 safe encoder).
             **kwargs: Additional keyword only arguments.

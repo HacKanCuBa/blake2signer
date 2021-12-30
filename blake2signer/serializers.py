@@ -15,6 +15,8 @@ class JSONSerializer(SerializerInterface):
 
         Args:
             data: Data to serialize.
+
+        Keyword Args:
             **kwargs: Additional arguments for `json.dumps`.
 
         Returns:
@@ -28,6 +30,8 @@ class JSONSerializer(SerializerInterface):
 
         Args:
             data: Serialized data to unserialize.
+
+        Keyword Args:
             **kwargs: Additional arguments for `json.loads`.
 
         Returns:
@@ -44,6 +48,8 @@ class NullSerializer(SerializerInterface):
 
         Args:
             data: Data to serialize.
+
+        Keyword Args:
             **kwargs: Ignored.
 
         Returns:
@@ -56,6 +62,8 @@ class NullSerializer(SerializerInterface):
 
         Args:
             data: Serialized data to unserialize.
+
+        Keyword Args:
             **kwargs: Ignored.
 
         Returns:

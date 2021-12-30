@@ -19,6 +19,8 @@ class SerializerInterface(ABC):
 
         Args:
             data: Data to serialize.
+
+        Keyword Args:
             **kwargs: Additional arguments for the serializer.
 
         Returns:
@@ -31,6 +33,8 @@ class SerializerInterface(ABC):
 
         Args:
             data: Serialized data to unserialize.
+
+        Keyword Args:
             **kwargs: Additional arguments for the serializer.
 
         Returns:
@@ -89,6 +93,8 @@ class CompressorInterface(ABC):
 
         Args:
             data: Data to compress.
+
+        Keyword Args:
             level: Desired compression level.
 
         Returns:

@@ -85,6 +85,8 @@ class Base(Mixin, ABC):
             secret: Secret value which will be derived using BLAKE to produce the
                 signing key. The minimum secret size is enforced to 16 bytes and
                 there is no maximum.
+
+        Keyword Args:
             personalisation (optional): Personalisation string to force the hash
                 function to produce different digests for the same input. It is
                 derived using BLAKE to ensure it fits the hasher limits, so it
@@ -269,6 +271,8 @@ class Blake2SignerBase(EncoderMixin, Base, ABC):
             secret: Secret value which will be derived using BLAKE to produce the
                 signing key. The minimum secret size is enforced to 16 bytes and
                 there is no maximum.
+
+        Keyword Args:
             personalisation (optional): Personalisation string to force the hash
                 function to produce different digests for the same input. It is
                 derived using BLAKE to ensure it fits the hasher limits, so it
@@ -558,6 +562,8 @@ class Blake2DualSignerBase(Blake2TimestampSignerBase, ABC):
             secret: Secret value which will be derived using BLAKE to produce the
                 signing key. The minimum secret size is enforced to 16 bytes and
                 there is no maximum.
+
+        Keyword Args:
             max_age (optional): Use a timestamp signer instead of a regular one
                 to ensure that the signature is not older than this time in seconds.
             personalisation (optional): Personalisation string to force the hash

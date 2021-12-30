@@ -267,6 +267,8 @@ class Blake2TimestampSigner(Blake2TimestampSignerBase):
 
         Args:
             signed_data: Signed data to unsign.
+
+        Keyword Args:
             max_age: Ensure the signature is not older than this time in seconds.
 
         Returns:
@@ -301,6 +303,8 @@ class Blake2TimestampSigner(Blake2TimestampSignerBase):
 
         Args:
             signature: Signed data container to unsign.
+
+        Keyword Args:
             max_age: Ensure the signature is not older than this time in seconds.
 
         Returns:
@@ -387,6 +391,8 @@ class Blake2SerializerSigner(
             secret: Secret value which will be derived using BLAKE to produce the
                 signing key. The minimum secret size is enforced to 16 bytes and
                 there is no maximum.
+
+        Keyword Args:
             max_age (optional): Use a timestamp signer instead of a regular one
                 to ensure that the signature is not older than this time in seconds.
             personalisation (optional): Personalisation string to force the hash
@@ -552,6 +558,8 @@ class Blake2SerializerSigner(
 
         Args:
             data: Any serializable object.
+
+        Keyword Args:
             compress (optional): Compress data (default) after serializing it and
                 decompress it before unserializing. For low entropy payloads such
                 as human-readable text, it's beneficial from around ~30bytes, and
@@ -628,6 +636,8 @@ class Blake2SerializerSigner(
 
         Args:
             data: Any serializable object.
+
+        Keyword Args:
             compress (optional): Compress data (default) after serializing it and
                 decompress it before unserializing. For low entropy payloads such
                 as human-readable text, it's beneficial from around ~30bytes, and
@@ -710,6 +720,8 @@ class Blake2SerializerSigner(
         Args:
             data: Any serializable object.
             file: A `.write()`-supporting file-like object.
+
+        Keyword Args:
             compress (optional): Compress data (default) after serializing it and
                 decompress it before unserializing. For low entropy payloads such
                 as human-readable text, it's beneficial from around ~30bytes, and
