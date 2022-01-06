@@ -4,7 +4,6 @@ import os
 import typing
 from abc import ABC
 from abc import abstractmethod
-from dataclasses import dataclass
 from datetime import timedelta
 from secrets import compare_digest
 from time import time
@@ -22,8 +21,7 @@ from .utils import file_mode_is_text
 from .utils import timestamp_to_aware_datetime
 
 
-@dataclass(frozen=True)
-class SignedDataParts:
+class SignedDataParts(typing.NamedTuple):
     """Parts of a signed data container."""
 
     data: bytes
@@ -31,24 +29,21 @@ class SignedDataParts:
     signature: bytes
 
 
-@dataclass(frozen=True)
-class TimestampedDataParts:
+class TimestampedDataParts(typing.NamedTuple):
     """Parts of a timestamped data container."""
 
     data: bytes
     timestamp: int
 
 
-@dataclass(frozen=True)
-class Blake2SignatureDump:
+class Blake2SignatureDump(typing.NamedTuple):
     """Signature container."""
 
     signature: str  # Composite signature
     data: str
 
 
-@dataclass(frozen=True)
-class Blake2Signature:
+class Blake2Signature(typing.NamedTuple):
     """Signature container."""
 
     signature: bytes  # Composite signature
