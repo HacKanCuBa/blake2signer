@@ -6,9 +6,16 @@ They work as a building block for other classes.
 import typing
 from abc import ABC
 
-from . import errors
 from .compressors import ZlibCompressor
 from .encoders import B64URLEncoder
+from .errors import CompressionError
+from .errors import ConversionError
+from .errors import DecodeError
+from .errors import DecompressionError
+from .errors import EncodeError
+from .errors import InvalidOptionError
+from .errors import SerializationError
+from .errors import UnserializationError
 from .interfaces import CompressorInterface
 from .interfaces import EncoderInterface
 from .interfaces import SerializerInterface
@@ -35,7 +42,7 @@ class Mixin(ABC):
         try:
             return force_bytes(value)
         except Exception as exc:
-            raise errors.ConversionError('value can not be converted to bytes') from exc
+            raise ConversionError('value can not be converted to bytes') from exc
 
 
 class SerializerMixin(Mixin, ABC):
@@ -80,7 +87,7 @@ class SerializerMixin(Mixin, ABC):
         try:
             return self._serializer.serialize(data, **kwargs)
         except Exception as exc:
-            raise errors.SerializationError('data can not be serialized') from exc
+            raise SerializationError('data can not be serialized') from exc
 
     def _unserialize(self, data: bytes) -> typing.Any:
         """Unserialize given data.
@@ -91,7 +98,7 @@ class SerializerMixin(Mixin, ABC):
         try:
             return self._serializer.unserialize(data)
         except Exception as exc:
-            raise errors.UnserializationError('data can not be unserialized') from exc
+            raise UnserializationError('data can not be unserialized') from exc
 
 
 class CompressorMixin(Mixin, ABC):
@@ -143,14 +150,10 @@ class CompressorMixin(Mixin, ABC):
     def _validate_comp_flag(self, flag: typing.Union[str, bytes]) -> bytes:
         """Validate the compression flag value and return it clean."""
         if not flag:
-            raise errors.InvalidOptionError(
-                'the compression flag character must have a value',
-            )
+            raise InvalidOptionError('the compression flag character must have a value')
 
         if not flag.isascii():
-            raise errors.InvalidOptionError(
-                'the compression flag character must be ASCII',
-            )
+            raise InvalidOptionError('the compression flag character must be ASCII')
 
         return self._force_bytes(flag)
 
@@ -162,9 +165,7 @@ class CompressorMixin(Mixin, ABC):
         if 0.0 <= ratio < 100.0:
             return ratio
 
-        raise errors.InvalidOptionError(
-            'the compression ratio must be between 0 and 99',
-        )
+        raise InvalidOptionError('the compression ratio must be between 0 and 99')
 
     def _add_compression_flag(self, data: bytes) -> bytes:
         """Add the compression flag to given data."""
@@ -237,7 +238,7 @@ class CompressorMixin(Mixin, ABC):
         try:
             compressed = self._compressor.compress(data, level=compression_level)
         except Exception as exc:
-            raise errors.CompressionError('data can not be compressed') from exc
+            raise CompressionError('data can not be compressed') from exc
 
         if force or self._is_significantly_compressed(len(data), len(compressed)):
             return compressed, True
@@ -254,7 +255,7 @@ class CompressorMixin(Mixin, ABC):
         try:
             return self._compressor.decompress(data)
         except Exception as exc:
-            raise errors.DecompressionError('data can not be decompressed') from exc
+            raise DecompressionError('data can not be decompressed') from exc
 
 
 class EncoderMixin(Mixin, ABC):
@@ -298,10 +299,10 @@ class EncoderMixin(Mixin, ABC):
         encoder = encoder_class()
 
         if not encoder.alphabet:
-            raise errors.InvalidOptionError('the encoder alphabet must have a value')
+            raise InvalidOptionError('the encoder alphabet must have a value')
 
         if not encoder.alphabet.isascii():
-            raise errors.InvalidOptionError('the encoder alphabet must be ASCII')
+            raise InvalidOptionError('the encoder alphabet must be ASCII')
 
         return encoder
 
@@ -314,7 +315,7 @@ class EncoderMixin(Mixin, ABC):
         try:
             return self._encoder.encode(data)
         except Exception as exc:
-            raise errors.EncodeError('data can not be encoded') from exc
+            raise EncodeError('data can not be encoded') from exc
 
     def _decode(self, data: bytes) -> bytes:
         """Decode given encoded data.
@@ -325,4 +326,4 @@ class EncoderMixin(Mixin, ABC):
         try:
             return self._encoder.decode(data)
         except Exception as exc:
-            raise errors.DecodeError('data can not be decoded') from exc
+            raise DecodeError('data can not be decoded') from exc

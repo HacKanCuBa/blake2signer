@@ -4,7 +4,7 @@ import typing
 from abc import ABC
 from abc import abstractmethod
 
-from . import errors
+from .errors import CompressionError
 
 
 class SerializerInterface(ABC):
@@ -83,7 +83,7 @@ class CompressorInterface(ABC):
             return self.default_compression_level
 
         if level < 1 or level > 9:
-            raise errors.CompressionError('compression level must be between 1 and 9')
+            raise CompressionError('compression level must be between 1 and 9')
 
         return self.scale_compression_level(level)
 

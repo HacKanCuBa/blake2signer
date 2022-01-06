@@ -8,8 +8,12 @@ from datetime import timedelta
 from secrets import compare_digest
 from time import time
 
-from . import errors
 from .encoders import B64URLEncoder
+from .errors import ExpiredSignatureError
+from .errors import FileError
+from .errors import InvalidOptionError
+from .errors import InvalidSignatureError
+from .errors import SignatureError
 from .hashers import BLAKE2Hasher
 from .hashers import BLAKE3Hasher
 from .hashers import BLAKEHasher
@@ -140,7 +144,7 @@ class Base(Mixin, ABC):
         secret = self._force_bytes(secret_)
 
         if len(secret) < self.MIN_SECRET_SIZE:
-            raise errors.InvalidOptionError(
+            raise InvalidOptionError(
                 f'secret should be longer than {self.MIN_SECRET_SIZE} bytes',
             )
 
@@ -176,7 +180,7 @@ class Base(Mixin, ABC):
             digest_size = self.DEFAULT_DIGEST_SIZE
 
         if digest_size < self.MIN_DIGEST_SIZE:
-            raise errors.InvalidOptionError(
+            raise InvalidOptionError(
                 f'digest_size should be bigger than or equal to {self.MIN_DIGEST_SIZE}',
             )
 
@@ -194,7 +198,7 @@ class Base(Mixin, ABC):
         try:
             choice = HasherChoice(hasher)
         except ValueError:
-            raise errors.InvalidOptionError(
+            raise InvalidOptionError(
                 f'invalid hasher choice, must be one of: '
                 f'{", ".join(h for h in HasherChoice)}',
             )
@@ -215,10 +219,10 @@ class Base(Mixin, ABC):
             InvalidOptionError:  The value is out of bounds.
         """
         if not separator:
-            raise errors.InvalidOptionError('the separator character must have a value')
+            raise InvalidOptionError('the separator character must have a value')
 
         if not separator.isascii():
-            raise errors.InvalidOptionError('the separator character must be ASCII')
+            raise InvalidOptionError('the separator character must be ASCII')
 
         return self._force_bytes(separator)
 
@@ -318,7 +322,7 @@ class Blake2SignerBase(EncoderMixin, Base, ABC):
         sep = super()._validate_separator(separator)
 
         if sep in self._encoder.alphabet:
-            raise errors.InvalidOptionError(
+            raise InvalidOptionError(
                 'the separator character must not belong to the encoder alphabet',
             )
 
@@ -360,12 +364,12 @@ class Blake2SignerBase(EncoderMixin, Base, ABC):
             SignatureError: Invalid signed data.
         """
         if self._separator not in signed_data:
-            raise errors.SignatureError('separator not found in signed data')
+            raise SignatureError('separator not found in signed data')
 
         composite_signature, data = signed_data.split(self._separator, 1)
 
         if not composite_signature:
-            raise errors.SignatureError('signature information is missing')
+            raise SignatureError('signature information is missing')
 
         if self._deterministic:
             salt = b''
@@ -414,7 +418,7 @@ class Blake2SignerBase(EncoderMixin, Base, ABC):
         if compare_digest(good_signature, parts.signature):
             return parts.data
 
-        raise errors.InvalidSignatureError('signature is not valid')
+        raise InvalidSignatureError('signature is not valid')
 
 
 class Blake2TimestampSignerBase(Blake2SignerBase, ABC):
@@ -453,12 +457,12 @@ class Blake2TimestampSignerBase(Blake2SignerBase, ABC):
             DecodeError: Timestamp can't be decoded.
         """
         if self._separator not in timestamped_data:
-            raise errors.SignatureError('separator not found in timestamped data')
+            raise SignatureError('separator not found in timestamped data')
 
         encoded_timestamp, data = timestamped_data.split(self._separator, 1)
 
         if not encoded_timestamp:
-            raise errors.SignatureError('timestamp information is missing')
+            raise SignatureError('timestamp information is missing')
 
         timestamp = self._decode_timestamp(encoded_timestamp)
 
@@ -518,13 +522,13 @@ class Blake2TimestampSignerBase(Blake2SignerBase, ABC):
         ttl = self._get_ttl_from_max_age(max_age)
 
         if age > ttl:
-            raise errors.ExpiredSignatureError(
+            raise ExpiredSignatureError(
                 f'signature has expired, age {age} > {ttl} seconds',
                 timestamp=timestamp_to_aware_datetime(timestamped_parts.timestamp),
             )
 
         if age < 0:  # Signed in the future
-            raise errors.ExpiredSignatureError(
+            raise ExpiredSignatureError(
                 f'signature has expired, age {age} < 0 seconds',
                 timestamp=timestamp_to_aware_datetime(timestamped_parts.timestamp),
             )
@@ -673,7 +677,7 @@ class Blake2SerializerSignerBase(Blake2DualSignerBase, ABC):
         try:
             return file.read()
         except OSError as exc:
-            raise errors.FileError('file can not be read') from exc
+            raise FileError('file can not be read') from exc
 
     def _write(self, file: typing.IO, data: str) -> None:
         """Write data to file.
@@ -692,4 +696,4 @@ class Blake2SerializerSignerBase(Blake2DualSignerBase, ABC):
         try:
             file.write(data_)
         except OSError as exc:
-            raise errors.FileError('file can not be written') from exc
+            raise FileError('file can not be written') from exc
