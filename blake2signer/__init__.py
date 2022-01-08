@@ -2,7 +2,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 #
-# by HacKan (https://hackan.net), 2020.
+# by HacKan (https://hackan.net), 2020-2022.
 # This software is provided as-is. You are free to use, share, modify
 # and share modifications under the terms of that license, even with
 # proprietary code. Attribution is not required to share but is

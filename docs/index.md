@@ -89,7 +89,7 @@ I'm not a cryptoexpert, so *this project needs a security review*. If you are on
 
 **Blake2Signer** is made by [HacKan](https://hackan.net) under MPL v2.0. You are free to use, share, modify and share modifications under the terms of that [license](https://gitlab.com/hackancuba/blake2signer/-/blob/bb95e04c7ff3eb73aa0d923898f5eff5abad9768/LICENSE).  Derived works may link back to the canonical repository: `https://gitlab.com/hackancuba/blake2signer`.
 
-    Copyright (C) 2020, 2021 HacKan (https://hackan.net)
+    Copyright (C) 2020, 2021, 2022 HacKan (https://hackan.net)
     This Source Code Form is subject to the terms of the Mozilla Public
     License, v. 2.0. If a copy of the MPL was not distributed with this
     file, You can obtain one at https://mozilla.org/MPL/2.0/.
