@@ -68,6 +68,24 @@ Other packages usually refer to salt as something to mix with the secret to prev
 !!! tip
     It is always a good idea to set the `personalisation` parameter. This helps to defeat the abuse of using a signed stream for different signers that share the same key by changing the digest computation result (read more about it in the [hashlib docs](https://docs.python.org/3/library/hashlib.html#personalization)). For example if you use a signer for cookies set something like `b'cookies-signer'` or if you use it for some user-related data signing it could be `b'user data signer'`, or when used for signing a special value it could be `b'the-special-value-signer`, etc.
 
+It is important to note that the `personalisation` value doesn't need to be secret, nor a setting, nor random. It's perfectly fine to just be hardcoded in the class instantiation or similar, and different from any other personalisation value used (unique across all signers used).
+
+??? example "Personalisation"
+    ```python
+    """Sample personalisation values."""
+
+    from blake2signer import Blake2Signer, Blake2TimestampSigner
+
+    secret = b'secret' * 3
+    signer = Blake2Signer(secret, personalisation=b'signer for the form CSRF')
+    timestamp_signer = Blake2TimestampSigner(
+        secret,
+        personalisation=b'timed_signer_for_cookies',
+    )
+
+    ...
+    ```
+
 ### Mixing signers
 
 You can't mix and match signers, and that's on purpose: internally, to protect signed data to be mishandled, the `personalisation` parameter is populated with the signer characteristics such as its encoder, its class, its serializer and compressor if any, etc - additionally to the given value -. This prevents a malicious user to use certain signed data to unsign it with a different signer.
