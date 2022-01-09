@@ -13,13 +13,13 @@ Changed
 Added
 -----
 
-- Allow changing encoder in every signer: previously only Blake2SerializerSigner accepted encoders other than b64, yet not totally: the signature was always b64 URL safe encoded. This required a slight refactor splitting the signers module into bases and signers
+- Allow changing encoder in every signer: previously only Blake2SerializerSigner accepted encoders other than b64, yet not totally: the signature was always b64 URL safe encoded. This required a slight refactor splitting the signers' module into bases and signers.
 - Add new base32 encoder.
 - Add check to ensure that the separator does not belong to the encoder alphabet.
 - Add new hex (base16) encoder.
 - Add check to ensure that the separator and compressor flag are ASCII characters to prevent encoding errors when converting from bytes to string.
 - Add new gzip compressor.
-- Add new null serializer: a serializer that doesn't actually serializes. It can be useful when you need to manage bytes or strings, but you want to compress too, therefore being able to use the Blake2SerializerSigner for this.
+- Add new null serializer: a serializer that doesn't actually serialize. It can be useful when you need to manage bytes or strings, but you want to compress too, therefore being able to use the Blake2SerializerSigner for this.
 - Add check to ensure that the separator and compressor flag are not empty.
 - Add check to ensure that the encoder alphabet is ASCII and not empty.
 - Add signature timestamp to `ExpiredSignatureError` exception in new `timestamp` parameter as an aware datetime object.
