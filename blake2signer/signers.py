@@ -480,7 +480,7 @@ class Blake2SerializerSigner(
         compress: bool = kwargs['compress']
         compression_level: typing.Optional[int] = kwargs.get('compression_level')
         force_compression: bool = kwargs['force_compression']
-        serializer_kwargs: typing.Optional[typing.Dict[str, typing.Any]]
+        serializer_kwargs: typing.Dict[str, typing.Any]
         serializer_kwargs = kwargs.get('serializer_kwargs') or {}
 
         serialized = self._serialize(data, **serializer_kwargs)
