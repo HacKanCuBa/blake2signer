@@ -364,3 +364,70 @@ class TestsBlake2TimestampSigner(TimestampSignerTestsBase, TestsBlake2Signer):
             self.unsign(signer, signed, max_age=max_age)
         assert exc.value.__cause__ is None
         assert exc.value.timestamp.timestamp() == timestamp
+
+        # called twice, during sign and unsign
+        mock_time.assert_has_calls([mock.call(), mock.call()])
+
+    @pytest.mark.xfail(
+        not has_blake3(),
+        reason='blake3 is not installed',
+        raises=errors.MissingDependencyError,
+    )
+    @pytest.mark.parametrize(
+        'hasher',
+        (
+            HasherChoice.blake2b,
+            HasherChoice.blake2s,
+            HasherChoice.blake3,
+        ),
+    )
+    @mock.patch('blake2signer.bases.time')
+    def test_max_age_can_be_null(
+        self,
+        mock_time: mock.MagicMock,
+        hasher: HasherChoice,
+    ) -> None:
+        """Test that `max_age` can be null."""
+        timestamp = int(time())
+        mock_time.return_value = timestamp
+        signer = self.signer(hasher=hasher)
+
+        signed = self.sign(signer, self.data)
+        unsigned = self.unsign(signer, signed, max_age=None)
+
+        assert self.data == unsigned
+
+        # called once when getting the time during sign, and not during unsign
+        mock_time.assert_called_once_with()
+
+    @pytest.mark.xfail(
+        not has_blake3(),
+        reason='blake3 is not installed',
+        raises=errors.MissingDependencyError,
+    )
+    @pytest.mark.parametrize(
+        'hasher',
+        (
+            HasherChoice.blake2b,
+            HasherChoice.blake2s,
+            HasherChoice.blake3,
+        ),
+    )
+    @mock.patch('blake2signer.bases.time')
+    def test_max_age_can_be_null_in_parts(
+        self,
+        mock_time: mock.MagicMock,
+        hasher: HasherChoice,
+    ) -> None:
+        """Test that `max_age` can be null."""
+        timestamp = int(time())
+        mock_time.return_value = timestamp
+        signer = self.signer(hasher=hasher)
+
+        signed = self.sign_parts(signer, self.data)
+        unsigned = self.unsign_parts(signer, signed, max_age=None)
+
+        assert self.data == unsigned
+
+        # called once when getting the time during sign, and not during unsign
+        mock_time.assert_called_once_with()

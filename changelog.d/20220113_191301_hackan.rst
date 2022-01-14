@@ -1,0 +1,4 @@
+Changed
+-------
+
+- Allow `max_age` to be None for the Blake2TimestampSigner: the timestamp is then not checked (but the signature is always checked).

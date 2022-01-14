@@ -707,6 +707,12 @@ except errors.ExpiredSignatureError as exc:
 # The `ExpiredSignatureError` exception contains the signature timestamp as an
 # aware datetime object (in UTC) in case you need that information to display
 # something meaningful to the user.
+
+# New in v2.4.0
+# If `max_age` is None, then the timestamp is not checked (but the signature is
+# always checked!).
+unsigned = t_signer.unsign(signed, max_age=None)
+print(data == unsigned)  # True
 ```
 
 !!! tip "Favor bytes over string"

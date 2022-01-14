@@ -569,15 +569,19 @@ class Blake2TimestampSignerBase(Blake2SignerBase, ABC):
         self,
         parts: SignedDataParts,
         *,
-        max_age: typing.Union[int, float, timedelta],
+        max_age: typing.Union[None, int, float, timedelta],
     ) -> bytes:
         """Verify signed data parts with timestamp and recover original data.
+
+        If `max_age` is not provided, then the timestamp is not checked (the
+        signature is always checked).
 
         Args:
             parts: Signed data parts to unsign.
 
         Keyword Args:
-            max_age: Ensure the signature is not older than this time in seconds.
+            max_age (optional): Ensure the signature is not older than this time
+                in seconds.
 
         Returns:
             Original data.
@@ -591,6 +595,9 @@ class Blake2TimestampSignerBase(Blake2SignerBase, ABC):
         timestamped_data = self._unsign(parts)
 
         timestamped_parts = self._decompose_timestamp(timestamped_data)
+
+        if max_age is None:
+            return timestamped_parts.data
 
         now = time()
         age = now - timestamped_parts.timestamp

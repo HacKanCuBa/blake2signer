@@ -258,7 +258,7 @@ class Blake2TimestampSigner(Blake2TimestampSignerBase):
         self,
         signed_data: typing.AnyStr,
         *,
-        max_age: typing.Union[int, float, timedelta],
+        max_age: typing.Union[None, int, float, timedelta],
     ) -> bytes:
         """Verify a stream signed and timestamped by `sign` and recover data.
 
@@ -266,11 +266,15 @@ class Blake2TimestampSigner(Blake2TimestampSignerBase):
         UTF-8 encoded. You should prefer to properly encode strings and passing
         bytes to this function.
 
+        If `max_age` is not provided, then the timestamp is not checked (the
+        signature is always checked).
+
         Args:
             signed_data: Signed data to unsign.
 
         Keyword Args:
-            max_age: Ensure the signature is not older than this time in seconds.
+            max_age (optional): Ensure the signature is not older than this time
+                in seconds.
 
         Returns:
             Original data.
@@ -291,7 +295,7 @@ class Blake2TimestampSigner(Blake2TimestampSignerBase):
         self,
         signature: typing.Union[Blake2Signature, Blake2SignatureDump],
         *,
-        max_age: typing.Union[int, float, timedelta],
+        max_age: typing.Union[None, int, float, timedelta],
     ) -> bytes:
         """Verify a container signed by `sign_parts` and recover original data.
 
@@ -302,11 +306,15 @@ class Blake2TimestampSigner(Blake2TimestampSignerBase):
         UTF-8 encoded. You should prefer to properly encode strings and passing
         a bytes container to this function.
 
+        If `max_age` is not provided, then the timestamp is not checked (the
+        signature is always checked).
+
         Args:
             signature: Signed data container to unsign.
 
         Keyword Args:
-            max_age: Ensure the signature is not older than this time in seconds.
+            max_age (optional): Ensure the signature is not older than this time
+                in seconds.
 
         Returns:
             Original data.
