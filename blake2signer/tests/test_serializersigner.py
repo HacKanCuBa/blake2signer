@@ -701,24 +701,27 @@ class SerializerSignerTestsBase(BaseTests):
             serializer=JSONSerializer,
             hasher=hasher,
         )
-        data = self.data + '\x87'
+        data = {
+            'a': 'b',
+            1: 2,
+        }
 
         signed1 = self.sign(
             signer,
             data,
-            serializer_kwargs={'ensure_ascii': True},
+            serializer_kwargs={'separators': ('.', ';')},
         )
         signed1_1 = self.sign(
             signer,
             data,
-            serializer_kwargs={'ensure_ascii': True},
+            serializer_kwargs={'separators': ('.', ';')},
         )
         assert signed1 == signed1_1  # It is effectively deterministic
 
         signed2 = self.sign(
             signer,
             data,
-            serializer_kwargs={'ensure_ascii': False},
+            serializer_kwargs={'separators': ('.', ',')},
         )
         assert signed1 != signed2  # Change due only to the serializer options
 
@@ -745,17 +748,20 @@ class SerializerSignerTestsBase(BaseTests):
             serializer=JSONSerializer,
             hasher=hasher,
         )
-        data = self.data + '\x87'
+        data = {
+            'a': 'b',
+            1: 2,
+        }
 
         signer.dump(
             data,
             file1,
-            serializer_kwargs={'ensure_ascii': True},
+            serializer_kwargs={'separators': ('.', ';')},
         )
         signer.dump(
             data,
             file1_1,
-            serializer_kwargs={'ensure_ascii': True},
+            serializer_kwargs={'separators': ('.', ';')},
         )
         file1.seek(0)
         file1_1.seek(0)
@@ -764,7 +770,7 @@ class SerializerSignerTestsBase(BaseTests):
         signer.dump(
             data,
             file2,
-            serializer_kwargs={'ensure_ascii': False},
+            serializer_kwargs={'separators': ('.', ',')},
         )
         file1.seek(0)
         file2.seek(0)
