@@ -405,7 +405,6 @@ class BaseTests(ABC):
             (b'setec astronomy.', 'acab', ',', 'datadata'),
             ('setec astronomy.', b'acab', ',', 'datadata'),
             ('setec astronomy.', 'acab', b',', 'datadata'),
-            ('setec astronomy.', 'acab', ',', 'datadata'),
             ('setec astronomy.', b'acab', b',', 'datadata'),
             (b'setec astronomy.', b'acab', b',', 'datadata'),
         ),
