@@ -18,6 +18,13 @@ enable-extensions=G
 import-order-style=pycharm
 docstring-convention=google
 
+# flake8-pytest-style
+pytest-fixture-no-parentheses=true
+pytest-parametrize-names-type=tuple
+pytest-parametrize-values-type=tuple
+pytest-parametrize-values-row-type=tuple
+pytest-mark-no-parentheses=true
+
 # Maximum Cyclomatic Complexity allowed
 max-complexity = 5
 radon-max-cc = 5
