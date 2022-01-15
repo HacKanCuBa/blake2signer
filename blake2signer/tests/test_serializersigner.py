@@ -789,6 +789,50 @@ class SerializerSignerTestsBase(BaseTests):
             HasherChoice.blake3,
         ),
     )
+    def test_dumps_parts_serializer_kwargs(self, hasher: HasherChoice) -> None:
+        """Test dumping parts using serializer kwargs."""
+        signer = self.signer(
+            deterministic=True,
+            serializer=JSONSerializer,
+            hasher=hasher,
+        )
+        data = {
+            'a': 'b',
+            1: 2,
+        }
+
+        signed1 = self.sign_parts(
+            signer,
+            data,
+            serializer_kwargs={'separators': ('.', ';')},
+        )
+        signed1_1 = self.sign_parts(
+            signer,
+            data,
+            serializer_kwargs={'separators': ('.', ';')},
+        )
+        assert signed1 == signed1_1  # It is effectively deterministic
+
+        signed2 = self.sign_parts(
+            signer,
+            data,
+            serializer_kwargs={'separators': ('.', ',')},
+        )
+        assert signed1 != signed2  # Change due only to the serializer options
+
+    @pytest.mark.xfail(
+        not has_blake3(),
+        reason='blake3 is not installed',
+        raises=errors.MissingDependencyError,
+    )
+    @pytest.mark.parametrize(
+        'hasher',
+        (
+            HasherChoice.blake2b,
+            HasherChoice.blake2s,
+            HasherChoice.blake3,
+        ),
+    )
     def test_dumps_unserializable_data(self, hasher: HasherChoice) -> None:
         """Test dumps unserializable data fails correctly."""
         signer = self.signer(serializer=JSONSerializer, hasher=hasher)
