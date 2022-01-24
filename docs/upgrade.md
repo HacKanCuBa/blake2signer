@@ -1,6 +1,20 @@
 # Upgrade guide
 
+## To v2.2
+
+!!! success "Old signatures will work"
+    Data signed with previous versions (>=2.0, <=2.2) will still be valid.
+
+No public API was changed, so there's no change for you except that you can now choose to use `blake3`.
+
+Regarding the private API, several internal methods of the signers changed, and many were transferred to the `BLAKEHasher` class, and subclasses. Check out the corresponding commit and [docs](hashers.md):
+
+* [`abd17905`](https://gitlab.com/hackancuba/blake2signer/-/commit/abd17905cf571b25aa001329a0c815338161c947) - ✨ Add support for BLAKE3
+
 ## To v2.1
+
+!!! success "Old signatures will work"
+    Data signed with previous versions (>=2.0, <=2.1) will still be valid.
 
 The default compression level was hardcoded to 6 no matter which compressor was being used. This has changed so that the corresponding default compression level for the compressor is used.
 

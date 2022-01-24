@@ -1,5 +1,16 @@
 # Changelog
 
+## 2.2.0 - 2022-01-24
+
+**Added**
+
+- Add support for BLAKE3 through third-party package `blake3`, which are bindings to the homonym Rust package (ported by one of the algorithm's author).
+
+**Changed**
+
+- Several docs content improvements.
+- Marginal performance improvement by changing frozen dataclasses for named tuples.
+
 ## 2.1.0 - 2021-12-28
 
 **Changed**
