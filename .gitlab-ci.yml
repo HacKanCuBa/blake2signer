@@ -309,9 +309,10 @@ security scanning:
 publish test:
   stage: publish
   script:
+    - set -euo pipefail
     - MAX_TRIES=${PUBLISH_TEST_MAX_TRIES:-10}
     - poetry config repositories.testpypi https://test.pypi.org/legacy/
-    - poetry config pypi-token.testpypi "$POETRY_PYPI_TOKEN_TESTPYPI"
+    - poetry config pypi-token.testpypi "${POETRY_PYPI_TOKEN_TESTPYPI:?env var unset (forgot to protect branch?)}"
     - count=0; while [ $count -lt $MAX_TRIES ]; do printf "Attempt %d of %d\n" "$((count + 1))" "$MAX_TRIES"; sleep "$((count / 2))"; poetry version prerelease && poetry publish --build -r testpypi && break || let "count+=1"; done
     - sha256sum dist/*
     - sha512sum dist/*
@@ -322,7 +323,8 @@ publish test:
 publish:
   stage: publish
   script:
-    - poetry config pypi-token.pypi "$POETRY_PYPI_TOKEN_PYPI"
+    - set -euo pipefail
+    - poetry config pypi-token.pypi "${POETRY_PYPI_TOKEN_PYPI:?env var unset (forgot to protect branch?)}"
     - poetry publish --build
     - sha256sum dist/*
     - sha512sum dist/*
