@@ -189,6 +189,12 @@ class TestsBLAKE2Hasher(BaseTests[BLAKE2Hasher]):
         assert hasher.keys[-1] == hasher.signing_key
 
 
+class TestsBLAKE2HasherPy38(TestsBLAKE2Hasher):
+    """BLAKE2Hasher tests, hack for Pytest under Python <=3.8."""
+
+    __new__ = object.__new__
+
+
 class TestsBLAKE3Hasher(BaseTests[BLAKE3Hasher]):
     """BLAKE3Hasher tests."""
 
@@ -272,3 +278,9 @@ class TestsBLAKE3Hasher(BaseTests[BLAKE3Hasher]):
         hasher = self.get_hasher()
 
         assert hasher.keys[-1] == hasher.signing_key
+
+
+class TestsBLAKE3HasherPy38(TestsBLAKE3Hasher):
+    """BLAKE3Hasher tests, hack for Pytest under Python <=3.8."""
+
+    __new__ = object.__new__
