@@ -1,0 +1,5 @@
+[darglint]
+docstring_style=google
+strictness=short
+# ToDo: Remove DAR101 when this is fixed: https://github.com/terrencepreilly/darglint/issues/192
+ignore=DAR402,DAR101

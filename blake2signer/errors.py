@@ -126,7 +126,8 @@ class ExpiredSignatureError(InvalidSignatureError):
     Means that the signature has expired.
     """
 
-    def __init__(self, *args: typing.Any, timestamp: datetime) -> None:
+    # ToDo: D417 is a false positive, see https://github.com/PyCQA/pydocstyle/issues/514
+    def __init__(self, *args: typing.Any, timestamp: datetime) -> None:  # noqa: D417
         """Initialize self.
 
         Args:
@@ -134,9 +135,6 @@ class ExpiredSignatureError(InvalidSignatureError):
 
         Keyword Args:
             timestamp: An aware datetime object indicating when the signature was done.
-
-        Returns:
-            None.
         """
         super().__init__(*args)
 

@@ -70,6 +70,12 @@ class BLAKEHasher(ABC):
     def _validate_digest_size(self, digest_size: int) -> int:
         """Validate the digest_size value and return it clean.
 
+        Args:
+            digest_size: digest size to validate.
+
+        Returns:
+            Validated digest size.
+
         Raises:
             InvalidOptionError: The value is out of bounds.
         """

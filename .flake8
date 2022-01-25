@@ -24,3 +24,11 @@ radon-max-cc = 5
 
 # Set the application name
 application-import-names=blake2signer
+
+# Ignores per files
+per-file-ignores =
+    # False positives, see https://github.com/PyCQA/pydocstyle/issues/514
+    # ToDo: remove once that is fixed
+    blake2signer/errors.py: D417
+    blake2signer/mixins.py: D417
+    # <>

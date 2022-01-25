@@ -210,6 +210,13 @@ class BaseTests(ABC):
 
         This function is useful to trick a signer into unsigning something that
         normally wouldn't be possible because of different safeguard checks.
+
+        Args:
+            signer: The signer to use.
+            data: data to be signed.
+
+        Returns:
+            Signed data, like `signer.sign(data)`, but bypassing checks if any.
         """
         # noinspection PyProtectedMember
         data_b = signer._force_bytes(data)

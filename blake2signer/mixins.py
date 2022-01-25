@@ -51,12 +51,13 @@ class SerializerMixin(Mixin, ABC):
     Adds serializing capabilities to a subclass.
     """
 
+    # ToDo: D417 is a false positive, see https://github.com/PyCQA/pydocstyle/issues/514
     def __init__(
         self,
         *args: typing.Any,
         serializer: typing.Type[SerializerInterface] = JSONSerializer,
         **kwargs: typing.Any,
-    ) -> None:
+    ) -> None:  # noqa: D417
         """Add serializing capabilities.
 
         Args:
@@ -66,9 +67,6 @@ class SerializerMixin(Mixin, ABC):
             serializer (optional): Serializer class to use (defaults to a JSON
                 serializer).
             **kwargs: Additional keyword only arguments.
-
-        Returns:
-            None.
         """
         self._serializer = serializer()
 
@@ -81,6 +79,15 @@ class SerializerMixin(Mixin, ABC):
     def _serialize(self, data: typing.Any, **kwargs: typing.Any) -> bytes:
         """Serialize given data.  Additional kwargs are passed to the serializer.
 
+        Args:
+            data: data to serialize.
+
+        Keyword Args:
+          **kwargs: Additional keyword only arguments for the serializer.
+
+        Returns:
+            Serialized data.
+
         Raises:
             SerializationError: Data can't be serialized.
         """
@@ -91,6 +98,12 @@ class SerializerMixin(Mixin, ABC):
 
     def _unserialize(self, data: bytes) -> typing.Any:
         """Unserialize given data.
+
+        Args:
+            data: serialized data to unserialize.
+
+        Returns:
+            Original data.
 
         Raises:
             UnserializationError: Data can't be unserialized.
@@ -107,6 +120,7 @@ class CompressorMixin(Mixin, ABC):
     Adds compressing capabilities to a subclass.
     """
 
+    # ToDo: D417 is a false positive, see https://github.com/PyCQA/pydocstyle/issues/514
     def __init__(
         self,
         *args: typing.Any,
@@ -114,7 +128,7 @@ class CompressorMixin(Mixin, ABC):
         compression_flag: typing.Union[str, bytes] = b'.',
         compression_ratio: typing.Union[int, float] = 5.0,
         **kwargs: typing.Any,
-    ) -> None:
+    ) -> None:  # noqa: D417
         """Add compressing capabilities.
 
         Args:
@@ -132,9 +146,6 @@ class CompressorMixin(Mixin, ABC):
                 compression. By default, if compression achieves less than 5% of
                 size reduction, it is considered detrimental.
             **kwargs: Additional keyword only arguments.
-
-        Returns:
-            None.
         """
         self._compressor = compressor()
 
@@ -148,7 +159,17 @@ class CompressorMixin(Mixin, ABC):
         super().__init__(*args, **kwargs)
 
     def _validate_comp_flag(self, flag: typing.Union[str, bytes]) -> bytes:
-        """Validate the compression flag value and return it clean."""
+        """Validate the compression flag value and return it clean.
+
+        Args:
+            flag: compression flag to validate.
+
+        Returns:
+            Validated compression flag as bytes.
+
+        Raises:
+            InvalidOptionError: the compression flag is not valid.
+        """
         if not flag:
             raise InvalidOptionError('the compression flag character must have a value')
 
@@ -158,14 +179,22 @@ class CompressorMixin(Mixin, ABC):
         return self._force_bytes(flag)
 
     @staticmethod
-    def _validate_comp_ratio(ratio_: float) -> float:
-        """Validate the compression ratio value and return it clean."""
-        ratio = float(ratio_)
+    def _validate_comp_ratio(ratio: float) -> float:
+        """Validate the compression ratio value and return it clean.
 
+        Args:
+            ratio: compression ratio to validate.
+
+        Returns:
+            Validated compression ratio as float.
+
+        Raises:
+            InvalidOptionError: the compression ratio is out of bounds.
+        """
         if 0.0 <= ratio < 100.0:
-            return ratio
+            return float(ratio)
 
-        raise InvalidOptionError('the compression ratio must be between 0 and 99')
+        raise InvalidOptionError('the compression ratio must be between 0 and less than 100')
 
     def _add_compression_flag(self, data: bytes) -> bytes:
         """Add the compression flag to given data."""
@@ -230,7 +259,7 @@ class CompressorMixin(Mixin, ABC):
             A tuple containing data, and a flag indicating if data is compressed
             (True) or not.
 
-        Raises
+        Raises:
             CompressionError: Data can't be compressed.
         """
         compression_level = self._compressor.get_compression_level(level)
@@ -249,6 +278,12 @@ class CompressorMixin(Mixin, ABC):
     def _decompress(self, data: bytes) -> bytes:
         """Decompress given data.
 
+        Args:
+            data: compressed data to decompress.
+
+        Returns:
+             Original data.
+
         Raises:
             DecompressionError: Data can't be decompressed.
         """
@@ -264,12 +299,13 @@ class EncoderMixin(Mixin, ABC):
     Adds encoding capabilities to a subclass.
     """
 
+    # ToDo: D417 is a false positive, see https://github.com/PyCQA/pydocstyle/issues/514
     def __init__(
         self,
         *args: typing.Any,
         encoder: typing.Type[EncoderInterface] = B64URLEncoder,
         **kwargs: typing.Any,
-    ) -> None:
+    ) -> None:  # noqa: D417
         """Add encoding capabilities.
 
         Args:
@@ -279,9 +315,6 @@ class EncoderMixin(Mixin, ABC):
             encoder (optional): Encoder class to use (defaults to a Base64 URL
                 safe encoder).
             **kwargs: Additional keyword only arguments.
-
-        Returns:
-            None.
         """
         self._encoder = self._validate_encoder(encoder)
 
@@ -293,7 +326,17 @@ class EncoderMixin(Mixin, ABC):
 
     @staticmethod
     def _validate_encoder(encoder_class: typing.Type[EncoderInterface]) -> EncoderInterface:
-        """Validate the separator value and return it clean."""
+        """Validate the encoder characteristics and return it clean.
+
+        Args:
+            encoder_class: encoder class to validate.
+
+        Returns:
+            Validated encoder instance.
+
+        Raises:
+            InvalidOptionError: the encoder alphabet is empty or is not ASCII.
+        """
         encoder = encoder_class()
 
         if not encoder.alphabet:
@@ -307,6 +350,12 @@ class EncoderMixin(Mixin, ABC):
     def _encode(self, data: bytes) -> bytes:
         """Encode given data.
 
+        Args:
+            data: data to encode.
+
+        Returns:
+            Encoded data.
+
         Raises:
             EncodeError: Data can't be encoded.
         """
@@ -317,6 +366,12 @@ class EncoderMixin(Mixin, ABC):
 
     def _decode(self, data: bytes) -> bytes:
         """Decode given encoded data.
+
+        Args:
+            data: encoded data to decode.
+
+        Returns:
+            Original data.
 
         Raises:
             DecodeError: Data can't be decoded.

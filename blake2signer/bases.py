@@ -221,6 +221,12 @@ class Base(Mixin, ABC):
     def _validate_hasher_choice(hasher: typing.Union[HasherChoice, str]) -> HasherChoice:
         """Validate the hasher choice.
 
+        Args:
+            hasher: the hasher choice to validate.
+
+        Returns:
+            A validated hasher choice as HasherChoice.
+
         Raises:
             InvalidOptionError: Invalid hasher choice.
         """
@@ -363,6 +369,10 @@ class Blake2SignerBase(EncoderMixin, Base, ABC):
         """Get a salt for the signature considering its type.
 
         For non-deterministic signatures, a pseudo random salt is generated.
+
+        Returns:
+            A pseudorandom salt for the signature if non-deterministic, otherwise an
+            empty bytes string.
         """
         if self._deterministic:
             return b''
@@ -391,6 +401,12 @@ class Blake2SignerBase(EncoderMixin, Base, ABC):
     def _decompose(self, signed_data: bytes) -> SignedDataParts:
         """Decompose a signed data stream into its parts.
 
+        Args:
+            signed_data: the signed data stream to decompose.
+
+        Returns:
+            The decomposed signed data in a container.
+
         Raises:
             SignatureError: Invalid signed data.
         """
@@ -416,6 +432,14 @@ class Blake2SignerBase(EncoderMixin, Base, ABC):
         """Return signature for given data using salt and all the hasher options.
 
         The signature is encoded using the chosen encoder.
+
+        Keyword Args:
+            data: data to sign.
+            salt: salt to use in the signature.
+            key: the signing key.
+
+        Returns:
+            An encoded signature.
         """
         signature = self._hasher.digest(data, key=key, salt=salt)
 
@@ -425,6 +449,12 @@ class Blake2SignerBase(EncoderMixin, Base, ABC):
         """Sign given data and produce a signature stream composed of salt and signature.
 
         The signature stream (salt and signature) is encoded using the chosen encoder.
+
+        Args:
+            data: data to sign.
+
+        Returns:
+            A signature stream containing salt and signature.
         """
         salt = self._get_salt()
         signature = self._signify(data=data, salt=salt, key=self._hasher.signing_key)
@@ -441,7 +471,6 @@ class Blake2SignerBase(EncoderMixin, Base, ABC):
             Original data.
 
         Raises:
-            SignatureError: Signed data structure is not valid.
             InvalidSignatureError: Signed data signature is invalid.
         """
         for key in reversed(self._hasher.keys):
@@ -471,6 +500,12 @@ class Blake2TimestampSignerBase(Blake2SignerBase, ABC):
     def _decode_timestamp(self, encoded_timestamp: bytes) -> int:
         """Decode an encoded timestamp whose signature should have been validated.
 
+        Args:
+            encoded_timestamp: encoded timestamp to decode.
+
+        Returns:
+            An integer timestamp.
+
         Raises:
             DecodeError: Timestamp can't be decoded.
         """
@@ -482,6 +517,12 @@ class Blake2TimestampSignerBase(Blake2SignerBase, ABC):
 
     def _decompose_timestamp(self, timestamped_data: bytes) -> TimestampedDataParts:
         """Decompose data + timestamp value.
+
+        Args:
+            timestamped_data: composed data with timestamp to decompose.
+
+        Returns:
+            A container with data and timestamp.
 
         Raises:
             SignatureError: Invalid timestamped data.
@@ -512,6 +553,9 @@ class Blake2TimestampSignerBase(Blake2SignerBase, ABC):
 
         The timestamped signature stream (timestamp, signature and salt) is
         encoded using the chosen encoder.
+
+        Args:
+            data: data to sign.
 
         Returns:
             A signature stream composed of salt, signature and timestamp.
@@ -640,8 +684,14 @@ class Blake2DualSignerBase(Blake2TimestampSignerBase, ABC):
     def _proper_sign(self, data: bytes) -> bytes:
         """Sign given data with a (timestamp) signer producing a signature stream.
 
-        The signature stream (salt, signature and/or timestamp) are encoded using
+        The signature stream (salt, signature and/or timestamp) is encoded using
         the chosen encoder.
+
+        Args:
+            data: data to sign.
+
+        Returns:
+            A signature stream of the salt, signature, and timestamp, if corresponds.
         """
         if self._max_age is None:
             return self._sign(data)
@@ -650,6 +700,12 @@ class Blake2DualSignerBase(Blake2TimestampSignerBase, ABC):
 
     def _proper_unsign(self, parts: SignedDataParts) -> bytes:
         """Unsign signed data properly with the corresponding signer.
+
+        Args:
+            parts: signed data parts to unsign.
+
+        Returns:
+            Original data.
 
         Raises:
             SignatureError: Signed data structure is not valid.
@@ -704,6 +760,12 @@ class Blake2SerializerSignerBase(Blake2DualSignerBase, ABC):
     def _read(file: typing.IO) -> typing.AnyStr:
         """Read data from a file.
 
+        Args:
+            file: file to read data from.
+
+        Returns:
+            File contents.
+
         Raises:
             FileError: File can't be read.
         """
@@ -714,6 +776,10 @@ class Blake2SerializerSignerBase(Blake2DualSignerBase, ABC):
 
     def _write(self, file: typing.IO, data: str) -> None:
         """Write data to file.
+
+        Args:
+            file: file to write data to.
+            data: data to write to the file.
 
         Notes:
             The file can be either in text or binary mode, therefore given data

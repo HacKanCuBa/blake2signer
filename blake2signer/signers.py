@@ -744,6 +744,12 @@ class Blake2SerializerSigner(
                 `compress`.
             serializer_kwargs (optional): Provide keyword arguments for the serializer.
 
+        Returns:
+            An encoded, signed and optionally timestamped string of serialized
+            and optionally compressed data. This value is safe for printing or
+            transmitting as it only contains the characters supported by the
+            encoder and the separator, which are ASCII.
+
         Raises:
             SerializationError: Data can't be serialized.
             CompressionError: Data can't be compressed or compression level is invalid.

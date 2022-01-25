@@ -23,6 +23,13 @@ def pydocstyle(ctx):
 
 
 @task
+def darglint(ctx):
+    """Run darglint."""
+    ctx.run('darglint -v2 blake2signer/', echo=True)
+    ctx.run('darglint -v2 tests/', echo=True)
+
+
+@task
 def bandit(ctx):
     """Run bandit with proper exclusions."""
     ctx.run(f'bandit -i -r -x blake2signer/tests blake2signer/', echo=True)
@@ -66,7 +73,7 @@ def reformat(ctx):
 
 
 # noinspection PyUnusedLocal
-@task(flake8, pydocstyle, mypy, bandit)
+@task(flake8, pydocstyle, darglint, mypy, bandit)
 def lint(ctx):
     """Lint code and static analysis."""
 
