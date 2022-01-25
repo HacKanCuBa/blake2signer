@@ -12,6 +12,7 @@ from .. import errors
 from ..bases import Blake2Signature
 from ..bases import Blake2SignatureDump
 from ..bases import HasherChoice
+from ..bases import Secret
 from ..encoders import B32Encoder
 from ..encoders import B64URLEncoder
 from ..encoders import HexEncoder
@@ -48,7 +49,7 @@ class BaseTests(ABC):
 
     def signer(
         self,
-        secret: typing.Union[None, str, bytes] = None,
+        secret: typing.Union[Secret, typing.Sequence[Secret], None] = None,
         **kwargs: typing.Any,
     ) -> Signer:
         """Get the signer to test."""
@@ -666,9 +667,34 @@ class BaseTests(ABC):
         """Test secret too short."""
         with pytest.raises(
                 errors.InvalidOptionError,
-                match='secret should be longer than',
+                match='1st secret should be longer than',
         ):
             self.signer(b's' * (self.signer_class.MIN_SECRET_SIZE - 1), hasher=hasher)
+
+    @pytest.mark.parametrize(
+        'hasher',
+        (
+            HasherChoice.blake2b,
+            HasherChoice.blake2s,
+            HasherChoice.blake3,
+        ),
+    )
+    def test_secret_too_short_in_sequence(self, hasher: HasherChoice) -> None:
+        """Test secret too short in a sequence."""
+        with pytest.raises(
+                errors.InvalidOptionError,
+                match='1st secret should be longer than',
+        ):
+            self.signer([b's' * (self.signer_class.MIN_SECRET_SIZE - 1)], hasher=hasher)
+
+        with pytest.raises(
+                errors.InvalidOptionError,
+                match='2nd secret should be longer than',
+        ):
+            self.signer(
+                [self.secret, b's' * (self.signer_class.MIN_SECRET_SIZE - 1)],
+                hasher=hasher,
+            )
 
     @pytest.mark.parametrize(
         'hasher',
@@ -1040,3 +1066,36 @@ class BaseTests(ABC):
                 b's' * (signer_min_secret_size_changed.MIN_SECRET_SIZE - 1),
                 hasher=hasher,
             )
+
+    @pytest.mark.xfail(
+        not has_blake3(),
+        reason='blake3 is not installed',
+        raises=errors.MissingDependencyError,
+    )
+    @pytest.mark.parametrize(
+        'hasher',
+        (
+            HasherChoice.blake2b,
+            HasherChoice.blake2s,
+            HasherChoice.blake3,
+        ),
+    )
+    @pytest.mark.parametrize(
+        'secret',
+        (
+            'a string secret' * 3,
+            b'a bytes secret' * 3,
+            ['a list' * 3, 'string secret' * 3],
+            [b'a list' * 3, b'bytes secret' * 3],
+            ['a list' * 3, b'mixed secret' * 3],
+            ('a tuple' * 3, 'secret' * 3),
+        ),
+    )
+    def test_secret_can_be_any_sequence(
+        self,
+        secret: typing.Union[Secret, typing.Sequence[Secret]],
+        hasher: HasherChoice,
+    ) -> None:
+        """Test that the min digest size limit can be changed."""
+        signer = self.signer(secret, hasher=hasher)
+        assert self.data == self.unsign(signer, self.sign(signer, self.data))

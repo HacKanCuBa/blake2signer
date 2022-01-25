@@ -121,3 +121,29 @@ def file_mode_is_text(file: typing.IO) -> bool:
     # then checking the type, but the file might be writable only, so it wouldn't
     # work.
     return isinstance(file, io.TextIOBase)
+
+
+def ordinal(number: int) -> str:
+    """Convert an integer into its ordinal representation.
+
+    Args:
+        number: integer number to get its ordinal representation.
+
+    Returns:
+        The ordinal string representation of the number as the number + ordinal suffix.
+
+    Examples:
+        >>> ordinal(0)
+        '0th'
+        >>> ordinal(3)
+        '3rd'
+    """
+    # From https://stackoverflow.com/a/50992575
+    if 11 <= (number % 100) <= 13:
+        suffix = 'th'
+    else:
+        suffixes = ('th', 'st', 'nd', 'rd', 'th')
+        idx = min(number % 10, 4)
+        suffix = suffixes[idx]
+
+    return f'{number}{suffix}'

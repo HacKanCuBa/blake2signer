@@ -91,3 +91,16 @@ def test_file_mode_is_text() -> None:
 
     bin_file = io.BytesIO()
     assert not utils.file_mode_is_text(bin_file)
+
+
+def test_ordinal() -> None:
+    """Test that the ordinal function works correctly."""
+    assert '0th' == utils.ordinal(0)
+    assert '1st' == utils.ordinal(1)
+    assert '2nd' == utils.ordinal(2)
+    assert '3rd' == utils.ordinal(3)
+    assert '4th' == utils.ordinal(4)
+    assert '12th' == utils.ordinal(12)
+    assert '100th' == utils.ordinal(100)
+    assert '101st' == utils.ordinal(101)
+    assert '1003rd' == utils.ordinal(1003)

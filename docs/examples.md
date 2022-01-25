@@ -913,6 +913,48 @@ unsigned = signer.unsign(signed)
 print(data == unsigned)  # True
 ```
 
+## Rotating the secret
+
+!!! info "New in v2.3.0"
+
+Secrets can be rotated by an external mechanism, and passed to a signer as a sequence through the `secret` parameter. Read more about [rotating secrets](details.md#secret-rotation) in its section. 
+
+!!! info "This can be done in every signer"
+
+```python
+"""Rotating the secret."""
+
+from blake2signer import Blake2Signer, errors
+
+secrets = [b'justicia' * 3, 'eXV0YSBhc2VzaW5hLCBubyBlcyBzb2xvIHVubyEhIQ']
+data = 'lucas gonzález presente'
+
+signer = Blake2Signer(secrets)
+signed = signer.sign(data)  # Signed with the latest, newest, secret
+
+# Let's rotate and add a new secret
+secrets.append('QmFzdGEgZGUgZ2F0aWxsbyBmw6FjaWw')
+signer = Blake2Signer(secrets)
+
+# Previously signed data is still valid
+unsigned = signer.unsign(signed)
+print(data == unsigned.decode())  # True
+
+# Once the old secret is rotated, old signatures won't be valid anymore
+secrets = secrets[-1:]
+signer = Blake2Signer(secrets)
+try:
+    signer.unsign(signed)
+except errors.InvalidSignatureError as exc:
+    print(exc)  # signature is not valid
+
+# New signatures are made with the newest secret
+secrets.append(b'no tolerance to injustice :)')
+signed = Blake2Signer(secrets).sign(data)
+unsigned = Blake2Signer(secrets[-1]).unsign(signed)
+print(data == unsigned.decode())  # True
+```
+
 ## Changing the hasher
 
 You can use either `blake2b` or `blake2s`: the first one is optimized for 64b platforms, and the second, for 8-32b platforms (read more about them in their [official site](https://blake2.net/)).

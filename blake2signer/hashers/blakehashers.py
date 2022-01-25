@@ -25,7 +25,7 @@ class BLAKEHasher(ABC):
         self,
         hasher: HasherChoice,
         *,
-        secret: bytes,
+        secrets: typing.Tuple[bytes, ...],
         digest_size: int,
         person: bytes,
     ) -> None:
@@ -35,9 +35,11 @@ class BLAKEHasher(ABC):
             hasher: Hash function to use.
 
         Keyword Args:
-            secret: Secret value which will be derived using BLAKE to produce
-                the signing key. It is derived using BLAKE to ensure it fits the
-                hasher limits, so it has no practical size limit.
+            secrets: A tuple of secret values which are derived using BLAKE to produce
+                the signing key, to ensure they fit the hasher limits (so they have
+                no practical size limit), from oldest to newest. This allows secret
+                rotation: signatures are checked against all of them, but the last one
+                (the newest one) is used to sign.
             digest_size: Size of digest in bytes.
             person: Personalisation string to force the hash function to produce
                 different digests for the same input. It is derived using BLAKE to
@@ -53,7 +55,17 @@ class BLAKEHasher(ABC):
         self._hasher_choice = hasher
         self._digest_size = self._validate_digest_size(digest_size)
         self._person = self._derive_person(person)
-        self._key = self._derive_key(secret, person=self._person)  # bye secret :)
+        self._keys = self._derive_keys(secrets, person=self._person)
+
+    @property
+    def keys(self) -> typing.Tuple[bytes, ...]:
+        """Get hasher keys, from oldest to newest."""
+        return self._keys
+
+    @property
+    def signing_key(self) -> bytes:
+        """Get the hasher signing key (the newest one)."""
+        return self._keys[-1]
 
     def _validate_digest_size(self, digest_size: int) -> int:
         """Validate the digest_size value and return it clean.
@@ -92,12 +104,22 @@ class BLAKEHasher(ABC):
     ) -> bytes:
         """Derive hasher key from given secret to ensure it fits the hasher correctly."""
 
+    def _derive_keys(
+        self,
+        secrets: typing.Tuple[bytes, ...],
+        *,
+        person: bytes,
+    ) -> typing.Tuple[bytes, ...]:
+        """Derive hasher keys from given secrets to ensure they fit the hasher."""
+        return tuple(self._derive_key(secret, person=person) for secret in secrets)
+
     @abstractmethod
     def digest(
         self,
         data: bytes,
         *,
-        salt: bytes = b'',
+        key: bytes,
+        salt: bytes,
     ) -> bytes:
         """Get a hash digest using the hasher in keyed hashing mode."""
 
@@ -109,7 +131,7 @@ class BLAKE2Hasher(BLAKEHasher):
         self,
         hasher: HasherChoice,
         *,
-        secret: bytes,
+        secrets: typing.Tuple[bytes, ...],
         digest_size: int,
         person: bytes,
     ) -> None:
@@ -119,9 +141,11 @@ class BLAKE2Hasher(BLAKEHasher):
             hasher: Hash function to use.
 
         Keyword Args:
-            secret: Secret value which will be derived using BLAKE to produce
-                the signing key. It is derived using BLAKE to ensure it fits the
-                hasher limits, so it has no practical size limit.
+            secrets: A tuple of secret values which are derived using BLAKE to produce
+                the signing key, to ensure they fit the hasher limits (so they have
+                no practical size limit), from oldest to newest. This allows secret
+                rotation: signatures are checked against all of them, but the last one
+                (the newest one) is used to sign.
             digest_size: Size of digest in bytes.
             person: Personalisation string to force the hash function to produce
                 different digests for the same input. It is derived using BLAKE to
@@ -133,7 +157,7 @@ class BLAKE2Hasher(BLAKEHasher):
         self._hasher: typing.Type[typing.Union[hashlib.blake2b, hashlib.blake2s]]
         self._hasher = getattr(hashlib, hasher)
 
-        super().__init__(hasher, secret=secret, digest_size=digest_size, person=person)
+        super().__init__(hasher, secrets=secrets, digest_size=digest_size, person=person)
 
     @property
     def salt_size(self) -> int:
@@ -166,13 +190,14 @@ class BLAKE2Hasher(BLAKEHasher):
         self,
         data: bytes,
         *,
-        salt: bytes = b'',
+        key: bytes,
+        salt: bytes,
     ) -> bytes:
         """Get a hash digest using the hasher in keyed hashing mode."""
         return self._hasher(
             data,
             digest_size=self._digest_size,
-            key=self._key,
+            key=key,
             salt=salt,
             person=self._person,
         ).digest()
@@ -220,13 +245,14 @@ class BLAKE3Hasher(BLAKEHasher):
         self,
         data: bytes,
         *,
-        salt: bytes = b'',
+        key: bytes,
+        salt: bytes,
     ) -> bytes:
         """Get a hash digest using the hasher in keyed hashing mode."""
         # BLAKE3 doesn't support salt nor personalisation, so there are a few
         # options to consider. Check following snippet:
         # https://gitlab.com/hackancuba/blake2signer/-/snippets/2132545
         payload = salt + self._person + data
-        hasher = blake3(payload, key=self._key)
+        hasher = blake3(payload, key=key)
 
         return hasher.digest(length=self._digest_size)

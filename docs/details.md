@@ -19,7 +19,7 @@ This module provides three signer classes:
 
 All [signers](signers.md) share the following instantiation parameters:
 
-* `secret`: Secret value which will be derived using BLAKE to produce the signing key. The minimum secret size is enforced to 16 bytes and there is no maximum.
+* `secret`: Secret value which will be derived using BLAKE to produce the signing key. The minimum secret size is enforced to 16 bytes and there is no maximum. Since v2.3.0, it supports receiving a sequence of secrets instead of a single one, to support secret rotation, considering them ordered from oldest to newest, so that signatures are made with the newest secret but verifications are done using all of them.
 * `personalisation`: Personalisation string (which will be derived using BLAKE) to force the hash function to produce different digests for the same input (no size limit).
 * `digest_size`: Size of output signature (digest) in bytes (since v2.0.0 it defaults to 16, which is the minimum size allowed).
 * `hasher`: Hash function to use, `blake2b` (default), `blake2s`, or since v2.2.0, `blake3`; the first one is optimized for 64b platforms; the second, for 8-32b platforms (read more about them in their [official site](https://blake2.net/)) and the third, for any platform (read more in the [official site](https://github.com/BLAKE3-team/BLAKE3-specs)).
@@ -173,6 +173,24 @@ Hex encoded:
 * `openssl rand -hex 64 | tr -d '\n'`
 
 The encoding doesn't matter, the secret value is used as-is, and derived to obtain the key.
+
+### Secret rotation
+
+!!! info "New in v2.3.0"
+    The `secret` parameter can be bytes, string or any sequence of them (list, tuple, etc.).
+
+Since v2.3.0, `secret` can also be a sequence of secrets instead of a single one to support _secret rotation_, considering them ordered from oldest to newest, so that signatures are made with the newest secret but verifications are done using all of them.  Every secret must comply with the restrictions enforced as a single secret does.
+
+An external system can maintain the list of secrets, periodically removing old ones. This provides an additional protection against secret leakage or potential bruteforce, and is always a recommended practice. This is, of course, out of the scope for this project, but it does fully support this mechanism.
+
+When a new secret is added to the list, all new signatures will be done with it, whereas signature verifications will consider every possible secret from the list. After a certain amount of time, the system can assume that every active user has received a new signature, thus being able to remove an old secret from the list without disturbing users nor interfering with other parts of the system.
+
+Do note that this has certain performance impact if many secrets are in said list, and a verification process is presented with a very old secret (say, the oldest one): the signer will go secret by secret, from newest to oldest, to verify this signature thus costing as much as making N signatures, where N is the number of secrets.
+
+You should consider this to define the amount of times you rotate the secret and how long should they last. In example, rotating the secret daily and maintaining a monthly list can have a deep negative performance impact, whereas rotating weekly or monthly and keeping four or less would not have a very noticeable impact, and the security benefits of this practice would prevail over the potential performance issue.
+
+!!! tip
+    The secret rotation mechanism is compatible with [ItsDangerous](https://itsdangerous.palletsprojects.com/en/2.0.x/concepts/#key-rotation)' one.
 
 ### Changing the secret size limit
 

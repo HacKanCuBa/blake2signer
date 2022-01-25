@@ -10,6 +10,7 @@ from .bases import Blake2SignatureDump
 from .bases import Blake2SignerBase
 from .bases import Blake2TimestampSignerBase
 from .bases import HasherChoice
+from .bases import Secret
 from .compressors import ZlibCompressor
 from .encoders import B64URLEncoder
 from .interfaces import CompressorInterface
@@ -366,7 +367,7 @@ class Blake2SerializerSigner(
 
     def __init__(
         self,
-        secret: typing.Union[str, bytes],
+        secret: typing.Union[Secret, typing.Sequence[Secret]],
         *,
         max_age: typing.Union[None, int, float, timedelta] = None,
         personalisation: typing.Union[str, bytes] = b'',
@@ -389,8 +390,10 @@ class Blake2SerializerSigner(
 
         Args:
             secret: Secret value which will be derived using BLAKE to produce the
-                signing key. The minimum secret size is enforced to 16 bytes and
-                there is no maximum.
+                signing key. The minimum secret size is enforced to 16 bytes and there
+                is no maximum. You can optionally provide a sequence of secrets, oldest
+                to newest, that are used during signature check to allow for secret
+                rotation. The last, newest, secret is used for signing.
 
         Keyword Args:
             max_age (optional): Use a timestamp signer instead of a regular one

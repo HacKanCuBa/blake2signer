@@ -22,6 +22,7 @@ from .interfaces import EncoderInterface
 from .mixins import EncoderMixin
 from .mixins import Mixin
 from .utils import file_mode_is_text
+from .utils import ordinal
 from .utils import timestamp_to_aware_datetime
 
 
@@ -54,6 +55,9 @@ class Blake2Signature(typing.NamedTuple):
     data: bytes
 
 
+Secret = typing.Union[str, bytes]
+
+
 class Base(Mixin, ABC):
     """Base class containing the minimum for a signer."""
 
@@ -70,7 +74,7 @@ class Base(Mixin, ABC):
 
     def __init__(
         self,
-        secret: typing.Union[str, bytes],
+        secret: typing.Union[Secret, typing.Sequence[Secret]],
         *,
         personalisation: typing.Union[str, bytes] = b'',
         digest_size: typing.Optional[int] = None,
@@ -82,8 +86,10 @@ class Base(Mixin, ABC):
 
         Args:
             secret: Secret value which will be derived using BLAKE to produce the
-                signing key. The minimum secret size is enforced to 16 bytes and
-                there is no maximum.
+                signing key. The minimum secret size is enforced to 16 bytes and there
+                is no maximum. You can optionally provide a sequence of secrets, oldest
+                to newest, that are used during signature check to allow for secret
+                rotation. The last, newest, secret is used for signing.
 
         Keyword Args:
             personalisation (optional): Personalisation string to force the hash
@@ -112,7 +118,7 @@ class Base(Mixin, ABC):
         digest_size = self._validate_digest_size(digest_size)
         separator = self._validate_separator(separator)
         person = self._validate_person(personalisation)
-        secret = self._validate_secret(secret)
+        secrets = self._validate_secret(secret)
 
         if deterministic:
             person += b'Deterministic'
@@ -123,30 +129,57 @@ class Base(Mixin, ABC):
 
         self._hasher = self._get_hasher(
             hasher_choice,
-            secret=secret,
+            secrets=secrets,
             digest_size=digest_size,
             person=person,
         )
 
-    def _validate_secret(self, secret_: typing.Union[str, bytes]) -> bytes:
+    def _validate_secret(
+        self,
+        secret: typing.Union[Secret, typing.Sequence[Secret]],
+    ) -> typing.Tuple[bytes, ...]:
         """Validate the secret value and return it clean.
 
         Args:
-            secret_: Secret value to validate.
+            secret: Secret value to validate.
 
         Returns:
-            Cleaned secret value.
+            Cleaned secrets tuple.
 
         Raises:
             ConversionError: The value is not bytes and can't be converted to bytes.
             InvalidOptionError: The value is out of bounds.
         """
-        secret = self._force_bytes(secret_)
 
-        if len(secret) < self.MIN_SECRET_SIZE:
-            raise InvalidOptionError(f'secret should be longer than {self.MIN_SECRET_SIZE} bytes')
+        def coerce(secret_: Secret, position_: int) -> bytes:
+            """Coerce a given secret into bytes.
 
-        return secret
+            Args:
+                secret_: Secret value to validate.
+                position_: Position of the secret in the sequence.
+
+            Returns:
+                A secret value as bytes.
+
+            Raises:
+                InvalidOptionError: the secret in given position is invalid.
+            """
+            coerced = self._force_bytes(secret_)
+            if len(coerced) < self.MIN_SECRET_SIZE:
+                raise InvalidOptionError(
+                    f'the {ordinal(position_)} secret should be longer than '
+                    f'{self.MIN_SECRET_SIZE} bytes',
+                )
+
+            return coerced
+
+        secrets: typing.Sequence[Secret]
+        if isinstance(secret, (str, bytes)):
+            secrets = [secret]
+        else:
+            secrets = secret
+
+        return tuple(coerce(dirty, position) for position, dirty in enumerate(secrets, start=1))
 
     def _validate_person(self, person: typing.Union[str, bytes]) -> bytes:
         """Validate the personalisation value and return it clean.
@@ -226,7 +259,7 @@ class Base(Mixin, ABC):
     def _get_hasher(
         hasher: HasherChoice,
         *,
-        secret: bytes,
+        secrets: typing.Tuple[bytes, ...],
         digest_size: int,
         person: bytes,
     ) -> BLAKEHasher:
@@ -240,7 +273,7 @@ class Base(Mixin, ABC):
 
         return hasher_class(
             hasher,
-            secret=secret,
+            secrets=secrets,
             digest_size=digest_size,
             person=person,
         )
@@ -251,7 +284,7 @@ class Blake2SignerBase(EncoderMixin, Base, ABC):
 
     def __init__(
         self,
-        secret: typing.Union[str, bytes],
+        secret: typing.Union[Secret, typing.Sequence[Secret]],
         *,
         personalisation: typing.Union[str, bytes] = b'',
         digest_size: typing.Optional[int] = None,
@@ -264,8 +297,10 @@ class Blake2SignerBase(EncoderMixin, Base, ABC):
 
         Args:
             secret: Secret value which will be derived using BLAKE to produce the
-                signing key. The minimum secret size is enforced to 16 bytes and
-                there is no maximum.
+                signing key. The minimum secret size is enforced to 16 bytes and there
+                is no maximum. You can optionally provide a sequence of secrets, oldest
+                to newest, that are used during signature check to allow for secret
+                rotation. The last, newest, secret is used for signing.
 
         Keyword Args:
             personalisation (optional): Personalisation string to force the hash
@@ -377,12 +412,12 @@ class Blake2SignerBase(EncoderMixin, Base, ABC):
 
         return SignedDataParts(data=data, salt=salt, signature=signature)
 
-    def _signify(self, *, salt: bytes, data: bytes) -> bytes:
+    def _signify(self, *, data: bytes, salt: bytes, key: bytes) -> bytes:
         """Return signature for given data using salt and all the hasher options.
 
         The signature is encoded using the chosen encoder.
         """
-        signature = self._hasher.digest(data, salt=salt)
+        signature = self._hasher.digest(data, key=key, salt=salt)
 
         return self._encode(signature)
 
@@ -392,7 +427,7 @@ class Blake2SignerBase(EncoderMixin, Base, ABC):
         The signature stream (salt and signature) is encoded using the chosen encoder.
         """
         salt = self._get_salt()
-        signature = self._signify(salt=salt, data=data)
+        signature = self._signify(data=data, salt=salt, key=self._hasher.signing_key)
 
         return salt + signature
 
@@ -409,10 +444,10 @@ class Blake2SignerBase(EncoderMixin, Base, ABC):
             SignatureError: Signed data structure is not valid.
             InvalidSignatureError: Signed data signature is invalid.
         """
-        good_signature = self._signify(salt=parts.salt, data=parts.data)
-
-        if compare_digest(good_signature, parts.signature):
-            return parts.data
+        for key in reversed(self._hasher.keys):
+            signature = self._signify(data=parts.data, salt=parts.salt, key=key)
+            if compare_digest(signature, parts.signature):
+                return parts.data
 
         raise InvalidSignatureError('signature is not valid')
 
@@ -537,7 +572,7 @@ class Blake2DualSignerBase(Blake2TimestampSignerBase, ABC):
 
     def __init__(
         self,
-        secret: typing.Union[str, bytes],
+        secret: typing.Union[Secret, typing.Sequence[Secret]],
         *,
         max_age: typing.Union[None, int, float, timedelta] = None,
         personalisation: typing.Union[str, bytes] = b'',
@@ -555,8 +590,10 @@ class Blake2DualSignerBase(Blake2TimestampSignerBase, ABC):
 
         Args:
             secret: Secret value which will be derived using BLAKE to produce the
-                signing key. The minimum secret size is enforced to 16 bytes and
-                there is no maximum.
+                signing key. The minimum secret size is enforced to 16 bytes and there
+                is no maximum. You can optionally provide a sequence of secrets, oldest
+                to newest, that are used during signature check to allow for secret
+                rotation. The last, newest, secret is used for signing.
 
         Keyword Args:
             max_age (optional): Use a timestamp signer instead of a regular one
