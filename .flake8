@@ -12,7 +12,7 @@ rst-roles =
     # Python programming language:
     py:func,py:mod,
 
-max-line-length=89
+max-line-length=99
 show-source=true
 enable-extensions=G
 import-order-style=pycharm

@@ -72,7 +72,7 @@ BLANK_LINE_BEFORE_MODULE_DOCSTRING = False
 COALESCE_BRACKETS = True
 
 # The column limit.
-COLUMN_LIMIT = 89
+COLUMN_LIMIT = 99
 
 # Put closing brackets on a separate line, dedented, if the bracketed
 # expression can't fit in a single line. Applies to all kinds of

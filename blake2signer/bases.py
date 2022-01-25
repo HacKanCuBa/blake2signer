@@ -144,9 +144,7 @@ class Base(Mixin, ABC):
         secret = self._force_bytes(secret_)
 
         if len(secret) < self.MIN_SECRET_SIZE:
-            raise InvalidOptionError(
-                f'secret should be longer than {self.MIN_SECRET_SIZE} bytes',
-            )
+            raise InvalidOptionError(f'secret should be longer than {self.MIN_SECRET_SIZE} bytes')
 
         return secret
 
@@ -187,9 +185,7 @@ class Base(Mixin, ABC):
         return digest_size
 
     @staticmethod
-    def _validate_hasher_choice(
-        hasher: typing.Union[HasherChoice, str],
-    ) -> HasherChoice:
+    def _validate_hasher_choice(hasher: typing.Union[HasherChoice, str]) -> HasherChoice:
         """Validate the hasher choice.
 
         Raises:

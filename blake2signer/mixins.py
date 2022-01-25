@@ -292,9 +292,7 @@ class EncoderMixin(Mixin, ABC):
         super().__init__(*args, **kwargs)
 
     @staticmethod
-    def _validate_encoder(
-        encoder_class: typing.Type[EncoderInterface],
-    ) -> EncoderInterface:
+    def _validate_encoder(encoder_class: typing.Type[EncoderInterface]) -> EncoderInterface:
         """Validate the separator value and return it clean."""
         encoder = encoder_class()
 
