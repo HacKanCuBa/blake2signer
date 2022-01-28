@@ -2,6 +2,7 @@
 
 import typing
 from abc import ABC
+from abc import abstractmethod
 from datetime import timedelta
 from time import time
 from unittest import mock
@@ -290,6 +291,20 @@ class TimestampSignerTestsBase(BaseTests, ABC):
         with pytest.raises(errors.InvalidSignatureError):
             self.unsign(signer1, signed2)
 
+    @abstractmethod
+    def test_versions_compat(
+        self,
+        version: str,
+        hasher: HasherChoice,
+        signed: str,
+        compat: bool,
+    ) -> None:
+        """Test if previous versions' signed data is compatible with the current one."""
+        timestamp: int = 531810000  # Signatures were made w/ this timestamp, too.
+
+        with mock.patch('blake2signer.bases.time', return_value=timestamp):
+            super().test_versions_compat(version, hasher, signed, compat)
+
 
 class TestsBlake2TimestampSigner(TimestampSignerTestsBase, TestsBlake2Signer):
     """Blake2TimestampSigner tests."""
@@ -431,3 +446,113 @@ class TestsBlake2TimestampSigner(TimestampSignerTestsBase, TestsBlake2Signer):
 
         # called once when getting the time during sign, and not during unsign
         mock_time.assert_called_once_with()
+
+    @pytest.mark.xfail(
+        not has_blake3(),
+        reason='blake3 is not installed',
+        raises=errors.MissingDependencyError,
+    )
+    @pytest.mark.parametrize(
+        ('version', 'hasher', 'signed', 'compat'),
+        (
+            (
+                '1.2.1',
+                HasherChoice.blake2b,
+                'tUWWADmGW7LvDiYIWAf9thfZTdJJdMB8ZPihqg.H7LG0A.is compat ensured?',
+                False,
+            ),
+            (
+                '1.2.1',
+                HasherChoice.blake2s,
+                'bEIaDntvjGRBlztHCioRz4iIHtiN-Q.H7LG0A.is compat ensured?',
+                False,
+            ),
+            (
+                '2.0.0',
+                HasherChoice.blake2b,
+                '8PRyw4n2iYujfxgMGJn4WiQ_MS2-0pd80qZx5g.H7LG0A.is compat ensured?',
+                True,
+            ),
+            (
+                '2.0.0',
+                HasherChoice.blake2s,
+                'i4vdq7u7374NorxdBngDlEYpHsA_MQ.H7LG0A.is compat ensured?',
+                True,
+            ),
+            (
+                '2.1.0',
+                HasherChoice.blake2b,
+                'fD4x0dnu-GJxY6da2Js4A_KY3w9vrQRNPFqOcA.H7LG0A.is compat ensured?',
+                True,
+            ),
+            (
+                '2.1.0',
+                HasherChoice.blake2s,
+                'sVRBofd44aqGYBrC0-fLIGsas1xYgA.H7LG0A.is compat ensured?',
+                True,
+            ),
+            (
+                '2.2.0',
+                HasherChoice.blake2b,
+                'oRWSC9lUQuR281W0U44-88asu9zUpiP3-_cIGQ.H7LG0A.is compat ensured?',
+                True,
+            ),
+            (
+                '2.2.0',
+                HasherChoice.blake2s,
+                'N6Zv1WkCDJP9fdReelAUXMw8NAffCA.H7LG0A.is compat ensured?',
+                True,
+            ),
+            (
+                '2.2.0',
+                HasherChoice.blake3,
+                '9bDZwVzVZOOONyA0ZdirK2Z3s_uh6fgV2j0Cww.H7LG0A.is compat ensured?',
+                True,
+            ),
+            (
+                '2.3.0',
+                HasherChoice.blake2b,
+                'HX9OjTKOyov0uRb2RnhBPMl74UPXt3Eq_b-GNw.H7LG0A.is compat ensured?',
+                True,
+            ),
+            (
+                '2.3.0',
+                HasherChoice.blake2s,
+                'WDwpKeBuILEplMlP58IcPGkUx12hjA.H7LG0A.is compat ensured?',
+                True,
+            ),
+            (
+                '2.3.0',
+                HasherChoice.blake3,
+                'NFOIZnYZ545GRYEkQkBCIvua5ceBMOsVPHnxOA.H7LG0A.is compat ensured?',
+                True,
+            ),
+            (
+                '2.4.0',
+                HasherChoice.blake2b,
+                'vdBOa1kSIFeCWZDsb0EepJpWYzvfuC2PSbINyw.H7LG0A.is compat ensured?',
+                True,
+            ),
+            (
+                '2.4.0',
+                HasherChoice.blake2s,
+                'JegLzJFvA_MFzgdkWURVQD-P05fX6w.H7LG0A.is compat ensured?',
+                True,
+            ),
+            (
+                '2.4.0',
+                HasherChoice.blake3,
+                'MPamwhHV0SP28U1jSpCsS7x_Rz3UvirqDjMsvg.H7LG0A.is compat ensured?',
+                True,
+            ),
+        ),
+    )
+    def test_versions_compat(
+        self,
+        version: str,
+        hasher: HasherChoice,
+        signed: str,
+        compat: bool,
+    ) -> None:
+        """Test if previous versions' signed data is compatible with the current one."""
+        super().test_versions_compat(version, hasher, signed, compat)

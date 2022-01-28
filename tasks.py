@@ -1,6 +1,7 @@
 """Common tasks for Invoke."""
 
 import os
+import typing
 from tempfile import mkstemp
 
 from invoke import UnexpectedExit
@@ -180,3 +181,46 @@ def docs(ctx, build=False, verbose=False):
         args.append('serve')
 
     ctx.run(' '.join(args))
+
+
+@task
+def check_compat(ctx):
+    """Print current version signatures to check compatibility with previous versions."""
+    from functools import partial
+    from unittest.mock import patch
+
+    from blake2signer import Blake2SerializerSigner
+    from blake2signer import Blake2Signer
+    from blake2signer import Blake2TimestampSigner
+    from blake2signer import __version__
+
+    def sign(
+        signer: typing.Union[Blake2Signer, Blake2TimestampSigner, Blake2SerializerSigner],
+        data: str,
+    ) -> str:
+        """Sign data with given signer."""
+        if isinstance(signer, Blake2SerializerSigner):
+            return signer.dumps(data)
+
+        return signer.sign(data).decode()
+
+    secret = 'too many secrets!'  # noqa: S105
+    data = 'is compat ensured?'
+    partial_signers = (
+        partial(Blake2Signer, secret, digest_size=16),
+        partial(Blake2TimestampSigner, secret, digest_size=16),
+        partial(Blake2SerializerSigner, secret, digest_size=16),
+        partial(Blake2SerializerSigner, secret, digest_size=16, max_age=5),
+    )
+    print('current version:', __version__)
+    print('Signer | Hasher | Signed value')
+    for partial_signer in partial_signers:
+        for hasher in ('blake2b', 'blake2s', 'blake3'):
+            with patch('blake2signer.bases.time', return_value=531810000):
+                print(
+                    str(partial_signer.func).split('.')[2].rstrip("'>"),
+                    '|',
+                    hasher,
+                    '|',
+                    sign(partial_signer(hasher=hasher), data),
+                )

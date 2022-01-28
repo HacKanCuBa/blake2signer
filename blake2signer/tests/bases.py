@@ -7,6 +7,7 @@ from abc import ABC
 from abc import abstractmethod
 
 import pytest
+from packaging.version import parse as version_parse
 
 from .. import errors
 from ..bases import Blake2Signature
@@ -1105,3 +1106,28 @@ class BaseTests(ABC):
         """Test that the min digest size limit can be changed."""
         signer = self.signer(secret, hasher=hasher)
         assert self.data == self.unsign(signer, self.sign(signer, self.data))
+
+    @abstractmethod
+    def test_versions_compat(
+        self,
+        version: str,
+        hasher: HasherChoice,
+        signed: str,
+        compat: bool,
+    ) -> None:
+        """Test if previous versions' signed data is compatible with the current one."""
+        signer: Signer = self.signer(b'too many secrets!', hasher=hasher)
+        data: bytes = b'is compat ensured?'
+
+        assert version_parse(version) >= version_parse('1.2.1')
+
+        if compat:
+            unsigned = self.unsign(signer, signed)
+
+            if self.signature_type is bytes:
+                assert data == unsigned
+            else:
+                assert data.decode() == unsigned
+        else:
+            with pytest.raises(errors.SignedDataError):
+                self.unsign(signer, signed)

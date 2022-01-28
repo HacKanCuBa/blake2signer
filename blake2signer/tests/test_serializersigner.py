@@ -4,6 +4,7 @@ import io
 import json
 import typing
 import zlib
+from abc import ABC
 from datetime import timedelta
 from secrets import token_bytes
 from time import time
@@ -30,7 +31,7 @@ from ..serializers import NullSerializer
 from ..signers import Blake2SerializerSigner
 
 
-class SerializerSignerTestsBase(BaseTests):
+class SerializerSignerTestsBase(BaseTests, ABC):
     """Base to test a serializer signer."""
 
     data_compressible = 'datadata' * 100  # so compression is meaningful
@@ -1237,8 +1238,8 @@ class SerializerSignerTestsBase(BaseTests):
 
 
 class TestsBlake2SerializerSignerTimestamp(
-        SerializerSignerTestsBase,
         TimestampSignerTestsBase,
+        SerializerSignerTestsBase,
 ):
     """Blake2SerializerSigner tests with timestamp."""
 
@@ -1298,6 +1299,116 @@ class TestsBlake2SerializerSignerTimestamp(
             assert exc.value.__cause__ is None
             assert exc.value.timestamp.timestamp() == timestamp
 
+    @pytest.mark.xfail(
+        not has_blake3(),
+        reason='blake3 is not installed',
+        raises=errors.MissingDependencyError,
+    )
+    @pytest.mark.parametrize(
+        ('version', 'hasher', 'signed', 'compat'),
+        (
+            (
+                '1.2.1',
+                HasherChoice.blake2b,
+                '3rXtVsLrCy3EP_6kdPW_NP6RaCXoIfwBa85o_w.H7LG0A.ImlzIGNvbXBhdCBlbnN1cmVkPyI',
+                False,
+            ),
+            (
+                '1.2.1',
+                HasherChoice.blake2s,
+                'cAJTWYO0t3gGIcPKYcxf1xcXYMDigA.H7LG0A.ImlzIGNvbXBhdCBlbnN1cmVkPyI',
+                False,
+            ),
+            (
+                '2.0.0',
+                HasherChoice.blake2b,
+                '4ghexnKJCLph0-yWvqWtYi5OKurbaK8sxfEe4g.H7LG0A.ImlzIGNvbXBhdCBlbnN1cmVkPyI',
+                True,
+            ),
+            (
+                '2.0.0',
+                HasherChoice.blake2s,
+                'Cbf0LBzcJqgDi3Atd30Bxd7rJonn7Q.H7LG0A.ImlzIGNvbXBhdCBlbnN1cmVkPyI',
+                True,
+            ),
+            (
+                '2.1.0',
+                HasherChoice.blake2b,
+                'WSJQGOWG5JYN0-5g3KD_dfni3mGf4IHdgjDtmg.H7LG0A.ImlzIGNvbXBhdCBlbnN1cmVkPyI',
+                True,
+            ),
+            (
+                '2.1.0',
+                HasherChoice.blake2s,
+                '9txxz03E8LyX5XbrHpPSF73kGjIvwg.H7LG0A.ImlzIGNvbXBhdCBlbnN1cmVkPyI',
+                True,
+            ),
+            (
+                '2.2.0',
+                HasherChoice.blake2b,
+                'BOTVypusKsx4ofDtwbAMbUMp-nfv1isosZe94g.H7LG0A.ImlzIGNvbXBhdCBlbnN1cmVkPyI',
+                True,
+            ),
+            (
+                '2.2.0',
+                HasherChoice.blake2s,
+                'f9oZEMvwMkEbIfl56BjsPra3BeeF3Q.H7LG0A.ImlzIGNvbXBhdCBlbnN1cmVkPyI',
+                True,
+            ),
+            (
+                '2.2.0',
+                HasherChoice.blake3,
+                '42nexVif5smuXxRqGre3PaT_DxzgBfCk7hHnyw.H7LG0A.ImlzIGNvbXBhdCBlbnN1cmVkPyI',
+                True,
+            ),
+            (
+                '2.3.0',
+                HasherChoice.blake2b,
+                'PpBAgu92LbI4pBs9UEn3y6KaAtdz25iAzg54dg.H7LG0A.ImlzIGNvbXBhdCBlbnN1cmVkPyI',
+                True,
+            ),
+            (
+                '2.3.0',
+                HasherChoice.blake2s,
+                'SWE7QcGvCBdqGYSRknvUXol06Nbggg.H7LG0A.ImlzIGNvbXBhdCBlbnN1cmVkPyI',
+                True,
+            ),
+            (
+                '2.3.0',
+                HasherChoice.blake3,
+                'ez6GEqMnbBIIUYtdo3YJXEt6pmN_qQqAmZdeMg.H7LG0A.ImlzIGNvbXBhdCBlbnN1cmVkPyI',
+                True,
+            ),
+            (
+                '2.4.0',
+                HasherChoice.blake2b,
+                'hZZkUGLgFFVWT-RA4JnHlt3t_nnkCdoU7wJVtg.H7LG0A.ImlzIGNvbXBhdCBlbnN1cmVkPyI',
+                True,
+            ),
+            (
+                '2.4.0',
+                HasherChoice.blake2s,
+                'QKhqawqxageBFRF4ZmCoPrUAJjEWSw.H7LG0A.ImlzIGNvbXBhdCBlbnN1cmVkPyI',
+                True,
+            ),
+            (
+                '2.4.0',
+                HasherChoice.blake3,
+                '10T9JBA_sRphLoSxIG6gA5oENMIAKqG_moBPFg.H7LG0A.ImlzIGNvbXBhdCBlbnN1cmVkPyI',
+                True,
+            ),
+        ),
+    )
+    def test_versions_compat(
+        self,
+        version: str,  # solely informational
+        hasher: HasherChoice,
+        signed: str,
+        compat: bool,
+    ) -> None:
+        """Test if previous versions' signed data is compatible with the current one."""
+        super().test_versions_compat(version, hasher, signed, compat)
+
 
 class TestsBlake2SerializerSigner(SerializerSignerTestsBase):
     """Blake2SerializerSigner tests (without timestamp)."""
@@ -1308,3 +1419,113 @@ class TestsBlake2SerializerSigner(SerializerSignerTestsBase):
         signer2 = self.signer(max_age=5)  # Timestamp signer
 
         self.mix_signers_sign_unsign(signer1, signer2)
+
+    @pytest.mark.xfail(
+        not has_blake3(),
+        reason='blake3 is not installed',
+        raises=errors.MissingDependencyError,
+    )
+    @pytest.mark.parametrize(
+        ('version', 'hasher', 'signed', 'compat'),
+        (
+            (
+                '1.2.1',
+                HasherChoice.blake2b,
+                '8NMTFVqT3vaiLXsgYJFGJQuFV_sNtinMX_R3Wg.ImlzIGNvbXBhdCBlbnN1cmVkPyI',
+                True,
+            ),
+            (
+                '1.2.1',
+                HasherChoice.blake2s,
+                'qMXQOTMMALCzgu7NSQ9lz1upgNwrEg.ImlzIGNvbXBhdCBlbnN1cmVkPyI',
+                True,
+            ),
+            (
+                '2.0.0',
+                HasherChoice.blake2b,
+                'mGOPVc77_Wj4syM55kjkdTbUAJp8zq-P6Yov8w.ImlzIGNvbXBhdCBlbnN1cmVkPyI',
+                True,
+            ),
+            (
+                '2.0.0',
+                HasherChoice.blake2s,
+                'qpTGzX5iLVj3KasTKJ38G8pUa17rJQ.ImlzIGNvbXBhdCBlbnN1cmVkPyI',
+                True,
+            ),
+            (
+                '2.1.0',
+                HasherChoice.blake2b,
+                'CYd7Nkw038oKejApbHyNWJDTl9WnR5DEyQD9yQ.ImlzIGNvbXBhdCBlbnN1cmVkPyI',
+                True,
+            ),
+            (
+                '2.1.0',
+                HasherChoice.blake2s,
+                'XnoeirEG8KD0FPJmBim0rzLuWQvOMQ.ImlzIGNvbXBhdCBlbnN1cmVkPyI',
+                True,
+            ),
+            (
+                '2.2.0',
+                HasherChoice.blake2b,
+                'EFGMJB71JhnVh4g4EGNpAqsEBkrD8mC3bdBhug.ImlzIGNvbXBhdCBlbnN1cmVkPyI',
+                True,
+            ),
+            (
+                '2.2.0',
+                HasherChoice.blake2s,
+                'goBSnffyopf866GSgdUDotfG71pOVA.ImlzIGNvbXBhdCBlbnN1cmVkPyI',
+                True,
+            ),
+            (
+                '2.2.0',
+                HasherChoice.blake3,
+                '7MY6A3Nm8k2Sd9lTK61negSa52451DrtGb_y0g.ImlzIGNvbXBhdCBlbnN1cmVkPyI',
+                True,
+            ),
+            (
+                '2.3.0',
+                HasherChoice.blake2b,
+                'X-eD0nscvIfGs3JgubIU9Ja8vbtzccSy0PVeug.ImlzIGNvbXBhdCBlbnN1cmVkPyI',
+                True,
+            ),
+            (
+                '2.3.0',
+                HasherChoice.blake2s,
+                'vMyDuUnJar7pwjUtZ9noL1SCOwhzAg.ImlzIGNvbXBhdCBlbnN1cmVkPyI',
+                True,
+            ),
+            (
+                '2.3.0',
+                HasherChoice.blake3,
+                '7U7dQhwqnOYNjSXruDBHpKwgbfiM8LoE4Q6oWw.ImlzIGNvbXBhdCBlbnN1cmVkPyI',
+                True,
+            ),
+            (
+                '2.4.0',
+                HasherChoice.blake2b,
+                'Xvs2SOklzzZAKAfK22TNn1meysxuWj3aKWcKuQ.ImlzIGNvbXBhdCBlbnN1cmVkPyI',
+                True,
+            ),
+            (
+                '2.4.0',
+                HasherChoice.blake2s,
+                'dWigMPiIE3ahrdn3yyBgvSpm9mqGqw.ImlzIGNvbXBhdCBlbnN1cmVkPyI',
+                True,
+            ),
+            (
+                '2.4.0',
+                HasherChoice.blake3,
+                '-0EfMMvVRJwAIKbaxvUPVd05jQ55V6oamkhk-A.ImlzIGNvbXBhdCBlbnN1cmVkPyI',
+                True,
+            ),
+        ),
+    )
+    def test_versions_compat(
+        self,
+        version: str,
+        hasher: HasherChoice,
+        signed: str,
+        compat: bool,
+    ) -> None:
+        """Test if previous versions' signed data is compatible with the current one."""
+        super().test_versions_compat(version, hasher, signed, compat)
