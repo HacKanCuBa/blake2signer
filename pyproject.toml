@@ -23,6 +23,10 @@ classifiers = [
     "Typing :: Typed",
 ]
 
+[tool.poetry.urls]
+"Changelog" = "https://blake2signer.hackan.net/en/latest/changelog"
+"Issues" = "https://gitlab.com/hackancuba/blake2signer/-/issues"
+
 [tool.poetry.dependencies]
 python = "^3.7"
 blake3 = {version = ">0.2.0", optional = true}
