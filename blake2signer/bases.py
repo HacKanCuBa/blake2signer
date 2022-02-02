@@ -168,7 +168,7 @@ class Base(Mixin, ABC):
             if len(coerced) < self.MIN_SECRET_SIZE:
                 raise InvalidOptionError(
                     f'the {ordinal(position_)} secret should be longer than '
-                    f'{self.MIN_SECRET_SIZE} bytes',
+                    + f'{self.MIN_SECRET_SIZE} bytes',
                 )
 
             return coerced
@@ -234,8 +234,7 @@ class Base(Mixin, ABC):
             choice = HasherChoice(hasher)
         except ValueError:
             raise InvalidOptionError(
-                f'invalid hasher choice, must be one of: '
-                f'{", ".join(h for h in HasherChoice)}',
+                f'invalid hasher choice, must be one of: {", ".join(h for h in HasherChoice)}',
             )
 
         return choice
@@ -492,7 +491,7 @@ class Blake2TimestampSignerBase(Blake2SignerBase, ABC):
         except OverflowError:  # This will happen in ~2106-02-07
             raise RuntimeError(
                 'can not represent this timestamp in bytes: this library is '
-                'too old and needs to be updated!',
+                + 'too old and needs to be updated!',
             )
 
         return self._encode(timestamp_b)

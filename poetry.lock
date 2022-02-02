@@ -375,6 +375,21 @@ optional = false
 python-versions = "*"
 
 [[package]]
+name = "flake8-no-implicit-concat"
+version = "0.3.3"
+description = "Flake8 plugin that forbids implicit str/bytes literal concatenations"
+category = "dev"
+optional = false
+python-versions = ">=3.3"
+
+[package.dependencies]
+flake8 = "*"
+more-itertools = {version = "*", markers = "python_version < \"3.10\""}
+
+[package.extras]
+dev = ["black", "isort", "flake8", "hacking (>=4)", "flake8-black", "flake8-isort", "pep8-naming", "flake8-broken-line", "flake8-builtins", "flake8-2020", "flake8-docstrings", "flake8-rst-docstrings", "darglint", "mypy", "coverage", "codecov"]
+
+[[package]]
 name = "flake8-plugin-utils"
 version = "1.3.2"
 description = "The package provides base classes and utils for flake8 plugin writing"
@@ -649,6 +664,14 @@ mkdocs = ">=1.2"
 mkdocs-autorefs = ">=0.1"
 pymdown-extensions = ">=6.3"
 pytkdocs = ">=0.14.0"
+
+[[package]]
+name = "more-itertools"
+version = "8.12.0"
+description = "More routines for operating on iterables, beyond itertools"
+category = "dev"
+optional = false
+python-versions = ">=3.5"
 
 [[package]]
 name = "mypy"
@@ -1106,7 +1129,7 @@ blake3 = ["blake3"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "9d71c4f042e18be490b9ea0f490c0a0bb5410e82cdaa1ef644b798be5ff486dc"
+content-hash = "64a16479c64c696e285fe94ec89e2e5451f78d90492addcd5e983fe7fe593d40"
 
 [metadata.files]
 add-trailing-comma = [
@@ -1306,6 +1329,10 @@ flake8-import-order = [
 flake8-logging-format = [
     {file = "flake8-logging-format-0.6.0.tar.gz", hash = "sha256:ca5f2b7fc31c3474a0aa77d227e022890f641a025f0ba664418797d979a779f8"},
 ]
+flake8-no-implicit-concat = [
+    {file = "flake8-no-implicit-concat-0.3.3.tar.gz", hash = "sha256:b68ff39c5620b0c9fd412c22e6dd98e56ca255eb9cc007135dbc26033dc5e07d"},
+    {file = "flake8_no_implicit_concat-0.3.3-py3-none-any.whl", hash = "sha256:ae5c17d0bce1a1c5f1117786c111616ffe9f81bf4fe98bcdd715d44a7371b370"},
+]
 flake8-plugin-utils = [
     {file = "flake8-plugin-utils-1.3.2.tar.gz", hash = "sha256:20fa2a8ca2decac50116edb42e6af0a1253ef639ad79941249b840531889c65a"},
     {file = "flake8_plugin_utils-1.3.2-py3-none-any.whl", hash = "sha256:1fe43e3e9acf3a7c0f6b88f5338cad37044d2f156c43cb6b080b5f9da8a76f06"},
@@ -1467,6 +1494,10 @@ mkdocs-material-extensions = [
 mkdocstrings = [
     {file = "mkdocstrings-0.17.0-py3-none-any.whl", hash = "sha256:103fc1dd58cb23b7e0a6da5292435f01b29dc6fa0ba829132537f3f556f985de"},
     {file = "mkdocstrings-0.17.0.tar.gz", hash = "sha256:75b5cfa2039aeaf3a5f5cf0aa438507b0330ce76c8478da149d692daa7213a98"},
+]
+more-itertools = [
+    {file = "more-itertools-8.12.0.tar.gz", hash = "sha256:7dc6ad46f05f545f900dd59e8dfb4e84a4827b97b3cfecb175ea0c7d247f6064"},
+    {file = "more_itertools-8.12.0-py3-none-any.whl", hash = "sha256:43e6dd9942dffd72661a2c4ef383ad7da1e6a3e968a927ad7a6083ab410a688b"},
 ]
 mypy = [
     {file = "mypy-0.931-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:3c5b42d0815e15518b1f0990cff7a705805961613e701db60387e6fb663fe78a"},

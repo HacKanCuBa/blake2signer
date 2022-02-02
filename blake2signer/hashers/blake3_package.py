@@ -16,8 +16,7 @@ except pkg_resources.DistributionNotFound:
     def blake3(*_: typing.Any, **__: typing.Any) -> typing.Any:
         """BLAKE3 function stub."""
         raise MissingDependencyError(
-            'blake3 can not be selected if it is not installed: '
-            'python3 -m pip install blake3',
+            'blake3 can not be selected if it is not installed: python3 -m pip install blake3',
         )
 
     _has_blake3 = False
