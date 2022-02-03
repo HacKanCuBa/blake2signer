@@ -2,6 +2,7 @@
 
 import io
 from datetime import datetime
+from datetime import timedelta
 
 from .. import utils
 
@@ -72,7 +73,11 @@ def test_timestamp_to_aware_datetime_accepts_int() -> None:
     converted_timestamp = utils.timestamp_to_aware_datetime(timestamp)
 
     assert isinstance(converted_timestamp, datetime)
+    assert timedelta() == converted_timestamp.utcoffset()  # Aware in UTC
+    # Technically, Python does some coercing, as in (1 == 1.0) is True, but just in case:
     assert timestamp == int(converted_timestamp.timestamp())
+    assert float(timestamp) == converted_timestamp.timestamp()
+    assert timestamp == converted_timestamp.timestamp()
 
 
 def test_timestamp_to_aware_datetime_accepts_float() -> None:
@@ -81,6 +86,7 @@ def test_timestamp_to_aware_datetime_accepts_float() -> None:
     converted_timestamp = utils.timestamp_to_aware_datetime(timestamp)
 
     assert isinstance(converted_timestamp, datetime)
+    assert timedelta() == converted_timestamp.utcoffset()  # Aware in UTC
     assert timestamp == converted_timestamp.timestamp()
 
 

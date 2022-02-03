@@ -201,6 +201,41 @@ class TimestampSignerTestsBase(BaseTests, ABC):
             HasherChoice.blake3,
         ),
     )
+    @mock.patch('blake2signer.bases.time')
+    def test_sign_unsign_timestamp_in_exc_is_an_aware_datetime(
+        self,
+        mock_time: mock.MagicMock,
+        hasher: HasherChoice,
+    ) -> None:
+        """Test that the timestamp in ExpiredSignatureError is an aware datetime."""
+        timestamp = int(time())
+        mock_time.return_value = timestamp
+        signer = self.signer(hasher=hasher)
+        signed = self.sign(signer, self.data)
+
+        mock_time.return_value += 10
+        with pytest.raises(
+                errors.ExpiredSignatureError,
+                match='signature has expired',
+        ) as exc:
+            self.unsign(signer, signed, max_age=5)
+        assert exc.value.__cause__ is None
+        assert timestamp == exc.value.timestamp.timestamp()
+        assert timedelta() == exc.value.timestamp.utcoffset()  # Aware in UTC
+
+    @pytest.mark.xfail(
+        not has_blake3(),
+        reason='blake3 is not installed',
+        raises=errors.MissingDependencyError,
+    )
+    @pytest.mark.parametrize(
+        'hasher',
+        (
+            HasherChoice.blake2b,
+            HasherChoice.blake2s,
+            HasherChoice.blake3,
+        ),
+    )
     def test_unsign_wrong_data_without_timestamp(self, hasher: HasherChoice) -> None:
         """Test unsign wrong data."""
         signer = self.signer(hasher=hasher)
