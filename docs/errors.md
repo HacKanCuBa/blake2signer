@@ -8,7 +8,7 @@ All exceptions raised by this lib are subclassed from `SignerError`. Exceptions 
 
 For example, all errors related to signature validation inherit from `SignatureError`, which in turn inherits from `SignedDataError`. This means that you can safely catch the latter when dealing with signed data that needs to be verified without worrying on masking other errors such as those produced on class instantiation.
 
-You can catch exceptions at the level you prefer, or i.e. broad catch them and then log them according to the exception.
+You can catch exceptions at the level you prefer, or i.e. broad catch them, and then log them according to the exception.
 
 ```python
 """Catching errors."""

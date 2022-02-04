@@ -191,6 +191,24 @@ class TestsBlake2Signer(BaseTests):
                 'YoCHtjlT-s5m9yuJBn2DJix5vT5xMnuUVR5BBg.is compat ensured?',
                 True,
             ),
+            (
+                '2.5.0',
+                HasherChoice.blake2b,
+                'AIZKi8N_MJp4EpXLIFtghIYopjXEP8bmMYQ1Qg.is compat ensured?',
+                True,
+            ),
+            (
+                '2.5.0',
+                HasherChoice.blake2s,
+                'npr41g2cMhziEPT5Ixo1qCOYkoev6A.is compat ensured?',
+                True,
+            ),
+            (
+                '2.5.0',
+                HasherChoice.blake3,
+                'RT2RHf3eCs33Vv-qBHA833w85KjdlPIkeZxzBQ.is compat ensured?',
+                True,
+            ),
         ),
     )
     def test_versions_compat(

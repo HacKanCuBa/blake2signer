@@ -127,7 +127,7 @@ class ExpiredSignatureError(InvalidSignatureError):
     """
 
     # ToDo: D417 is a false positive, see https://github.com/PyCQA/pydocstyle/issues/514
-    def __init__(self, *args: typing.Any, timestamp: datetime) -> None:  # noqa: D417
+    def __init__(self, *args: typing.Any, timestamp: datetime, data: bytes) -> None:  # noqa: D417
         """Initialize self.
 
         Args:
@@ -135,10 +135,13 @@ class ExpiredSignatureError(InvalidSignatureError):
 
         Keyword Args:
             timestamp: An aware datetime object indicating when the signature was done.
+            data: Valid unsigned data as bytes (it may be serialized/compressed/encoded when
+                raised from a serializer signer).
         """
         super().__init__(*args)
 
         self.timestamp: datetime = timestamp
+        self.data: bytes = data
 
 
 class UnserializationError(SignedDataError):

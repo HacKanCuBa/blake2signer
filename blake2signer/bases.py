@@ -606,12 +606,14 @@ class Blake2TimestampSignerBase(Blake2SignerBase, ABC):
             raise ExpiredSignatureError(
                 f'signature has expired, age {age} > {ttl} seconds',
                 timestamp=timestamp_to_aware_datetime(timestamped_parts.timestamp),
+                data=timestamped_parts.data,
             )
 
         if age < 0:  # Signed in the future
             raise ExpiredSignatureError(
                 f'signature has expired, age {age} < 0 seconds',
                 timestamp=timestamp_to_aware_datetime(timestamped_parts.timestamp),
+                data=timestamped_parts.data,
             )
 
         return timestamped_parts.data

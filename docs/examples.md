@@ -791,6 +791,11 @@ except errors.ExpiredSignatureError as exc:
     # Should an hour had passed, then this exception would be raised
     print(repr(exc), 'expired on', (exc.timestamp + ttl).isoformat())
     # ExpiredSignatureError('signature has expired, age ... > 3600.0 seconds') expired on 2021-05-19T22:50:27+00:00
+
+    # Since v2.5.0, valid unsigned data as bytes is available in the exception.
+    # However, it is serialized/compressed/encoded when raised from a serializer
+    # signer, so to recover it:
+    print(data == signer.data_from_exc(exc))  # True
 else:
     print(data == unsigned)  # True
 
@@ -808,12 +813,15 @@ except errors.ExpiredSignatureError as exc:
     # Should an hour had passed, then this exception would be raised
     print(repr(exc), 'expired on', (exc.timestamp + ttl).isoformat())
     # ExpiredSignatureError('signature has expired, age ... > 3600.0 seconds') expired on 2021-05-19T22:50:27+00:00
+
+    # Since v2.5.0, valid unsigned data as bytes is available in the exception
+    print(serialized_data == exc.data.decode())  # True
 else:
     print(serialized_data == unsigned.decode())  # True
 ```
 
 !!! tip
-    The `ExpiredSignatureError` exception contains the signature timestamp as an aware datetime object (in UTC) in case you need that information to display something meaningful to the user.
+    Sice v2.0.0, the `ExpiredSignatureError` exception contains the signature timestamp as an aware datetime object (in UTC) in case you need that information to display something meaningful to the user, and since v2.5.0, it also contains the _valid_ unsigned data, which you can safely access (yet considering that it hasn't passed the timestamp check!). If the exception is raised by a serializer signer, you need to unserialize/uncompress/undecode it using the method `data_from_exc`.
 
 ### Choosing when to check the timestamp
 
@@ -841,6 +849,97 @@ unsigned = signer.unsign(signed, max_age=None)  # Omits checking the timestamp
 
 print(data == unsigned)  # True
 ```
+
+### The ExpiredSignatureError exception
+
+!!! info "New in v2.0.0"
+
+Whenever the signature expires, an `ExpiredSignatureError` is raised. Since v2.0.0, this exception contains additional, useful, information: the signature timestamp as an aware datetime object (in UTC), and since v2.5.0, the _valid_ unsigned data payload (given the signature is valid and correct, it is OK to access its unsigned data value, just be aware that its time-to-live has expired, according to your own settings).
+
+=== "Blake2SerializerSigner"
+
+    ```python
+    """Using the information provided by the ExpiredSignatureError exception."""
+
+    from datetime import timedelta, timezone
+    from time import sleep
+
+    from blake2signer import Blake2SerializerSigner
+    from blake2signer import errors
+
+    secret = b'ZnVja3RoZXBvbGljZQ'
+    data = {
+        'username': 'hackan',
+        'id': 1,
+        'timezone': -3,
+    }
+    ttl = timedelta(seconds=3)  # int or float value can also be used, as seconds
+
+    signer = Blake2SerializerSigner(
+        secret,
+        max_age=ttl,  # With timestamp
+    )
+    signed = signer.dumps(data)
+
+    print('Doing things...')
+    sleep(3)
+
+    try:
+        unsigned = signer.loads(signed)
+    except errors.ExpiredSignatureError as exc:
+        # Since v2.5.0, valid unsigned data is available in the exception. However,
+        # it is serialized/compressed/encoded when raised from a serializer signer,
+        # so to recover it use `data_from_exc`.
+        data = signer.data_from_exc(exc)
+        expired_since = exc.timestamp + ttl
+        # You may want to convert the computed time to the user's timezone
+        user_tz = timezone(timedelta(hours=data['timezone']))
+        print(
+            f'Dear user {data["username"]}: your login has expired since',
+            expired_since.astimezone(user_tz),
+        )
+        print('Please, log in again')
+    else:
+        print(data == unsigned)  # True
+    ```
+
+=== "Blake2TimestampSigner"
+
+    ```python
+    """Using the information provided by the ExpiredSignatureError exception."""
+
+    from datetime import timedelta, timezone
+    from time import sleep
+
+    from blake2signer import Blake2TimestampSigner
+    from blake2signer import errors
+
+    secret = b'ZnVja3RoZXBvbGljZQ'
+    username = 'hackan'
+    ttl = timedelta(seconds=3)  # int or float value can also be used, as seconds
+
+    signer = Blake2TimestampSigner(secret)
+    signed = signer.sign(username)
+
+    print('Doing things...')
+    sleep(3)
+
+    try:
+        unsigned = signer.unsign(signed, max_age=ttl)
+    except errors.ExpiredSignatureError as exc:
+        # Since v2.5.0, valid unsigned data is available in the exception.
+        username = exc.data.decode()  # it's `bytes`!
+        expired_since = exc.timestamp + ttl
+        # You may want to convert the computed time to the user's timezone
+        user_tz = timezone(timedelta(hours=-3))
+        print(
+            f'Dear user {username}: your login has expired since',
+            expired_since.astimezone(user_tz),
+        )
+        print('Please, log in again')
+    else:
+        print(data == unsigned)  # True
+    ```
 
 ## Using personalisation
 
