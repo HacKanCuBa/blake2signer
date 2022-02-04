@@ -258,3 +258,40 @@ A high compression level usually implies a big hit to performance, taking more C
 
 !!! note "No worries"
     Usually, there's no need to set the compression level to a particular value, and therefore there's no need to worry about it, and it can be left by default. However, if you need to, you can.
+
+## Exceptions
+
+In this package, every exception is subclassed from [`SignerError`](errors.md#blake2signer.errors.SignerError) (except for a [`RuntimeError` that will happen in ~2106-02-07](https://gitlab.com/hackancuba/blake2signer/-/blob/fcc2588939895c428d7b3420fbddaab62d864b88/blake2signer/bases.py#L462-465), if this library is unmaintained by then). You can read more about [errors and exceptions](errors.md) in its page.
+
+There is one particular exception that is different from the rest: [`ExpiredSignatureError`](errors.md#blake2signer.errors.ExpiredSignatureError). This exception, raised when a signature has expired, but is valid, can hold the timestamp indicating when the signature was done as an aware datetime object in UTC (since v2.0.0), and the _valid_ unsigned data payload (since v2.5.0).  Since the signature is valid and correct, it is OK to access its unsigned data value. Just be aware that its time-to-live has expired, according to your own settings.
+
+It is important to note that if said exception is raised by a serializer signer, then the data contained in it is not the original unsigned data but a serialized/compressed/encoded one. Therefore, in such cases, one must use the method [`data_from_exc`](signers.md#blake2signer.signers.Blake2SerializerSigner.data_from_exc):
+
+```python
+"""Reading data from an ExpiredSignatureError exception."""
+from time import sleep
+
+from blake2signer import Blake2SerializerSigner, errors
+
+
+data = {'some': 'data'}
+secret = 'just some very secret secret'
+
+signer = Blake2SerializerSigner(secret, max_age=3)
+signed = signer.dumps(data)
+
+sleep(3)
+
+try:
+    signer.loads(signed)
+except errors.ExpiredSignatureError as exc:
+    # The signature expired, but it is a good sig, so data is safe
+    print(exc.data)  # It's a bytes value that is serialized/compressed/encoded
+    unsigned = signer.data_from_exc(exc)
+    print(unsigned)  # Now we have the original data
+    print(data == unsigned)  # True
+```
+
+This can be used to act upon such event, like informing of something to a user. Again, do note that the signature is expired!.
+
+Check the [limiting signature lifetime](examples.md#limiting-signature-lifetime) and [the ExpiredSignatureError exception](examples.md#the-expired-signature-exception) examples.

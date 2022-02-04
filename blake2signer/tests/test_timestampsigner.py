@@ -152,7 +152,8 @@ class TimestampSignerTestsBase(BaseTests, ABC):
         ) as exc:
             self.unsign(signer, signed)
         assert exc.value.__cause__ is None
-        assert exc.value.timestamp.timestamp() == timestamp
+        assert timestamp == exc.value.timestamp.timestamp()
+        assert self.data == exc.value.data
 
     @pytest.mark.xfail(
         not has_blake3(),
@@ -413,7 +414,8 @@ class TestsBlake2TimestampSigner(TimestampSignerTestsBase, TestsBlake2Signer):
         ) as exc:
             self.unsign(signer, signed, max_age=max_age)
         assert exc.value.__cause__ is None
-        assert exc.value.timestamp.timestamp() == timestamp
+        assert timestamp == exc.value.timestamp.timestamp()
+        assert self.data == exc.value.data
 
         # called twice, during sign and unsign
         mock_time.assert_has_calls([mock.call(), mock.call()])
@@ -578,6 +580,24 @@ class TestsBlake2TimestampSigner(TimestampSignerTestsBase, TestsBlake2Signer):
                 '2.4.0',
                 HasherChoice.blake3,
                 'MPamwhHV0SP28U1jSpCsS7x_Rz3UvirqDjMsvg.H7LG0A.is compat ensured?',
+                True,
+            ),
+            (
+                '2.5.0',
+                HasherChoice.blake2b,
+                'LxSytFKm4x7EopjajsFcAY1ofPr27VXISLzf_w.H7LG0A.is compat ensured?',
+                True,
+            ),
+            (
+                '2.5.0',
+                HasherChoice.blake2s,
+                'v9J0bjY8z4kLzm594_C42ldMjm9B5w.H7LG0A.is compat ensured?',
+                True,
+            ),
+            (
+                '2.5.0',
+                HasherChoice.blake3,
+                'o5EebTjPPGFjYiXwlVsV88legFhUbDT-wGVcoQ.H7LG0A.is compat ensured?',
                 True,
             ),
         ),

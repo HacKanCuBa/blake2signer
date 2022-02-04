@@ -876,3 +876,24 @@ class Blake2SerializerSigner(
             FileError: File can't be read.
         """
         return self.loads(self._read(file))
+
+    def data_from_exc(self, exc: errors.ExpiredSignatureError) -> typing.Any:
+        """Recover original data from an ExpiredSignatureError exception.
+
+        If the data was compressed, it will be decompressed before unserializing it.
+
+        The full flow is as follows, where optional actions are marked between brackets:
+        data -> decode -> [decompress] -> unserialize
+
+        Args:
+            exc: An ExpiredSignatureError exception to extract the data from it.
+
+        Returns:
+            Original data.
+
+        Raises:
+            DecodeError: Data can't be decoded.
+            DecompressionError: Data can't be decompressed.
+            UnserializationError: Data can't be unserialized.
+        """
+        return self._loads(exc.data)

@@ -1397,6 +1397,24 @@ class TestsBlake2SerializerSignerTimestamp(
                 '10T9JBA_sRphLoSxIG6gA5oENMIAKqG_moBPFg.H7LG0A.ImlzIGNvbXBhdCBlbnN1cmVkPyI',
                 True,
             ),
+            (
+                '2.5.0',
+                HasherChoice.blake2b,
+                '0Rhn5V3lh4IrIx193btAyh9OjLMWJDmPHvFezw.H7LG0A.ImlzIGNvbXBhdCBlbnN1cmVkPyI',
+                True,
+            ),
+            (
+                '2.5.0',
+                HasherChoice.blake2s,
+                'QDgT2rg1WxkfXecEXMvvZzhNIhSScA.H7LG0A.ImlzIGNvbXBhdCBlbnN1cmVkPyI',
+                True,
+            ),
+            (
+                '2.5.0',
+                HasherChoice.blake3,
+                'OTS4011hmnC4FNDoS6-0jrGB1DLBWieeUNcxmw.H7LG0A.ImlzIGNvbXBhdCBlbnN1cmVkPyI',
+                True,
+            ),
         ),
     )
     def test_versions_compat(
@@ -1408,6 +1426,177 @@ class TestsBlake2SerializerSignerTimestamp(
     ) -> None:
         """Test if previous versions' signed data is compatible with the current one."""
         super().test_versions_compat(version, hasher, signed, compat)
+
+    @pytest.mark.xfail(
+        not has_blake3(),
+        reason='blake3 is not installed',
+        raises=errors.MissingDependencyError,
+    )
+    @pytest.mark.parametrize(
+        'hasher',
+        (
+            HasherChoice.blake2b,
+            HasherChoice.blake2s,
+            HasherChoice.blake3,
+        ),
+    )
+    @mock.patch('blake2signer.bases.time')
+    def test_sign_unsign_timestamp_expired(
+        self,
+        mock_time: mock.MagicMock,
+        hasher: HasherChoice,
+    ) -> None:
+        """Test unsigning with timestamp is correct."""
+        timestamp = int(time())
+        mock_time.return_value = timestamp
+        signer = self.signer(self.secret, hasher=hasher)
+
+        signed = self.sign(signer, self.data)
+
+        mock_time.return_value += 10
+        with pytest.raises(
+                errors.ExpiredSignatureError,
+                match='signature has expired',
+        ) as exc:
+            self.unsign(signer, signed)
+        assert exc.value.__cause__ is None
+        assert timestamp == exc.value.timestamp.timestamp()
+        assert b'ImRhdGFkYXRhIg' == exc.value.data  # serialized+encoded data
+        assert self.data == signer.data_from_exc(exc.value)
+
+    @pytest.mark.xfail(
+        not has_blake3(),
+        reason='blake3 is not installed',
+        raises=errors.MissingDependencyError,
+    )
+    @pytest.mark.parametrize(
+        'hasher',
+        (
+            HasherChoice.blake2b,
+            HasherChoice.blake2s,
+            HasherChoice.blake3,
+        ),
+    )
+    @mock.patch('blake2signer.bases.time')
+    def test_data_from_exc_with_null_serializer(
+        self,
+        mock_time: mock.MagicMock,
+        hasher: HasherChoice,
+    ) -> None:
+        """Test that data_from_exc works with a NullSerializer."""
+        timestamp = int(time())
+        mock_time.return_value = timestamp
+        signer = self.signer(self.secret, hasher=hasher, serializer=NullSerializer)
+        data = b'datadata'
+        signed = self.sign(signer, data)
+
+        mock_time.return_value += 10
+        with pytest.raises(
+                errors.ExpiredSignatureError,
+                match='signature has expired',
+        ) as exc:
+            self.unsign(signer, signed)
+        assert exc.value.__cause__ is None
+        assert timestamp == exc.value.timestamp.timestamp()
+        assert data == signer.data_from_exc(exc.value)
+
+    @pytest.mark.xfail(
+        not has_blake3(),
+        reason='blake3 is not installed',
+        raises=errors.MissingDependencyError,
+    )
+    @pytest.mark.parametrize(
+        'hasher',
+        (
+            HasherChoice.blake2b,
+            HasherChoice.blake2s,
+            HasherChoice.blake3,
+        ),
+    )
+    @mock.patch('blake2signer.bases.time')
+    def test_data_from_exc_with_null_serializer_with_compression(
+        self,
+        mock_time: mock.MagicMock,
+        hasher: HasherChoice,
+    ) -> None:
+        """Test that data_from_exc works with compression."""
+        timestamp = int(time())
+        mock_time.return_value = timestamp
+        signer = self.signer(self.secret, hasher=hasher, serializer=NullSerializer)
+        data = b'datadatadatadata'
+        signed = self.sign(signer, data, force_compression=True)
+
+        mock_time.return_value += 10
+        with pytest.raises(
+                errors.ExpiredSignatureError,
+                match='signature has expired',
+        ) as exc:
+            self.unsign(signer, signed)
+        assert exc.value.__cause__ is None
+        assert timestamp == exc.value.timestamp.timestamp()
+        assert data == signer.data_from_exc(exc.value)
+
+    @pytest.mark.xfail(
+        not has_blake3(),
+        reason='blake3 is not installed',
+        raises=errors.MissingDependencyError,
+    )
+    @pytest.mark.parametrize(
+        'hasher',
+        (
+            HasherChoice.blake2b,
+            HasherChoice.blake2s,
+            HasherChoice.blake3,
+        ),
+    )
+    @mock.patch('blake2signer.bases.time')
+    def test_data_from_exc_raises_exceptions(
+        self,
+        mock_time: mock.MagicMock,
+        hasher: HasherChoice,
+    ) -> None:
+        """Test that data_from_exc raises exceptions."""
+        timestamp = int(time())
+        mock_time.return_value = timestamp
+        signer = self.signer(
+            self.secret,
+            hasher=hasher,
+            compressor=ZlibCompressor,
+            serializer=JSONSerializer,
+            encoder=B64URLEncoder,
+        )
+        signed = self.sign(signer, self.data_compressible, force_compression=True)
+
+        mock_time.return_value += 10
+        with pytest.raises(
+                errors.ExpiredSignatureError,
+                match='signature has expired',
+        ) as expired_sig_exc:
+            self.unsign(signer, signed)
+
+        with mock.patch('blake2signer.compressors.zlib.decompress', side_effect=zlib.error):
+            with pytest.raises(
+                    errors.DecompressionError,
+                    match='data can not be decompressed',
+            ) as exc:
+                signer.data_from_exc(expired_sig_exc.value)
+            assert isinstance(exc.value.__cause__, zlib.error)
+
+        with mock.patch('blake2signer.serializers.json.loads', side_effect=ValueError):
+            with pytest.raises(
+                    errors.UnserializationError,
+                    match='data can not be unserialized',
+            ) as exc:
+                signer.data_from_exc(expired_sig_exc.value)
+            assert isinstance(exc.value.__cause__, ValueError)
+
+        with mock.patch('blake2signer.utils.base64.urlsafe_b64decode', side_effect=TypeError):
+            with pytest.raises(
+                    errors.DecodeError,
+                    match='data can not be decoded',
+            ) as exc:
+                signer.data_from_exc(expired_sig_exc.value)
+            assert isinstance(exc.value.__cause__, TypeError)
 
 
 class TestsBlake2SerializerSigner(SerializerSignerTestsBase):
@@ -1516,6 +1705,24 @@ class TestsBlake2SerializerSigner(SerializerSignerTestsBase):
                 '2.4.0',
                 HasherChoice.blake3,
                 '-0EfMMvVRJwAIKbaxvUPVd05jQ55V6oamkhk-A.ImlzIGNvbXBhdCBlbnN1cmVkPyI',
+                True,
+            ),
+            (
+                '2.5.0',
+                HasherChoice.blake2b,
+                'AhPRIw-p8SV-jbed_paSiew3vZuwQ9Osa6K8aA.ImlzIGNvbXBhdCBlbnN1cmVkPyI',
+                True,
+            ),
+            (
+                '2.5.0',
+                HasherChoice.blake2s,
+                'F332w0v5y4EsExF2oUCG2Au12f0Mew.ImlzIGNvbXBhdCBlbnN1cmVkPyI',
+                True,
+            ),
+            (
+                '2.5.0',
+                HasherChoice.blake3,
+                'lA26lgG0BP3nnPyXDboAGUztXSg8JVmG82NqWQ.ImlzIGNvbXBhdCBlbnN1cmVkPyI',
                 True,
             ),
         ),
