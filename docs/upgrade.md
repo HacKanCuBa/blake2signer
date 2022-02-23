@@ -1,5 +1,16 @@
 # Upgrade guide
 
+## To v2.3
+
+!!! success "Old signatures will work"
+    Data signed with previous versions (>=2.0, <=2.3) will still be valid.
+
+For the public API, the constructor for signers now accept as the _secret_, besides string or bytes, a sequence of string or bytes, to allow for [secret rotation](examples.md#rotating-the-secret). This means you don't have to change anything unless you want to start using said feature.
+
+Regarding the private API, a few internal methods were modified to work with this sequence of secrets. Check out the corresponding commit:
+
+* [`5a0b22d5`](https://gitlab.com/hackancuba/blake2signer/-/commit/5a0b22d5949ffed4010cfb9d1b75d1660d682269) - ✨ Support secret rotation
+
 ## To v2.2
 
 !!! success "Old signatures will work"

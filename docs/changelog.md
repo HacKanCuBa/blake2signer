@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.3.0 - 2022-02-23
+
+**Added**
+
+- Add support for [signing secret rotation](examples.md#rotating-the-secret): now it supports receiving a sequence of secrets instead of a single one, considering them ordered from oldest to newest, so that signatures are made with the newest secret but verifications are done using all of them.
+- Add dev tool `darglint` to help checking docstrings consistency with the code, and consequently improve docstrings adding missing parts.
+
 ## 2.2.0 - 2022-01-24
 
 **Added**

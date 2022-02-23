@@ -1,4 +1,0 @@
-Added
------
-
-- Add dev tool `darglint` to help checking docstrings consistency with the code, and consequently improve docstrings adding missing parts.
