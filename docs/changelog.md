@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.4.0 - 2022-03-27
+
+**Added**
+
+- Add tests to ensure compatibility, or not, with previous versions.
+
+**Changed**
+
+- Allow [`max_age` to be None](examples.md#choosing-when-to-check-the-timestamp) for the Blake2TimestampSigner: the timestamp is then not checked (but the signature is always checked).
+
 ## 2.3.0 - 2022-02-23
 
 **Added**

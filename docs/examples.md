@@ -815,6 +815,33 @@ else:
 !!! tip
     The `ExpiredSignatureError` exception contains the signature timestamp as an aware datetime object (in UTC) in case you need that information to display something meaningful to the user.
 
+### Choosing when to check the timestamp
+
+!!! info "New in v2.4.0"
+
+Sometimes it can be useful to make certain data expire, but there are situations that requires us to get that data as if it would never expire.
+
+!!! success inline end "Signatures are always checked"
+
+Since v2.4.0, `Blake2TimestampSigner` can omit the timestamp check when needed, acting like both a timestamped and a regular signer.  
+This can be done in both `unsign` and `unsign_parts` methods.
+
+```python
+"""Choosing when to check the timestamp."""
+
+from blake2signer import Blake2TimestampSigner
+
+secret = 'todo está guardado en la memoria'
+data = b'espina de la vida y de la historia'
+
+signer = Blake2TimestampSigner(secret)
+
+signed = signer.sign(data)
+unsigned = signer.unsign(signed, max_age=None)  # Omits checking the timestamp
+
+print(data == unsigned)  # True
+```
+
 ## Using personalisation
 
 The [personalisation parameter](details.md#about-salt-and-personalisation) is very important and prevents [mixing the signers](details.md#mixing-signers). It is referred in other packages as salt, and helps to defeat the abuse of using a signed stream for different signers that share the same key by changing the digest computation result.

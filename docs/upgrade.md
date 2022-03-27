@@ -1,5 +1,14 @@
 # Upgrade guide
 
+## To v2.4
+
+!!! success "Old signatures will work"
+    Data signed with previous versions (>=2.0, <=2.4) will still be valid.
+
+Both the public and private API of Blake2TimestampSigner for `unsign` and `unsign_parts` now accepts `max_age=None` to omit checking the signature timestamp (but note that there is no default! it has to be explicit). This happens after checking the signature, which must be valid.
+
+Checkout the [examples](examples.md#choosing-when-to-check-the-timestamp).
+
 ## To v2.3
 
 !!! success "Old signatures will work"
