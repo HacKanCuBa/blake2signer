@@ -68,7 +68,7 @@ flake8-2020 = "^1.6.0"
 flake8-annotations-complexity = "^0"
 mkdocs = "^1.1.2"
 mkdocs-material = "^8"
-mkdocstrings = "^0"
+mkdocstrings = {extras = ["python"], version = ">0.18"}
 pytest-randomly = "^3.8.0"
 types-setuptools = "^57.4.5"
 blake3 = ">0.2.0"
