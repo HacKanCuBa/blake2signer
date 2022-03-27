@@ -78,6 +78,15 @@ def reformat(ctx):
     """Reformat code."""
 
 
+@task
+def pylint(ctx):
+    """Run pylint."""
+    ctx.run('pylint blake2signer/ --ignore tests', echo=True, pty=True, warn=True)
+    ctx.run('pylint blake2signer/tests/ --exit-zero', echo=True, pty=True, warn=True)
+    ctx.run('pylint tests/ --exit-zero', echo=True, pty=True, warn=True)
+    ctx.run('pylint tasks.py --exit-zero', echo=True, pty=True, warn=True)
+
+
 # noinspection PyUnusedLocal
 @task(flake8, pydocstyle, darglint, mypy, bandit)
 def lint(ctx):
