@@ -14,7 +14,7 @@ with mock.patch.object(
     from blake2signer import errors
     from blake2signer.tests.bases import BaseTests
     from blake2signer.tests.test_serializersigner import TestsBlake2SerializerSigner
-    from blake2signer.tests.test_serializersigner import TestsBlake2SerializerSignerTimestamp  # noqa: E501
+    from blake2signer.tests.test_serializersigner import TestsBlake2SerializerSignerTimestamp  # noqa: E501  # pylint: disable=C0301
     from blake2signer.tests.test_signer import TestsBlake2Signer
     from blake2signer.tests.test_timestampsigner import TestsBlake2TimestampSigner
     from blake2signer.hashers import blake3

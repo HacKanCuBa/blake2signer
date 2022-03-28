@@ -13,6 +13,8 @@ from ..hashers import BLAKE3Hasher
 from ..hashers import HasherChoice
 from ..hashers import blake3
 
+# pylint: disable=W8205
+
 THasher = typing.TypeVar('THasher', BLAKE2Hasher, BLAKE3Hasher)
 
 
@@ -88,8 +90,8 @@ class TestsBLAKE2Hasher(BaseTests[BLAKE2Hasher]):
         """Test that person is correctly derived."""
         hasher = self.get_hasher(choice)
 
-        assert self.person != hasher._person
-        assert hasher._hasher.PERSON_SIZE == len(hasher._person)
+        assert self.person != hasher._person  # pylint: disable=W0212
+        assert hasher._hasher.PERSON_SIZE == len(hasher._person)  # pylint: disable=W0212
 
     @pytest.mark.parametrize(
         'choice',
@@ -107,14 +109,14 @@ class TestsBLAKE2Hasher(BaseTests[BLAKE2Hasher]):
         assert sorted(self.secrets) != sorted(hasher.keys)
 
         for key in hasher.keys:
-            assert hasher._hasher.MAX_KEY_SIZE == len(key)
+            assert hasher._hasher.MAX_KEY_SIZE == len(key)  # pylint: disable=W0212
 
         # Ensure keys are actually derived
         with mock.patch.object(self.hasher_class, '_derive_key') as mock_derive_key:
             hasher = self.get_hasher(choice)
-        calls = []
-        for secret in self.secrets:
-            calls.append(mock.call(secret, person=hasher._person))
+
+        person = hasher._person  # pylint: disable=W0212
+        calls = [mock.call(secret, person=person) for secret in self.secrets]
         mock_derive_key.assert_has_calls(calls)
 
         # Ensure the hasher gets called properly
@@ -171,7 +173,7 @@ class TestsBLAKE2Hasher(BaseTests[BLAKE2Hasher]):
         """Test that digest is correctly calculated."""
         hasher = self.get_hasher(choice)
 
-        digest = hasher.digest(b'datadata', key=hasher.signing_key, salt=salt)
+        digest = hasher.digest(data, key=hasher.signing_key, salt=salt)
 
         assert expected_digest == digest
 
@@ -218,7 +220,7 @@ class TestsBLAKE3Hasher(BaseTests[BLAKE3Hasher]):
         """Test that person is not derived."""
         hasher = self.get_hasher()
 
-        assert self.person == hasher._person
+        assert self.person == hasher._person  # pylint: disable=W0212
 
     def test_derive_secret(self) -> None:
         """Test that secret is correctly derived."""
@@ -234,9 +236,9 @@ class TestsBLAKE3Hasher(BaseTests[BLAKE3Hasher]):
         # Ensure keys are actually derived
         with mock.patch.object(self.hasher_class, '_derive_key') as mock_derive_key:
             hasher = self.get_hasher()
-        calls = []
-        for secret in self.secrets:
-            calls.append(mock.call(secret, person=hasher._person))
+
+        person = hasher._person  # pylint: disable=W0212
+        calls = [mock.call(secret, person=person) for secret in self.secrets]
         mock_derive_key.assert_has_calls(calls)
 
         # Ensure the hasher gets called properly
@@ -269,7 +271,7 @@ class TestsBLAKE3Hasher(BaseTests[BLAKE3Hasher]):
         """Test that digest is correctly calculated."""
         hasher = self.get_hasher()
 
-        digest = hasher.digest(b'datadata', key=hasher.signing_key, salt=salt)
+        digest = hasher.digest(data, key=hasher.signing_key, salt=salt)
 
         assert expected_digest == digest
 

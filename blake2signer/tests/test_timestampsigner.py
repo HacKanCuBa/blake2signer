@@ -1,4 +1,5 @@
 """Timestamp signers tests."""
+# pylint: disable=R0801
 
 import typing
 from abc import ABC
@@ -37,7 +38,7 @@ class TimestampSignerTestsBase(BaseTests, ABC):
         ),
     )
     @mock.patch('blake2signer.bases.time')
-    def test_sign_unsign_deterministic(
+    def test_sign_unsign_deterministic(  # pylint: disable=W0221
         self,
         mock_time: mock.MagicMock,
         hasher: HasherChoice,
@@ -61,7 +62,7 @@ class TimestampSignerTestsBase(BaseTests, ABC):
         ),
     )
     @mock.patch('blake2signer.bases.time')
-    def test_sign_unsign_parts_deterministic(
+    def test_sign_unsign_parts_deterministic(  # pylint: disable=W0221
         self,
         mock_time: mock.MagicMock,
         hasher: HasherChoice,
@@ -85,7 +86,7 @@ class TimestampSignerTestsBase(BaseTests, ABC):
         ),
     )
     @mock.patch('blake2signer.bases.time')
-    def test_sign_is_unique_non_deterministic(
+    def test_sign_is_unique_non_deterministic(  # pylint: disable=W0221
         self,
         mock_time: mock.MagicMock,
         hasher: HasherChoice,
@@ -109,7 +110,7 @@ class TimestampSignerTestsBase(BaseTests, ABC):
         ),
     )
     @mock.patch('blake2signer.bases.time')
-    def test_sign_parts_is_unique_non_deterministic(
+    def test_sign_parts_is_unique_non_deterministic(  # pylint: disable=W0221
         self,
         mock_time: mock.MagicMock,
         hasher: HasherChoice,
@@ -251,7 +252,7 @@ class TimestampSignerTestsBase(BaseTests, ABC):
 
         trick_signed = self.trick_sign(
             signer,
-            signer._separator + signer._force_bytes(self.data),
+            signer._separator + signer._force_bytes(self.data),  # pylint: disable=W0212
         )
         with pytest.raises(
                 errors.SignatureError,
@@ -279,7 +280,7 @@ class TimestampSignerTestsBase(BaseTests, ABC):
 
         trick_signed = self.trick_sign(
             signer,
-            b'-' + signer._separator + signer._force_bytes(self.data),
+            b'-' + signer._separator + signer._force_bytes(self.data),  # pylint: disable=W0212
         )
         with pytest.raises(errors.DecodeError, match='can not be decoded') as exc:
             self.unsign(signer, trick_signed)

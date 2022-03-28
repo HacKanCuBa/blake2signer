@@ -2,10 +2,18 @@
 
 import os
 import typing
+from functools import partial
 from tempfile import mkstemp
+from unittest.mock import patch
 
 from invoke import UnexpectedExit
 from invoke import task
+
+from blake2signer import Blake2SerializerSigner
+from blake2signer import Blake2Signer
+from blake2signer import Blake2TimestampSigner
+# noinspection PyProtectedMember
+from blake2signer import __version__
 
 
 @task
@@ -76,7 +84,7 @@ def trailing_commas(ctx):
 
 # noinspection PyUnusedLocal
 @task(yapf, trailing_commas)
-def reformat(ctx):
+def reformat(ctx):  # pylint: disable=W0613
     """Reformat code."""
 
 
@@ -90,8 +98,8 @@ def pylint(ctx):
 
 
 # noinspection PyUnusedLocal
-@task(flake8, pydocstyle, darglint, mypy, bandit)
-def lint(ctx):
+@task(flake8, pylint, pydocstyle, darglint, mypy, bandit)
+def lint(ctx):  # pylint: disable=W0613
     """Lint code and static analysis."""
 
 
@@ -199,26 +207,20 @@ def docs(ctx, build=False, verbose=False):
     ctx.run(' '.join(args))
 
 
+# noinspection PyUnusedLocal
 @task
-def check_compat(ctx):
+def check_compat(ctx):  # pylint: disable=W0613
     """Print current version signatures to check compatibility with previous versions."""
-    from functools import partial
-    from unittest.mock import patch
-
-    from blake2signer import Blake2SerializerSigner
-    from blake2signer import Blake2Signer
-    from blake2signer import Blake2TimestampSigner
-    from blake2signer import __version__
 
     def sign(
         signer: typing.Union[Blake2Signer, Blake2TimestampSigner, Blake2SerializerSigner],
-        data: str,
+        data_: str,
     ) -> str:
         """Sign data with given signer."""
         if isinstance(signer, Blake2SerializerSigner):
-            return signer.dumps(data)
+            return signer.dumps(data_)
 
-        return signer.sign(data).decode()
+        return signer.sign(data_).decode()
 
     secret = 'too many secrets!'  # noqa: S105  # nosec: B105
     data = 'is compat ensured?'
@@ -231,10 +233,11 @@ def check_compat(ctx):
     print('current version:', __version__)
     print('Signer | Hasher | Signed value')
     for partial_signer in partial_signers:
+        name = str(partial_signer.func).split('.')[2].rstrip("'>")
         for hasher in ('blake2b', 'blake2s', 'blake3'):
             with patch('blake2signer.bases.time', return_value=531810000):
                 print(
-                    str(partial_signer.func).split('.')[2].rstrip("'>"),
+                    name,
                     '|',
                     hasher,
                     '|',

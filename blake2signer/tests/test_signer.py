@@ -1,4 +1,5 @@
 """Signers tests."""
+# pylint: disable=R0801
 
 import typing
 

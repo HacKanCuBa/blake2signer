@@ -19,14 +19,14 @@ except pkg_resources.DistributionNotFound:
             'blake3 can not be selected if it is not installed: python3 -m pip install blake3',
         )
 
-    _has_blake3 = False
+    _HAS_BLAKE3 = False
 else:
     # ToDo: mypy stubs missing, ask or do PR
-    from blake3 import blake3  # type: ignore  # noqa: F401
+    from blake3 import blake3  # type: ignore  # noqa: F401  # pylint: disable=W0611
 
-    _has_blake3 = True
+    _HAS_BLAKE3 = True
 
 
 def has_blake3() -> bool:
     """Return True if the `blake3` package is installed."""
-    return _has_blake3
+    return _HAS_BLAKE3

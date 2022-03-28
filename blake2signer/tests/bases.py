@@ -1,4 +1,5 @@
 """Base classes to test signers."""
+# pylint: disable=R0904,C0302,W8205,R0801
 
 import hashlib
 import re
@@ -220,10 +221,10 @@ class BaseTests(ABC):
             Signed data, like `signer.sign(data)`, but bypassing checks if any.
         """
         # noinspection PyProtectedMember
-        data_b = signer._force_bytes(data)
+        data_b = signer._force_bytes(data)  # pylint: disable=W0212
 
         # noinspection PyProtectedMember
-        return signer._compose(data_b, signature=signer._sign(data_b))
+        return signer._compose(data_b, signature=signer._sign(data_b))  # pylint: disable=W0212
 
     @pytest.fixture
     def signer_min_digest_size_changed(self) -> typing.Type[Signer]:
@@ -264,8 +265,8 @@ class BaseTests(ABC):
         signer = self.signer()
 
         assert isinstance(signer, self.signer_class)
-        assert isinstance(signer._hasher, BLAKE2Hasher)
-        assert signer._hasher._hasher == hashlib.blake2b
+        assert isinstance(signer._hasher, BLAKE2Hasher)  # pylint: disable=W0212
+        assert signer._hasher._hasher == hashlib.blake2b  # pylint: disable=W0212
 
         signed = self.sign(signer, self.data)
         assert isinstance(signed, self.signature_type)
@@ -300,7 +301,7 @@ class BaseTests(ABC):
         signer = self.signer(hasher=hasher)
 
         assert isinstance(signer, self.signer_class)
-        assert isinstance(signer._hasher, hasher_class)
+        assert isinstance(signer._hasher, hasher_class)  # pylint: disable=W0212
 
         signed = self.sign(signer, self.data)
         assert isinstance(signed, self.signature_type)
@@ -471,7 +472,7 @@ class BaseTests(ABC):
         signed2 = self.sign(signer, self.data)
 
         assert len(signed1) == len(signed2)
-        assert type(signed1) == type(signed2)
+        assert isinstance(signed1, type(signed2))
         assert signed1[-len(self.data):] == signed2[-len(self.data):]
         assert signed1 != signed2
 
@@ -955,11 +956,11 @@ class BaseTests(ABC):
 
             def encode(self, data: typing.AnyStr) -> bytes:
                 """Encode data."""
-                pass  # pragma: nocover
+                pass  # pragma: nocover  # pylint: disable=W0107
 
             def decode(self, data: typing.AnyStr) -> bytes:
                 """Decode data."""
-                pass  # pragma: nocover
+                pass  # pragma: nocover  # pylint: disable=W0107
 
         with pytest.raises(
                 errors.InvalidOptionError,
@@ -984,7 +985,7 @@ class BaseTests(ABC):
         """Test encoder having an empty alphabet raises exception."""
 
         class Encoder(EncoderInterface):
-            """Wrong encoder."""
+            """Encoder with empty alphabet."""
 
             @property
             def alphabet(self) -> bytes:
@@ -993,11 +994,11 @@ class BaseTests(ABC):
 
             def encode(self, data: typing.AnyStr) -> bytes:
                 """Encode data."""
-                pass  # pragma: nocover
+                pass  # pragma: nocover  # pylint: disable=W0107
 
             def decode(self, data: typing.AnyStr) -> bytes:
                 """Decode data."""
-                pass  # pragma: nocover
+                pass  # pragma: nocover  # pylint: disable=W0107
 
         with pytest.raises(
                 errors.InvalidOptionError,

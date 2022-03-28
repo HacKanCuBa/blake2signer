@@ -1,4 +1,5 @@
 """Serializer signers tests."""
+# pylint: disable=R0904,C0302,R0801
 
 import io
 import json
@@ -363,11 +364,11 @@ class SerializerSignerTestsBase(BaseTests, ABC):
     ) -> None:
         """Test dumping and loading using a custom serializer."""
 
-        class Justice:
+        class Justice:  # pylint: disable=R0903
             """Some object."""
 
-            def __init__(self, a: str = ''):
-                self.a = a
+            def __init__(self, value: str = ''):
+                self.value = value
 
         class CustomJSONEncoder(json.JSONEncoder):
             """Custom JSON encoder."""
@@ -375,7 +376,7 @@ class SerializerSignerTestsBase(BaseTests, ABC):
             def default(self, o):
                 """Encode object."""
                 if isinstance(o, Justice):
-                    return o.a
+                    return o.value
 
                 return super().default(o)  # pragma: no cover
 
@@ -390,7 +391,7 @@ class SerializerSignerTestsBase(BaseTests, ABC):
         signer = self.signer(serializer=MyJSONSerializer, hasher=hasher)
 
         unsigned = self.unsign(signer, self.sign(signer, obj))
-        assert obj.a == unsigned
+        assert obj.value == unsigned
 
     @pytest.mark.xfail(
         not has_blake3(),
@@ -415,9 +416,9 @@ class SerializerSignerTestsBase(BaseTests, ABC):
         signer = self.signer(compression_flag=flag, hasher=hasher)
 
         if isinstance(flag, bytes):
-            assert signer._compression_flag == flag
+            assert signer._compression_flag == flag  # pylint: disable=W0212
         else:
-            assert signer._compression_flag == flag.encode()
+            assert signer._compression_flag == flag.encode()  # pylint: disable=W0212
 
         signed = self.sign(signer, self.data_compressible)
         if isinstance(flag, bytes):
@@ -425,6 +426,7 @@ class SerializerSignerTestsBase(BaseTests, ABC):
         else:
             assert flag in signed
 
+        # pylint: disable=W0212
         unsigned = signer._proper_unsign(signer._decompose(signed.encode()))
         if isinstance(flag, bytes):
             assert unsigned.startswith(flag)
@@ -457,7 +459,7 @@ class SerializerSignerTestsBase(BaseTests, ABC):
             hasher=hasher,
         )
 
-        payload = signer._compression_flag + bomb
+        payload = signer._compression_flag + bomb  # pylint: disable=W0212
         signed = self.sign(signer, payload, compress=False)
         # If the bomb worked, then when unsigning the payload would be decompressed
         # If it failed, then the payload would stay the same, which is what should
@@ -1234,7 +1236,7 @@ class SerializerSignerTestsBase(BaseTests, ABC):
                 errors.ConversionError,
                 match='can not be converted to bytes',
         ):
-            signer._write(file, '\uD83D')
+            signer._write(file, '\uD83D')  # pylint: disable=W0212
 
 
 class TestsBlake2SerializerSignerTimestamp(
