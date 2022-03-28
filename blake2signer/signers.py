@@ -373,7 +373,7 @@ class Blake2SerializerSigner(
 
     """
 
-    def __init__(
+    def __init__(  # pylint: disable=R0801
         self,
         secret: typing.Union[Secret, typing.Sequence[Secret]],
         *,

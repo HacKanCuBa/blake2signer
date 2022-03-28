@@ -13,9 +13,9 @@ from .blake3_package import blake3
 class HasherChoice(str, Enum):
     """Hasher selection choices."""
 
-    blake2b = 'blake2b'
-    blake2s = 'blake2s'
-    blake3 = 'blake3'
+    blake2b = 'blake2b'  # pylint: disable=C0103
+    blake2s = 'blake2s'  # pylint: disable=C0103
+    blake3 = 'blake3'  # pylint: disable=C0103
 
 
 class BLAKEHasher(ABC):

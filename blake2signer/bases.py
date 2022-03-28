@@ -175,7 +175,7 @@ class Base(Mixin, ABC):
 
         secrets: typing.Sequence[Secret]
         if isinstance(secret, (str, bytes)):
-            secrets = [secret]
+            secrets = (secret,)
         else:
             secrets = secret
 
@@ -232,10 +232,10 @@ class Base(Mixin, ABC):
         """
         try:
             choice = HasherChoice(hasher)
-        except ValueError:
+        except ValueError as exc:
             raise InvalidOptionError(
                 f'invalid hasher choice, must be one of: {", ".join(h for h in HasherChoice)}',
-            )
+            ) from exc
 
         return choice
 
@@ -287,7 +287,7 @@ class Base(Mixin, ABC):
 class Blake2SignerBase(EncoderMixin, Base, ABC):
     """Base class for a signer based on BLAKE in keyed hashing mode."""
 
-    def __init__(
+    def __init__(  # pylint: disable=W0235  # Not useless, otherwise I lose hints and docs.
         self,
         secret: typing.Union[Secret, typing.Sequence[Secret]],
         *,
@@ -488,11 +488,11 @@ class Blake2TimestampSignerBase(Blake2SignerBase, ABC):
         timestamp = int(time())  # It's easier to encode and decode an integer
         try:
             timestamp_b = timestamp.to_bytes(4, 'big', signed=False)
-        except OverflowError:  # This will happen in ~2106-02-07
+        except OverflowError as exc:  # This will happen in ~2106-02-07
             raise RuntimeError(
                 'can not represent this timestamp in bytes: this library is '
                 + 'too old and needs to be updated!',
-            )
+            ) from exc
 
         return self._encode(timestamp_b)
 

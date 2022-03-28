@@ -18,7 +18,8 @@ def force_bytes(value: typing.Any) -> bytes:
     """
     if isinstance(value, bytes):
         return value
-    elif isinstance(value, str):
+
+    if isinstance(value, str):
         return value.encode('utf-8', errors='strict')
 
     return bytes(value)
