@@ -1,0 +1,3 @@
+[submodule "git-minisign"]
+	path = git-minisign
+	url = https://gitlab.com/hackancuba/git-minisign.git

@@ -101,3 +101,9 @@ Once everything is ready for release, follow these steps:
 1. Merge into `main` and create MR to `develop`.
 1. Merge into `develop`, create and push signed tag: `git tag -s <M.m.p>`. A CI job will publish the package to PyPi.
 1. Create release in Gitlab and [properly sign packages](https://gist.github.com/HacKanCuBa/6fabded3565853adebf3dd140e72d33e).
+
+### Signing
+
+To sign a tag, run `inv sign-tag <tag name>`. To sign a file, use `inv sign-file <file name>`.
+
+Read more about [signatures](signatures.md) in this project.

@@ -63,6 +63,7 @@ nav:
   - Releases:
     - 'changelog.md'
     - 'upgrade.md'
+    - 'signatures.md'
   - Documentation:
     - Stable: 'https://blake2signer.hackan.net/en/stable/'
     - Latest: 'https://blake2signer.hackan.net/en/latest/'

@@ -1,11 +1,16 @@
 """Common tasks for Invoke."""
 
+import codecs
 import os
 import typing
+from datetime import datetime
+from datetime import timezone
 from functools import partial
+from pathlib import Path
 from tempfile import mkstemp
 from unittest.mock import patch
 
+from invoke import Result
 from invoke import UnexpectedExit
 from invoke import task
 
@@ -14,6 +19,7 @@ from blake2signer import Blake2Signer
 from blake2signer import Blake2TimestampSigner
 # noinspection PyProtectedMember
 from blake2signer import __version__
+from blake2signer.utils import b64decode
 
 
 @task
@@ -243,3 +249,219 @@ def check_compat(ctx):  # pylint: disable=W0613
                     '|',
                     sign(partial_signer(hasher=hasher), data),
                 )
+
+
+def generate_trusted_comment_parts(
+    *,
+    timestamp: int,
+    pubkey: str,
+    email: str,
+) -> typing.Tuple[typing.Tuple[str, str], ...]:
+    """Generate a trusted comment for a minisign signature."""
+    if not timestamp:
+        timestamp = int(datetime.utcnow().replace(tzinfo=timezone.utc).timestamp())
+
+    if not pubkey:
+        with open('minisign.pub', 'rt', encoding='utf-8') as pubkeyfile:
+            pubkey = pubkeyfile.readlines()[1].strip()
+
+    if not email:
+        # Encoded email to prevent spammers
+        email = b64decode(codecs.decode('nTSwn2ShDTqgLJyfYzAioD', 'rot_13').encode()).decode()
+
+    trusted_comment_parts = (
+        ('timestamp', str(timestamp)),
+        ('pubkey', pubkey),
+        ('email', email),
+    )
+
+    return trusted_comment_parts
+
+
+def generate_trusted_comment_from_parts(parts: typing.Sequence[typing.Tuple[str, str]]) -> str:
+    """Generate a trusted comment from its parts."""
+    return '\t'.join(f'{key}:{value}' for key, value in parts)
+
+
+def generate_trusted_comment_for_file(
+    file: Path,
+    *,
+    timestamp: int,
+    pubkey: str,
+    email: str,
+) -> str:
+    """Generate a trusted comment for a file minisign signature."""
+    trusted_comment_parts = list(
+        generate_trusted_comment_parts(
+            timestamp=timestamp,
+            pubkey=pubkey,
+            email=email,
+        ),
+    )
+
+    trusted_comment_parts.insert(1, ('file', file.name))
+
+    return generate_trusted_comment_from_parts(trusted_comment_parts)
+
+
+def generate_trusted_comment_for_tag(
+    ctx,
+    tag: str,
+    *,
+    timestamp: int,
+    pubkey: str,
+    email: str,
+) -> str:
+    """Generate a trusted comment for a tag minisign signature."""
+    trusted_comment_parts = list(
+        generate_trusted_comment_parts(
+            timestamp=timestamp,
+            pubkey=pubkey,
+            email=email,
+        ),
+    )
+
+    tag_hash_raw: Result = ctx.run(
+        f'git tag --list --format "%(objectname)" "{tag}"',
+        hide='out',
+    )
+    tag_hash = tag_hash_raw.stdout.strip()
+    trusted_comment_parts.insert(1, ('object', tag_hash))
+
+    return generate_trusted_comment_from_parts(trusted_comment_parts)
+
+
+@task(
+    help={
+        'tag': 'git tag to sign',
+        'trusted_comment': 'trusted comment to include in the signature',
+        'untrusted_comment': 'untrusted comment to include in the signature',
+        'seckey': 'full path to the signing secret key',
+        'timestamp': 'unix timestamp in seconds to include in the trusted comment',
+        'pubkey': 'encoded public key to include in the trusted comment',
+        'email': 'signer email to include in the trusted comment',
+        'force': 'true to force overwriting an existing note (defaults to false)',
+    },
+)
+def sign_tag(  # pylint: disable=R0913
+        ctx,
+        tag,
+        trusted_comment='',
+        untrusted_comment='',
+        seckey='',
+        timestamp=0,
+        pubkey='',
+        email='',
+        force=False,
+):
+    """Sign given tag with minisign.
+
+    If trusted_comment is not specified, a default one is created composed of key:value
+    separated by tabs, using the following information: timestamp (defaults to current
+    timestamp), git object hash, signer public key (defaults to a hardcoded public key),
+    signer email (defaults to a hardcoded email).
+
+    If untrusted comment is not specified, a default hardcoded one is used.
+
+    Note that this command requires the script `git-minisign-sign`. To fetch it, run:
+    `git submodule sync --recursive && git submodule update --init --recursive --remote`
+
+    Additionally, it requires minisign installed. For more information, refer to:
+    https://jedisct1.github.io/minisign/
+    """
+    if not trusted_comment:
+        trusted_comment = generate_trusted_comment_for_tag(
+            ctx,
+            tag,
+            timestamp=timestamp,
+            pubkey=pubkey,
+            email=email,
+        )
+
+    if not untrusted_comment:
+        untrusted_comment = 'signature from HacKan'
+
+    args = [
+        './git-minisign/sh/git-minisign-sign.sh',
+        f'-t "{trusted_comment}"',
+        f'-c "{untrusted_comment}"',
+        f'-T "{tag}"',
+    ]
+    if seckey:
+        args.append(f'-S "{seckey}"')
+    if force:
+        args.append('-f')
+
+    ctx.run(' '.join(args), echo=True, pty=True)
+
+
+@task(
+    help={
+        'file': 'file to sign',
+        'trusted_comment': 'trusted comment to include in the signature',
+        'untrusted_comment': 'untrusted comment to include in the signature',
+        'seckey': 'full path to the signing secret key',
+        'timestamp': 'unix timestamp in seconds to include in the trusted comment',
+        'pubkey': 'encoded public key to include in the trusted comment',
+        'email': 'signer email to include in the trusted comment',
+    },
+)
+def sign_file(  # pylint: disable=R0913
+    ctx,
+    file,
+    trusted_comment='',
+    untrusted_comment='',
+    seckey='',
+    timestamp=0,
+    pubkey='',
+    email='',
+):
+    """Sign given file with minisign.
+
+    If trusted_comment is not specified, a default one is created composed of key:value
+    separated by tabs, using the following information: timestamp (defaults to current
+    timestamp), file name, signer public key (defaults to a hardcoded public key), signer
+    email (defaults to a hardcoded email).
+
+    If untrusted comment is not specified, a default hardcoded one is used.
+
+    Note that this command requires minisign installed. For more information, refer to:
+    https://jedisct1.github.io/minisign/
+    """
+    if not trusted_comment:
+        trusted_comment = generate_trusted_comment_for_file(
+            Path(file),
+            timestamp=timestamp,
+            pubkey=pubkey,
+            email=email,
+        )
+
+    if not untrusted_comment:
+        untrusted_comment = 'signature from HacKan'
+
+    args = [
+        'minisign',
+        '-S',
+        f'-t "{trusted_comment}"',
+        f'-c "{untrusted_comment}"',
+        f'-m "{file}"',
+    ]
+    if seckey:
+        args.append(f'-S "{seckey}"')
+
+    ctx.run(' '.join(args), echo=True, pty=True)
+
+    print('File signed as:', file + '.minisig')
+
+
+@task
+def verify_tag(ctx, tag):
+    """Verify a tag signed by minisign."""
+    ctx.run(f'./git-minisign/sh/git-minisign-verify.sh -T "{tag}"', echo=True)
+
+
+@task
+def verify_file(ctx, file):
+    """Verify a file signed by minisign."""
+    pubkeyfile = Path(__file__).parent / 'minisign.pub'
+    ctx.run(f'minisign -Vm "{file}" -p {pubkeyfile}', echo=True)
