@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "Blake2Signer Docs"
+version = "0.1.0"
+description = "Documentation for Blake2Signer"
+authors = ["HacKan <hackan@gmail.com>"]
+license = "MPL-2.0"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+mkdocs = ">=1.3.0"
+mkdocs-material = "^8"
+mkdocstrings = {extras = ["python"], version = ">0.18,^0"}
+
+[tool.poetry.dev-dependencies]
+blake2signer = {path = "../", develop = true}
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

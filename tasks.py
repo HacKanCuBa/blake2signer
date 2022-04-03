@@ -3,6 +3,7 @@
 import codecs
 import os
 import typing
+from contextlib import contextmanager
 from datetime import datetime
 from datetime import timezone
 from functools import partial
@@ -10,6 +11,8 @@ from pathlib import Path
 from tempfile import mkstemp
 from unittest.mock import patch
 
+from invoke import Context
+from invoke import Exit
 from invoke import Result
 from invoke import task
 
@@ -147,10 +150,13 @@ def tests(ctx, watch=False, seed=0, coverage=True):
     if not coverage:
         cmd.append('--no-cov')
 
-    cmd0 = cmd + ['--ignore tests']
-    cmd1 = cmd + ['--ignore blake2signer/tests']
+    cmd0, cmd1 = cmd.copy(), cmd.copy()
+
     if coverage:
         cmd1.append('--cov-append')
+
+    cmd0.append('blake2signer')
+    cmd1.append('tests')
 
     ctx.run(' '.join(cmd0), pty=True, echo=True)
     ctx.run(' '.join(cmd1), pty=True, echo=True)
@@ -169,8 +175,8 @@ def safety(ctx):
         os.remove(requirements_path)
 
     print()
-    print('Safety check ReadTheDocs requirements (.readthedocs.requirements.txt)...')
-    ctx.run('safety check --full-report -r .readthedocs.requirements.txt')
+    print('Safety check ReadTheDocs requirements (docs/readthedocs.requirements.txt)...')
+    ctx.run('safety check --full-report -r docs/readthedocs.requirements.txt')
 
 
 @task(
@@ -198,6 +204,32 @@ def commit(ctx, amend=False):
     ctx.run(' '.join(cmd), pty=True)
 
 
+def docs_venv(ctx: Context) -> None:
+    """Ensure venv for the docs."""
+    if not Path('tasks.py').exists():
+        raise Exit("You can only run this command from the project's root directory", code=1)
+
+    if Path('docs/.venv/bin/python').exists():
+        return
+
+    print('Creating docs venv...')
+    with ctx.cd('docs'):
+        ctx.run('python -m venv .venv')
+        print('Installing dependencies...')
+        with ctx.prefix('source .venv/bin/activate'):
+            ctx.run('poetry install --no-ansi --no-root')
+
+
+@contextmanager
+def docs_context(ctx: Context) -> typing.Iterator[None]:
+    """Context manager to do things in the docs dir with the proper virtualenv."""
+    docs_venv(ctx)
+
+    with ctx.cd('docs'):
+        with ctx.prefix('source .venv/bin/activate'):
+            yield
+
+
 @task(help={'build': 'Build the docs instead of serving them'})
 def docs(ctx, build=False, verbose=False):
     """Serve the docs using mkdocs, alternatively building them."""
@@ -211,7 +243,27 @@ def docs(ctx, build=False, verbose=False):
     else:
         args.append('serve')
 
-    ctx.run(' '.join(args))
+    with docs_context(ctx):
+        ctx.run(' '.join(args))
+
+
+@task(
+    help={'update': 'update dependencies first'},
+    aliases=['docs-reqs'],
+)
+def docs_requirements(ctx, update=False):
+    """Create docs requirements using poetry (overwriting existing one, if any).
+
+    Additionally, if `update` is True then update dependencies first.
+    """
+    with docs_context(ctx):
+        if update:
+            print('Updating docs dependencies...')
+            ctx.run('poetry install --no-ansi --remove-untracked')
+            ctx.run('poetry update --no-ansi')
+
+        print('Exporting docs requirements to readthedocs.requirements.txt...')
+        ctx.run('poetry export -f requirements.txt -o readthedocs.requirements.txt')
 
 
 # noinspection PyUnusedLocal

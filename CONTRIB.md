@@ -44,6 +44,19 @@ Start your local dev environment by activating the virtualenv. I recommend using
 
 After that, install dependencies with `poetry install --remove-untracked`.
 
+### Dependencies
+
+All dependencies are managed by [poetry](https://python-poetry.org/). Project related dependencies are handled at the project's root, whereas docs related dependencies are treated separately in the `docs` subdir.
+
+Splitting dependencies like this is a bit annoying, but it was necessary due to an incompatibility between `mkdocs` and `flake8` (due to [`importlib-metadata`](https://github.com/PyCQA/flake8/pull/1438)). And it turns out to be not that bad, given that now we can create a proper requirements file for [Read The Docs](https://readthedocs.org/projects/blake2signer/).
+
+Therefore, you will need two virtualenv: one for the project, and one for the docs. However, if you use `invoke` then this is taken care for you, and you don't have to worry about the docs venv: it will be created automatically as needed. If you need to interact with said virtualenv, make sure to activate it when entering the docs subdir (poetry should take care of this for you, too).
+
+### Special considerations
+
+When working with BLAKE3, please import the `blake3` function from the `hashers` submodule: `from blake2signer.hashers import blake3` instead of importing it directly from its package. This is due to the fact that the package is optional, and it may not be installed.  
+That module handles it properly and will raise an exception when the function is called without the package installed.
+
 ### Making PRs
 
 Write your code. Then create a changelog fragment using `scriv create` with a short description of your changes in the corresponding category (added, changed, fixed, etc.).  

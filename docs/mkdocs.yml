@@ -75,11 +75,11 @@ plugins:
       default_handler: python
       handlers:
         python:
-          docstring_style: 'restructured-text'
+          docstring_style: 'google'
           rendering:
             show_root_heading: true
       watch:
-        - blake2signer
+        - ../blake2signer
 
 markdown_extensions:
   - toc:
@@ -103,4 +103,3 @@ extra:
       link: https://twitter.com/hackancuba
     - icon: fontawesome/solid/globe
       link: https://hackan.net
-
