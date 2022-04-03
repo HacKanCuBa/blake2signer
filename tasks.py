@@ -11,7 +11,6 @@ from tempfile import mkstemp
 from unittest.mock import patch
 
 from invoke import Result
-from invoke import UnexpectedExit
 from invoke import task
 
 from blake2signer import Blake2SerializerSigner
@@ -162,14 +161,16 @@ def safety(ctx):
     """Run Safety dependency vuln checker."""
     fd, requirements_path = mkstemp(prefix='b2s')
     os.close(fd)
+    print('Safety check project requirements...')
     try:
         ctx.run(f'poetry export -f requirements.txt -o {requirements_path} --dev')
         ctx.run(f'safety check --full-report -r {requirements_path}')
-    except UnexpectedExit:
+    finally:
         os.remove(requirements_path)
-        raise
 
-    os.remove(requirements_path)
+    print()
+    print('Safety check ReadTheDocs requirements (.readthedocs.requirements.txt)...')
+    ctx.run('safety check --full-report -r .readthedocs.requirements.txt')
 
 
 @task(
