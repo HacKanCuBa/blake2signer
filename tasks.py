@@ -60,7 +60,7 @@ def bandit(ctx):
 
 @task
 def mypy(ctx):
-    """Hint code with mypy."""
+    """Lint code with mypy."""
     ctx.run('mypy blake2signer/', echo=True, pty=True)
     ctx.run('mypy tests/', echo=True, pty=True)
 
@@ -83,7 +83,7 @@ def yapf(ctx, diff=False):
 
 @task
 def trailing_commas(ctx):
-    """Add missing trailing commas or remove it if necessary."""
+    """Add missing trailing commas, or remove them if necessary."""
     opts = r'-type f -name "*.py" -exec add-trailing-comma "{}" \+'  # noqa: P103
     ctx.run('find blake2signer/ ' + opts, echo=True, pty=True, warn=True)
     ctx.run('find tests/ ' + opts, echo=True, pty=True, warn=True)
@@ -93,7 +93,7 @@ def trailing_commas(ctx):
 # noinspection PyUnusedLocal
 @task(yapf, trailing_commas)
 def reformat(ctx):  # pylint: disable=W0613
-    """Reformat code."""
+    """Reformat code (runs YAPF and add-trailing-comma)."""
 
 
 @task
@@ -108,7 +108,10 @@ def pylint(ctx):
 # noinspection PyUnusedLocal
 @task(flake8, pylint, pydocstyle, darglint, mypy, bandit)
 def lint(ctx):  # pylint: disable=W0613
-    """Lint code and static analysis."""
+    """Lint code, and run static analysis.
+
+    Runs flake8, pylint, pydocstyle, darglint, mypy, and bandit.
+    """
 
 
 @task
@@ -135,6 +138,7 @@ def clean(ctx):
     help={
         'watch': 'run tests continuously with pytest-watch',
         'seed': 'seed number to repeat a randomization sequence',
+        'coverage': 'run with coverage (or not)',
     },
 )
 def tests(ctx, watch=False, seed=0, coverage=True):
@@ -165,9 +169,9 @@ def tests(ctx, watch=False, seed=0, coverage=True):
 @task
 def safety(ctx):
     """Run Safety dependency vuln checker."""
+    print('Safety check project requirements...')
     fd, requirements_path = mkstemp(prefix='b2s')
     os.close(fd)
-    print('Safety check project requirements...')
     try:
         ctx.run(f'poetry export -f requirements.txt -o {requirements_path} --dev')
         ctx.run(f'safety check --full-report -r {requirements_path}')
@@ -230,7 +234,12 @@ def docs_context(ctx: Context) -> typing.Iterator[None]:
             yield
 
 
-@task(help={'build': 'Build the docs instead of serving them'})
+@task(
+    help={
+        'build': 'build the docs instead of serving them',
+        'verbose': 'enable verbose output',
+    },
+)
 def docs(ctx, build=False, verbose=False):
     """Serve the docs using mkdocs, alternatively building them."""
     args = ['mkdocs']
