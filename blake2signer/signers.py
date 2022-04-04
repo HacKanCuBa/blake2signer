@@ -24,7 +24,7 @@ from .serializers import JSONSerializer
 class Blake2Signer(Blake2SignerBase):
     """BLAKE in keyed hashing mode for signing data.
 
-    Example:
+    Examples:
         >>> data = b'facundo castro presente'
         >>> secret_key = b'a very secret string'
         >>> signer = Blake2Signer(
@@ -165,7 +165,7 @@ class Blake2Signer(Blake2SignerBase):
 class Blake2TimestampSigner(Blake2TimestampSignerBase):
     """BLAKE in keyed hashing mode for signing data with timestamp.
 
-    Example:
+    Examples:
         >>> data = b'facundo castro presente'
         >>> secret_key = b'a very secret string'
         >>> signer = Blake2TimestampSigner(
@@ -343,7 +343,7 @@ class Blake2SerializerSigner(
     It uses BLAKE in keyed hashing mode, and it can handle data serialization,
     compression and encoding.
 
-    Example:
+    Examples:
         >>> data = {'message': 'attack at dawn', 'extra': [1, 2, 3, 4]}
         >>> secret_key = b'a very secret string'
         >>> signer = Blake2SerializerSigner(
