@@ -1,5 +1,6 @@
-[![Pipeline Status](https://img.shields.io/gitlab/pipeline/hackancuba/blake2signer/develop?style=plastic)](https://gitlab.com/hackancuba/blake2signer/-/pipelines?page=1&scope=all&ref=develop)
 [![Coverage Report](https://img.shields.io/gitlab/coverage/hackancuba/blake2signer/develop?style=plastic)](https://gitlab.com/hackancuba/blake2signer/-/commits/develop)
+[![Pipeline Status](https://img.shields.io/gitlab/pipeline/hackancuba/blake2signer/develop?style=plastic)](https://gitlab.com/hackancuba/blake2signer/-/pipelines?page=1&scope=all&ref=develop)
+[![Stable Documentation Status](https://readthedocs.org/projects/blake2signer/badge/?version=stable)](https://blake2signer.hackan.net/en/stable/?badge=stable)
 [![PyPI Version](https://img.shields.io/pypi/v/blake2signer?color=light%20green&style=plastic)](https://pypi.org/project/blake2signer)
 [![PyPI Python Versions](https://img.shields.io/pypi/pyversions/blake2signer?color=light%20green&style=plastic)](https://pypi.org/project/blake2signer)
 [![License](https://img.shields.io/pypi/l/blake2signer?color=light%20green&style=plastic)](https://gitlab.com/hackancuba/blake2signer/-/blob/main/LICENSE)
