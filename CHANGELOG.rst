@@ -10,7 +10,7 @@ Added
 Changed
 -------
 
-- Allow `max_age` to be None for the Blake2TimestampSigner: the timestamp is then not checked (but the signature is always checked).
+- Allow `max_age` to be None for the `Blake2TimestampSigner`: the timestamp is then not checked (but the signature is always checked).
 
 2.3.0 - 2022-02-23
 ==================
@@ -41,7 +41,7 @@ Changed
 Changed
 -------
 
-- Unhardcode default compression level, which was hardcoded to 6. That value was set for Zlib and remain there since the old times. Make the default `None` so we can let the compressor set the right value.
+- Unhardcode default compression level, which was hardcoded to 6. That value was set for Zlib and remained there since the old times. Make the default `None` so we can let the compressor set the right value.
 
 2.0.0 - 2021-06-11
 ==================
@@ -62,7 +62,7 @@ Added
 - Add new dump/load interface in `Blake2SerializerSigner` for file-like objects.
 - Add argument to `Blake2SerializerSigner.dumps()` to pass keyword arguments to the serializer.
 - Add documentation with mkdocs, and a nice title with logo (many thanks to Erus).
-- Add new methods to obtain data and signature separately for all signers: `sign_parts`/`unsign_parts` and `dumps_parts`/`loads_parts`.
+- Add new methods to obtain data and signature separately for all signers: `sign_parts`/`unsign_parts`, and `dumps_parts`/`loads_parts`.
 - Create a security scanning job using `Trivy <https://aquasecurity.github.io/trivy/>`_.
 - Add a job to test support for `PyPy <https://www.pypy.org>`_ 3.7.
 - Add a job to test support for `Stackless Python <https://github.com/stackless-dev/stackless/wiki>`_ 3.7.
@@ -136,15 +136,15 @@ Security
 Added
 -----
 
-- Add a logo and icons for the project (many thanks to NoonSleeper).
+- Add a logo and icons for the project (many thanks to `NoonSleeper <https://gitlab.com/noonsleeper>`_).
 - Add index to readme.
-- Add again flake8-annotations-complexity since it now works in Python 3.9+.
+- Add again `flake8-annotations-complexity` since it now works in Python 3.9+.
 
 Changed
 -------
 
 - Updated dependencies.
-- Use debian-based images in CI to run tests, prventing package building wreckage and improving run time (there's no need to build given most packages publish a wheel artifact).
+- Use debian-based images in CI to run tests, preventing package building wreckage and improving run time (there's no need to build given most packages publish a wheel artifact).
 
 0.5.1 - 2020-11-08
 ==================
@@ -186,7 +186,7 @@ Added
 -----
 
 - Create new parameter to set compression level in `dumps` for `Blake2SerializerSigner`.
-- When compressing check if there's a benefit to it and if not skip it in `dumps` for `Blake2SerializerSigner`.
+- When compressing, check if there's a benefit to it and if not skip it in `dumps` for `Blake2SerializerSigner`.
 
 Changed
 -------
@@ -196,7 +196,7 @@ Changed
 - The salt is generated and used as base64 data to avoid needing to decode it when checking the signature.
 - Use a symbol to separate composite signature from timestamp and data.
 - Verify the signature before decoding.
-- Blake2Serializer was renamed to Blake2SerializerSigner because of reasons.
+- `Blake2Serializer` was renamed to `Blake2SerializerSigner` because of reasons.
 - Derive key from `secret` and `person` in all classes.
 - Force bytes in all inputs.
 - Set minimum digest size of 16 (was 8).
