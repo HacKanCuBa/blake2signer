@@ -4,7 +4,7 @@ This section discusses internals of this lib and performance tweaks that can hel
 
 ## Class instantiation
 
-During class instantiation, both the `secret` and `personalisation` values are derived, and every parameter is checked to be in certain bounds; therefore there is a performance impact similar to sign a relatively small payload. It is twice as significant when instantiating *Blake2SerializerSigner* than the other signers. So, this creates an interesting optimization possibility: to cache the class instantiation.
+During class instantiation, both the `secret` and `personalisation` values are derived, and every parameter is checked to be in certain bounds; therefore there is a performance impact similar to sign a relatively small payload. It is twice as significant when instantiating [*Blake2SerializerSigner*](signers.md#blake2signer.signers.Blake2SerializerSigner) than the other signers. So, this creates an interesting optimization possibility: to cache the class instantiation.
 
 !!! warning
     If the instantiation only occurs once, then using a cache won't make a difference since the first hit is always needed to produce it. Test your implementation to make sure it is making a positive difference.

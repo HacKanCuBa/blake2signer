@@ -44,7 +44,7 @@ print(unsigned)  # {'user_id': 1, 'is_admin': True, 'username': 'hackan'}
 ```
 
 !!! tip "Controlling exceptions"
-    When using `unsign` or `loads` always wrap them in a `try ... except errors.SignedDataError` block to catch all exceptions raised by those methods. Moreover, [all exceptions raised by this lib](errors.md) are subclassed from `SignerError`.  
+    When using `unsign` or `loads` always wrap them in a `try ... except errors.SignedDataError` block to catch all exceptions raised by those methods. Moreover, [all exceptions raised by this lib](errors.md) are subclassed from [`SignerError`](errors.md#blake2signer.errors.SignerError).  
     Alternatively, check each method's docs and catch specific exceptions.
 
 !!! tip "Using personalisation"
@@ -148,7 +148,7 @@ class CookieHTTPMiddleware(BaseHTTPMiddleware):
 
 ## Signing data structures
 
-You can quickly get any python object serialized and signed using `Blake2SerializerSigner`, which additionally compresses and encodes the output by default. It uses a JSON serializer by default, but it can be changed easily.
+You can quickly get any python object serialized and signed using [`Blake2SerializerSigner`](signers.md#blake2signer.signers.Blake2SerializerSigner), which additionally compresses and encodes the output by default. It uses a JSON serializer by default, but it can be changed easily.
 
 ```python
 """Signing a data structure that requires serialization."""
@@ -173,11 +173,11 @@ print(data == unsigned)  # True
 ```
 
 !!! tip "Favor bytes over string"
-    Even though `Blake2SerializerSigner` accepts parameters as string (`secret`, `personalisation`, `separator` and `compression_flag`) you should use bytes instead: it will try to convert any given string to bytes **assuming it's UTF-8 encoded** which might not be correct (an `errors.ConversionError` exception is raised); if you are certain that the string given is UTF-8 then it's OK, otherwise ensure encoding the string correctly and using bytes instead.
+    Even though [`Blake2SerializerSigner`](signers.md#blake2signer.signers.Blake2SerializerSigner) accepts parameters as string (`secret`, `personalisation`, `separator` and `compression_flag`) you should use bytes instead: it will try to convert any given string to bytes **assuming it's UTF-8 encoded** which might not be correct (an [`errors.ConversionError`](errors.md#blake2signer.errors.ConversionError) exception is raised); if you are certain that the string given is UTF-8 then it's OK, otherwise ensure encoding the string correctly and using bytes instead.
 
 ### Using non-serializer signers
 
-You may not want all that `Blake2SerializerSigner` does and instead require the serialization to be plain in the signature, perhaps to [split the signature](#splitting-signatures) and be able to read the payload from JS. In this situation you may want to use `Blake2Signer`, or `Blake2TimestampSigner` if you also require to limit the lifetime of the signature.
+You may not want all that [`Blake2SerializerSigner`](signers.md#blake2signer.signers.Blake2SerializerSigner) does and instead require the serialization to be plain in the signature, perhaps to [split the signature](#splitting-signatures) and be able to read the payload from JS. In this situation you may want to use [`Blake2Signer`](signers.md#blake2signer.signers.Blake2Signer), or [`Blake2TimestampSigner`](signers.md#blake2signer.signers.Blake2TimestampSigner) if you also require to limit the lifetime of the signature.
 
 ```python
 """Signing a serialized data structure."""
@@ -343,10 +343,10 @@ You can use a custom JSON encoder to serialize values that are not supported by 
 
 You can use a custom serializer such as [msgpack](https://pypi.org/project/msgpack/) which is very efficient, much better than JSON (half resulting size and more than twice as fast), so it is an excellent choice for a serializer. For keeping JSON as serializer a better choice than the standard library is [orjson](https://github.com/ijl/orjson) which is faster.
 
-All you need to do is implement `SerializerInterface`, and define how is your serializer serializing and unserializing. That's it.
+All you need to do is implement [`SerializerInterface`](interfaces.md#blake2signer.interfaces.SerializerInterface), and define how is your serializer serializing and unserializing. That's it.
 
 !!! warning
-    **Never** use `pickle` as serializer given than if for some implementation error a malicious user can sign arbitrary data, then unsigning it will cause code execution (JSON and msgpack are safe against such situations).
+    **Never** use `pickle` as serializer given that if for some implementation error a malicious user can sign arbitrary data, then unsigning it will cause code execution (JSON and msgpack are safe against such situations).
 
 ```python
 """Creating a custom serializer."""
@@ -386,7 +386,7 @@ print(data == unsigned)  # True
 
 ### Compressing data
 
-There are several options regarding the compression capabilities of `Blake2SerializerSigner`. By default, it will check if compressing given data is working out positively or not, and may decide to not compress after all. This behaviour can be changed to not compress at all or force the compression nevertheless. The [compression level](details.md#compression-level) can also be tweaked to your needs.
+There are several options regarding the compression capabilities of [`Blake2SerializerSigner`](signers.md#blake2signer.signers.Blake2SerializerSigner). By default, it will check if compressing given data is working out positively or not, and may decide to not compress after all. This behaviour can be changed to not compress at all or force the compression nevertheless. The [compression level](details.md#compression-level) can also be tweaked to your needs.
 
 ```python
 """Signing a data structure and playing with compression capabilities."""
@@ -479,7 +479,7 @@ print(
 
 ### Changing the compressor
 
-There are two [compressors provided by this package](details.md#encoders-serializers-and-compressors): a Zlib compressor (default) and a Gzip compressor.
+There are two [compressors provided by this package](details.md#encoders-serializers-and-compressors): a [Zlib compressor](compressors.md#blake2signer.compressors.ZlibCompressor) (default) and a [Gzip compressor](compressors.md#blake2signer.compressors.GzipCompressor).
 
 ```python
 """Changing the compressor in Blake2SerializerSigner."""
@@ -512,7 +512,7 @@ signer1.loads(signed)
 
 ### Using a custom compressor
 
-You can use custom compressors such as BZ2 or LZMA, or any other. All you need to do is implement `CompressorInterface`, and define how is your compressor compressing and decompressing. That's it.
+You can use custom compressors such as BZ2 or LZMA, or any other. All you need to do is implement [`CompressorInterface`](interfaces.md#blake2signer.interfaces.CompressorInterface), and define how is your compressor compressing and decompressing. That's it.
 
 !!! note
     If you get an import error for `bz2` then [your python build doesn't support it](https://stackoverflow.com/questions/12806122/missing-python-bz2-module/12806325#12806325).
@@ -587,7 +587,7 @@ print(data == signer.loads(signed))  # True
 
 !!! info "New in v2.0.0"
 
-`Blake2SerializerSigner` has two convenient methods to deal with files: `dump` (write signed data to file) and `load` (read signed data from file). These methods may raise `errors.FileError` while reading from/writing to the file.
+[`Blake2SerializerSigner`](signers.md#blake2signer.signers.Blake2SerializerSigner) has two convenient methods to deal with files: [`dump`](signers.md#blake2signer.signers.Blake2SerializerSigner.dump) (write signed data to file) and [`load`](signers.md#blake2signer.signers.Blake2SerializerSigner.load) (read signed data from file). These methods may raise [`errors.FileError`](errors.md#blake2signer.errors.FileError) while reading from/writing to the file.
 
 ```python
 """Dealing with files using Blake2SerializerSigner."""
@@ -648,7 +648,7 @@ print(file.read().decode())
 ```
 
 !!! note
-    Both methods uses the file as-is: this means that for `dump`, data is written at the current position (so the cursor advances equally to the written size), and for `load`, data is read entirely from the current position (so the cursor will sit at the end).
+    Both methods uses the file as-is: this means that for [`dump`](signers.md#blake2signer.signers.Blake2SerializerSigner.dump), data is written at the current position (so the cursor advances equally to the written size), and for [`load`](signers.md#blake2signer.signers.Blake2SerializerSigner.load), data is read entirely from the current position (so the cursor will sit at the end).
 
 ## Signing raw bytes or strings
 
@@ -716,22 +716,22 @@ print(data == unsigned)  # True
 ```
 
 !!! tip "Favor bytes over string"
-    Even though both `Blake2Signer` and `Blake2TimestampSigner` accepts data and parameters (`secret`, `personalisation` and `separator`) as string you should use bytes instead: both classes will try to convert any given string to bytes **assuming it's UTF-8 encoded** which might not be correct (an `errors.ConversionError` exception is raised); if you are certain that the string given is UTF-8 then it's OK, otherwise ensure encoding the string correctly and using bytes instead. Additionally, when *unsigned*, the data type will be bytes and not string (again, you can convert it if you know the encoding).
+    Even though both [`Blake2Signer`](signers.md#blake2signer.signers.Blake2Signer) and [`Blake2TimestampSigner`](signers.md#blake2signer.signers.Blake2TimestampSigner) accepts data and parameters (`secret`, `personalisation` and `separator`) as string you should use bytes instead: both classes will try to convert any given string to bytes **assuming it's UTF-8 encoded** which might not be correct (an [`errors.ConversionError`](errors.md#blake2signer.errors.ConversionError) exception is raised); if you are certain that the string given is UTF-8 then it's OK, otherwise ensure encoding the string correctly and using bytes instead. Additionally, when *unsigned*, the data type will be bytes and not string (again, you can convert it if you know the encoding).
 
 ### I need to work with raw bytes, but I want compression and encoding
 
-Usually to work with bytes or string one can choose to use either `Blake2Signer` or `Blake2TimestampSigner`. However, if you also want to have compression and encoding, you need `Blake2SerializerSigner`. The problem now is that JSON doesn't support bytes, so the class as-is won't work. There are a couple of solutions:
+Usually to work with bytes or string one can choose to use either [`Blake2Signer`](signers.md#blake2signer.signers.Blake2Signer) or [`Blake2TimestampSigner`](signers.md#blake2signer.signers.Blake2TimestampSigner). However, if you also want to have compression and encoding, you need [`Blake2SerializerSigner`](signers.md#blake2signer.signers.Blake2SerializerSigner). The problem now is that JSON doesn't support bytes, so the class as-is won't work. There are a couple of solutions:
 
-1. Use the `NullSerializer` from the `serializers` submodule with `Blake2SerializerSigner` ([see example](#using-the-nullserializer) below).
+1. Use the [`NullSerializer`](serializers.md#blake2signer.serializers.NullSerializer) from the [`serializers`](serializers.md) submodule with [`Blake2SerializerSigner`](signers.md#blake2signer.signers.Blake2SerializerSigner) ([see example](#using-the-nullserializer) below).
 1. Create a custom JSON encoder that encodes bytes ([see example](#using-a-custom-json-encoder) above).
 1. Use the `MsgpackSerializer` given that *msgpack* does handle bytes serialization ([see example](#using-a-custom-serializer) above).
-1. Create a custom class inheriting from `CompressorMixin` and `Blake2SerializerSignerBase` - which already contains `EncoderMixin` - ([see example](#creating-a-custom-serializersigner-class) below).
+1. Create a custom class inheriting from [`CompressorMixin`](mixins.md#blake2signer.mixins.CompressorMixin) and [`Blake2SerializerSignerBase`](bases.md#blake2signer.bases.Blake2SerializerSignerBase) - which already contains [`EncoderMixin`](mixins.md#blake2signer.mixins.EncoderMixin) - ([see example](#creating-a-custom-serializersigner-class) below).
 
 #### Using the NullSerializer
 
 !!! info "New in v2.0.0"
 
-The `NullSerializer` is useful when one needs to deal with bytes but want compression and encoding capabilities. Otherwise `Blake2Signer` or `Blake2TimestampSigner` should be preferred.
+The [`NullSerializer`](serializers.md#blake2signer.serializers.NullSerializer) is useful when one needs to deal with bytes but want compression and encoding capabilities. Otherwise [`Blake2Signer`](signers.md#blake2signer.signers.Blake2Signer) or [`Blake2TimestampSigner`](signers.md#blake2signer.signers.Blake2TimestampSigner) should be preferred.
 
 ```python
 """Using the NullSerializer with Blake2SerializerSigner."""
@@ -758,7 +758,7 @@ print(data == unsigned)  # True
 
 ## Limiting signature lifetime
 
-You can limit the lifetime of the signature with both `Blake2SerializerSigner` and `Blake2TimestampSigner`: a timestamp is appended to the signature and is checked to the current time when verifying it.
+You can limit the lifetime of the signature with both [`Blake2SerializerSigner`](signers.md#blake2signer.signers.Blake2SerializerSigner) and [`Blake2TimestampSigner`](signers.md#blake2signer.signers.Blake2TimestampSigner): a timestamp is appended to the signature and is checked to the current time when verifying it.
 
 ```python
 """Signing a data structure that requires a limited lifetime."""
@@ -831,8 +831,8 @@ Sometimes it can be useful to make certain data expire, but there are situations
 
 !!! success inline end "Signatures are always checked"
 
-Since v2.4.0, `Blake2TimestampSigner` can omit the timestamp check when needed, acting like both a timestamped and a regular signer.  
-This can be done in both `unsign` and `unsign_parts` methods.
+Since v2.4.0, [`Blake2TimestampSigner`](signers.md#blake2signer.signers.Blake2TimestampSigner) can omit the timestamp check when needed, acting like both a timestamped and a regular signer.  
+This can be done in both [`unsign`](signers.md#blake2signer.signers.Blake2TimestampSigner.unsign) and [`unsign_parts`](signers.md#blake2signer.signers.Blake2TimestampSigner.unsign_parts) methods.
 
 ```python
 """Choosing when to check the timestamp."""
@@ -987,7 +987,7 @@ except errors.InvalidSignatureError as exc:
 
 !!! info "New in v2.0.0"
 
-There are some situations were you need to transmit data and signature through different transports, such as different cookies (i.e. to store the signature in a HTTPOnly cookie and the data in a JS readable one) or different fields (i.e. to present data to the user but hide the signature because it is not pretty to read). For those situations a mechanism is provided out-of-the-box: `sign_parts`/`unsign_parts` and `dumps_parts`/`loads_parts`.
+There are some situations were you need to transmit data and signature through different transports, such as different cookies (i.e. to store the signature in a HTTPOnly cookie and the data in a JS readable one) or different fields (i.e. to present data to the user but hide the signature because it is not pretty to read). For those situations a mechanism is provided out-of-the-box: [`sign_parts`](signers.md#blake2signer.signers.Blake2Signer.sign_parts)/[`unsign_parts`](signers.md#blake2signer.signers.Blake2Signer.unsign_parts) and [`dumps_parts`](signers.md#blake2signer.signers.Blake2SerializerSigner.dumps_parts)/[`loads_parts`](signers.md#blake2signer.signers.Blake2SerializerSigner.loads_parts).
 
 !!! info "This can be done in every signer"
 
@@ -1018,7 +1018,7 @@ print(data == unsigned)  # True
 ```
 
 !!! note
-    Signature containers `Blake2Signature` and `Blake2SignatureDump` are equivalent, but the first one contains only bytes whereas the second one, only strings.
+    Signature containers [`Blake2Signature`](bases.md#blake2signer.bases.Blake2Signature) and [`Blake2SignatureDump`](bases.md#blake2signer.bases.Blake2SignatureDump) are equivalent, but the first one contains only bytes whereas the second one, only strings.
 
 ## Generating deterministic signatures
 
@@ -1153,7 +1153,7 @@ print(data == unsigned)  # True
 
 ## Changing the encoder
 
-There are three [encoders provided by this package](details.md#encoders-serializers-and-compressors): a Base64 URL safe encoder (default), a Base 32 encoder and a Base 16/Hex encoder.
+There are three [encoders provided by this package](details.md#encoders-serializers-and-compressors): a [Base64 URL safe encoder](encoders.md#blake2signer.encoders.B64URLEncoder) (default), a [Base 32 encoder](encoders.md#blake2signer.encoders.B32Encoder) and a [Base 16/Hex encoder](encoders.md#blake2signer.encoders.HexEncoder).
 
 !!! info "This can be done in every signer since v2.0.0"
 
@@ -1200,7 +1200,7 @@ signer2.unsign(signed)
 
 ## Using a custom encoder
 
-If you need to use an encoder that is not implemented by this package, such as A85 or UUencode, you can do so: all you need to do is implement the `EncoderInterface`, and define how is your encoder encoding and decoding, as well as indicating its alphabet. That's it.
+If you need to use an encoder that is not implemented by this package, such as A85 or UUencode, you can do so: all you need to do is implement the [`EncoderInterface`](interfaces.md#blake2signer.interfaces.EncoderInterface), and define how is your encoder encoding and decoding, as well as indicating its alphabet. That's it.
 
 !!! note
     The separator and compression flag characters must not belong to the encoder alphabet. This is to correctly split the signature and payload before decoding (it would be dangerous to do it the other way around), and to unequivocally identify a compressed payload, respectively.
@@ -1271,7 +1271,7 @@ print(data == signer.unsign(signed))  # True
 
 ## Changing the digest size
 
-One advantage of BLAKE2+ is that it is very flexible and tweakable, and one of the things we can tweak is its digest size. This means that the output size of the signer can be changed for shorter or longer signatures: longer ones are more secure given that they are almost impossible to bruteforce. It is set to 16 bytes by default, which is a good compromise between security and length.
+One advantage of BLAKE2+ is that it is very flexible, and tweakable, and one of the things we can tweak is its digest size. This means that the output size of the signer can be changed for shorter or longer signatures: longer ones are more secure given that they are almost impossible to bruteforce. It is set to 16 bytes by default, which is a good compromise between security and length.
 
 !!! note
     A minimum size of 16 bytes is enforced, but [it can be changed](#changing-the-digest-size-limit).
@@ -1292,7 +1292,7 @@ print(len(signed))  # 103: 16 for salt, 86 for the encoded 64B digest, 1 for the
 ```
 
 !!! note
-    The maximum digest size depends on the hasher: 64 bytes for *blake2b*, and 32 for *blake2s* (check the [Python docs](https://docs.python.org/3/library/hashlib.html#creating-hash-objects) for more info).
+    The maximum digest size depends on the hasher: 64 bytes for *blake2b*, and 32 for *blake2s* (check the [Python docs](https://docs.python.org/3/library/hashlib.html#creating-hash-objects) for more info); *blake3* has no size limit.
 
 ### Changing the digest size limit
 
@@ -1327,7 +1327,7 @@ print(len(signed))  # 12: 11 for the encoded 8B digest, 1 for the separator
 
 ## Creating a custom SerializerSigner class
 
-You can create your own *SerializerSigner* using provided `Blake2SerializerSignerBase` and any of the mixins: `SerializerMixin` or `CompressorMixin` (`EncoderMixin` is included in the base class) or even creating your own mixin inheriting from `Mixin` (note that the class inheritance order matters, and the mixins must come first leaving the chosen base class last).
+You can create your own *SerializerSigner* using provided [`Blake2SerializerSignerBase`](bases.md#blake2signer.bases.Blake2SerializerSignerBase) and any of the mixins: [`SerializerMixin`](mixins.md#blake2signer.mixins.SerializerMixin) or [`CompressorMixin`](mixins.md#blake2signer.mixins.CompressorMixin) ([`EncoderMixin`](mixins.md#blake2signer.mixins.EncoderMixin) is included in the base class) or even creating your own mixin inheriting from [`Mixin`](mixins.md#blake2signer.mixins.Mixin) (note that the class inheritance order matters, and the mixins must come first leaving the chosen base class last).
 
 !!! danger
     This is rather advanced, and you should think if this is what you really need to do.

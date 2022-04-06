@@ -6,11 +6,11 @@ Some details and general information about the signers in this lib.
 
 This module provides three signer classes:
 
-* **Blake2SerializerSigner**: a signer class that handles data serialization, compression and encoding along with salted signing and salted timestamped signing. Its public methods are `dumps`, `loads`, `dumps_parts` and `loads_parts`, and `dump` and `load` for files.
-* **Blake2Signer**: a signer class that simply salts, signs and verifies signed data as bytes or string. Its public methods are `sign`, `unsign`, `sign_parts` and `unsign_parts`.
-* **Blake2TimestampSigner**: a signer class that simply salts, signs and verifies signed timestamped data as bytes or string. Its public methods are `sign`, `unsign`, `sign_parts` and `unsign_parts`.
+* [**Blake2SerializerSigner**](signers.md#blake2signer.signers.Blake2SerializerSigner): a signer class that handles data serialization, compression and encoding along with salted signing and salted timestamped signing. Its public methods are `dumps`, `loads`, `dumps_parts` and `loads_parts`, and `dump` and `load` for files.
+* [**Blake2Signer**](signers.md#blake2signer.signers.Blake2Signer): a signer class that simply salts, signs and verifies signed data as bytes or string. Its public methods are `sign`, `unsign`, `sign_parts` and `unsign_parts`.
+* [**Blake2TimestampSigner**](signers.md#blake2signer.signers.Blake2TimestampSigner): a signer class that simply salts, signs and verifies signed timestamped data as bytes or string. Its public methods are `sign`, `unsign`, `sign_parts` and `unsign_parts`.
 
-**You should generally go for Blake2SerializerSigner**, given that it's the most versatile of the three, unless you need to deal with plain bytes or string.
+**You should generally go for [Blake2SerializerSigner](signers.md#blake2signer.signers.Blake2SerializerSigner)**, given that it's the most versatile of the three, unless you need to deal with plain bytes or string.
 
 !!! tip
     [Serializing with JSON has a cost](performance.md#choosing-the-right-signer), even for small payloads (at least twice as much time as not serializing); so think about what you need to sign to pick the right signer. Also, note that [you can change the serializer](examples.md#using-a-custom-serializer) for better performance.
@@ -27,7 +27,7 @@ All [signers](signers.md) share the following instantiation parameters:
 * `separator`: (New in v2.0.0) Character to separate the signature, the timestamp and the payload. It must not belong to the encoder alphabet and be ASCII (defaults to `.`).
 * `encoder`: (New in v2.0.0) Encoder class to use (defaults to a Base64 URL safe encoder). Note that `Blake2Signer` and `Blake2TimestampSigner` only encodes the signature, whereas `Blake2SerializerSigner` encodes everything.
 
-Additionally, *Blake2SerializerSigner* supports the following:
+Additionally, [*Blake2SerializerSigner*](signers.md#blake2signer.signers.Blake2SerializerSigner) supports the following:
 
 * `max_age`: Use a timestamp signer instead of a regular one to ensure that the signature is not older than this time in seconds.
 * `serializer`: Serializer class to use (defaults to a JSON serializer).
@@ -61,7 +61,7 @@ On all signers a secure pseudorandom salt of the maximum allowed size for the ha
     print(signed1 != signed2)  # True
     ```
 
-Since v1.2.0, it is possible to generate deterministic signatures (meaning, without salt) using the `deterministic` option when instantiating any signer. For `Blake2SerializerSigner` this assumes that the serializer and compressor are always deterministic: if that is not true, then the signature won't be deterministic (encoders always are, and provided serializers and compressors are too), which isn't a problem on itself but just to clarify that the parameter doesn't do any magic.
+Since v1.2.0, it is possible to generate deterministic signatures (meaning, without salt) using the `deterministic` option when instantiating any signer. For [`Blake2SerializerSigner`](signers.md#blake2signer.signers.Blake2SerializerSigner) this assumes that the serializer and compressor are always deterministic: if that is not true, then the signature won't be deterministic (encoders always are, and provided serializers and compressors are too), which isn't a problem on itself but just to clarify that the parameter doesn't do any magic.
 
 Other packages usually refer to salt as something to mix with the secret to prevent signer misuse, but here we have the `personalisation` parameter for that.
 
@@ -195,7 +195,7 @@ You should consider this to define the amount of times you rotate the secret and
 ### Changing the secret size limit
 
 The secret value is enforced to be of a minimum length of 16 bytes, but this can be changed: either to a bigger or lower value. A longer secret is always a good idea, and there is no limit for this given that [its value is derived](details.md#about-the-secret) to produce the hashing key.  
-To change the limit, set the class attribute `MIN_SECRET_SIZE` to the desired value in bytes.
+To change the limit, set the class attribute [`MIN_SECRET_SIZE`](bases.md#blake2signer.bases.Base.MIN_SECRET_SIZE) to the desired value in bytes.
 
 !!! danger
     Reducing the secret size lower than 8 bytes (128 bits) poses an increasing security risk.
@@ -227,7 +227,7 @@ To change the limit, set the class attribute `MIN_SECRET_SIZE` to the desired va
 
 ## Encoders, Serializers and Compressors
 
-Signers support changing the encoder class (since v2.0.0) and *Blake2SerializerSigner* also support changing the serializer and compressor. This package provides several encoders, serializers and compressors in their respective submodules:
+Signers support changing the encoder class (since v2.0.0) and [*Blake2SerializerSigner*](signers.md#blake2signer.signers.Blake2SerializerSigner) also support changing the serializer and compressor. This package provides several encoders, serializers and compressors in their respective submodules:
 
 * Encoders
     * Base64 URL safe encoder: uses only lowercase and uppercase English alphabet letters, numbers, underscore (`_`) and hyphen (`-`).
@@ -241,16 +241,16 @@ Signers support changing the encoder class (since v2.0.0) and *Blake2SerializerS
     * Gzip compressor: compresses using [GZip](https://www.gzip.org/).
 
 !!! tip "New in v0.4.0"
-    You can create a custom encoder simply inheriting from `EncoderInterface`, a custom compressor inheriting from `CompressorInterface` and a custom serializer inheriting from `SerializerInterface`, and you don't need to handle or worry about exceptions: those are caught by the caller class.
+    You can create a custom encoder simply inheriting from [`EncoderInterface`](interfaces.md#blake2signer.interfaces.EncoderInterface), a custom compressor inheriting from [`CompressorInterface`](interfaces.md#blake2signer.interfaces.CompressorInterface) and a custom serializer inheriting from [`SerializerInterface`](interfaces.md#blake2signer.interfaces.SerializerInterface), and you don't need to handle or worry about exceptions: those are caught by the caller class.
 
 !!! info "New in v2.0.0"
-    All interfaces live in the `interfaces` submodule.
+    All interfaces live in the [`interfaces`](interfaces.md) submodule.
 
 Check examples on how to use existing [encoders](examples.md#changing-the-encoder), [compressors](examples.md#changing-the-compressor) and [serializers](examples.md#changing-the-serializer), or how to create a [custom serializer](examples.md#using-a-custom-serializer), [encoder](examples.md#using-a-custom-encoder) or [compressor](examples.md#using-a-custom-compressor) or even a [custom serializer signer class](examples.md#creating-a-custom-serializersigner-class).
 
 ### Compression level
 
-*Blake2SerializerSigner* can optionally [compress data](examples.md#compressing-data) after serializing it to make the resulting signature shorter. Since v2.1.0, the default compression level depends on the compressor and is no longer hardcoded to 6. For example, Zlib defaults to 6 but Gzip, to 9.
+[*Blake2SerializerSigner*](signers.md#blake2signer.signers.Blake2SerializerSigner) can optionally [compress data](examples.md#compressing-data) after serializing it to make the resulting signature shorter. Since v2.1.0, the default compression level depends on the compressor and is no longer hardcoded to 6. For example, Zlib defaults to 6 but Gzip, to 9.
 
 No matter which compressor is used, it will always be a value between 1 and 9, where 1 is the fastest and least compressed and 9 the slowest and most compressed. Should a compressor in particular use a different scale, then a conversion is internally done, so the end user doesn't have to deal with those details, and the interface remains homogeneous.
 

@@ -1,5 +1,9 @@
 # FAQ
 
+## Is this project being maintained?
+
+Yes, I'm actively maintaining it, and producing releases on a regular basis, even with new features. As a general rule, you can check the [repo activity](https://gitlab.com/hackancuba/blake2signer/activity) or the [commits graph](https://gitlab.com/hackancuba/blake2signer/-/network/develop).
+
 ## How can I do *something*?
 
 Check the [examples](examples.md) and [details](details.md) for more information. If you still can't solve your doubt, please [open an issue](https://gitlab.com/hackancuba/blake2signer/-/issues/new).
@@ -10,7 +14,7 @@ If you are already using *X* package, then there may be little to no benefit to 
 
 ## Can I use this package in production?
 
-Yes, it has a stable API and is ready for production. It will greatly benefit of having more time in the wild and/or an external security review.
+Yes, it has a stable API and is ready for production. It will greatly benefit of having more time in the wild and/or an external security review. Additionally, it will always follow [semver](https://semver.org/), so rest assured that minors and patches *should not* break your application, ever. Take a peak at the [upgrade guide](upgrade.md) detailing everything related to version changes.
 
 ## Will this package support other versions of BLAKE?
 

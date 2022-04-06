@@ -1,6 +1,6 @@
 # Security
 
-This project takes security very seriously. If you ever find a vulnerability, please [get in touch](https://hackan.net) ASAP and/or [open an issue](https://gitlab.com/hackancuba/blake2signer/-/issues) unless disclosure is harmful.
+This project takes security very seriously. If you ever find a vulnerability, please [get in touch](https://hackan.net) ASAP and/or [open an issue](https://gitlab.com/hackancuba/blake2signer/-/issues) unless disclosure is harmful (make sure to check the *confidential* checkbox).
 
 ## Improving security
 
@@ -9,7 +9,7 @@ With the goal of keeping this project secure, several measures are taken:
 * Good test coverage to prevent bugs.
 * Code fuzzed to uncover unexpected bugs.
 * Static typing to prevent type-related bugs.
-* Tags, releases and packages are always signed.
+* Tags, releases and packages are [always signed](signatures.md).
 * No external dependencies to diminish attack surface and risk.
 * Safe defaults and secure minimums enforced for sensitive values.
 * Analysis of (dev) dependencies for known vulnerabilities using [safety](https://pyup.io/safety) and [trivy](https://aquasecurity.github.io/trivy/).

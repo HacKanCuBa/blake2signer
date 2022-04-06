@@ -8,7 +8,7 @@ Comparison against other similar libraries.
 
 ### Signing interface
 
-Both `itsdangerous.Signer` and `itsdangerous.TimestampSigner` appends the signature to the given string, whereas `blake2signer.Blake2Signer` and `blake2signer.Blake2TimestampSigner` prepends it (with salt). Other than that, this package can be a drop-in replacement and vice versa.
+Both `itsdangerous.Signer` and `itsdangerous.TimestampSigner` appends the signature to the given string, whereas [`blake2signer.Blake2Signer`](signers.md#blake2signer.signers.Blake2Signer) and [`blake2signer.Blake2TimestampSigner`](signers.md#blake2signer.signers.Blake2TimestampSigner) prepends it (with salt). Other than that, this package can be a drop-in replacement and vice versa.
 
 === "ItsDangerous"
 
@@ -59,7 +59,7 @@ Both `itsdangerous.Signer` and `itsdangerous.TimestampSigner` appends the signat
 
 ### Serializing interface
 
-For serializing and signing objects, *itsdangerous* provides four classes: `Serializer`, `URLSafeSerializer`, `TimedSerializer` and `URLSafeTimedSerializer`. This package provides similar capabilities in a single class: `Blake2SerializerSigner`.  
+For serializing and signing objects, *itsdangerous* provides four classes: `Serializer`, `URLSafeSerializer`, `TimedSerializer` and `URLSafeTimedSerializer`. This package provides similar capabilities in a single class: [`Blake2SerializerSigner`](signers.md#blake2signer.signers.Blake2SerializerSigner).  
 The interfaces are similar and can be used as drop-in replacements.
 
 === "ItsDangerous"
@@ -130,7 +130,7 @@ The interfaces are similar and can be used as drop-in replacements.
 
 ### Signing interface
 
-The `django.core.signing.Signer` appends the signature to the given string, whereas `blake2signer.Blake2Signer` prepends it (with salt). Other than that, this package can be a drop-in replacement and vice versa.
+The `django.core.signing.Signer` appends the signature to the given string, whereas [`blake2signer.Blake2Signer`](signers.md#blake2signer.signers.Blake2Signer) prepends it (with salt). Other than that, this package can be a drop-in replacement and vice versa.
 
 === "Django"
 
@@ -179,13 +179,13 @@ The `django.core.signing.Signer` appends the signature to the given string, wher
 
 !!! abstract "Main differences"
     * *django* uses *sha-256* by default as hashing backend, this package uses *blake2b*.
-    * *django* creates deterministic signatures by default, this package doesn't.
+    * *django* creates deterministic signatures by default, this package doesn't, [but can](examples.md#generating-deterministic-signatures).
     * *django* appends signature (and timestamp) to data, this package prepends it.
     * *django* uses the character `:` as separator by default, this package uses `.`.
 
 ### Serializing interface
 
-For serializing and signing objects, *Django* provides two functions: `dumps` and `loads`. This package provides similar capabilities in a single class: `Blake2SerializerSigner`.  
+For serializing and signing objects, *Django* provides two functions: `dumps` and `loads`. This package provides similar capabilities in a single class: [`Blake2SerializerSigner`](signers.md#blake2signer.signers.Blake2SerializerSigner).  
 The interfaces are similar and can be used as drop-in replacements.
 
 === "Django"
