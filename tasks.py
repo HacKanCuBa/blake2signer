@@ -68,7 +68,7 @@ def mypy(ctx):
 @task
 def yapf(ctx, diff=False):
     """Run yapf to format the code."""
-    cmd = ['yapf', '-r', '-vv']
+    cmd = ['yapf', '--recursive', '--verbose', '--parallel']
     if diff:
         cmd.append('-d')
     else:
