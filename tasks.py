@@ -149,7 +149,7 @@ def tests(ctx, watch=False, seed=0, coverage=True):
         cmd = ['pytest', '--suppress-no-test-exit-code']
 
     if seed:
-        cmd.append(f'--randomly-seed={seed}')
+        cmd.append(f'--randomly-seed="{seed}"')
 
     if not coverage:
         cmd.append('--no-cov')
@@ -173,8 +173,8 @@ def safety(ctx):
     fd, requirements_path = mkstemp(prefix='b2s')
     os.close(fd)
     try:
-        ctx.run(f'poetry export -f requirements.txt -o {requirements_path} --dev')
-        ctx.run(f'safety check --full-report -r {requirements_path}')
+        ctx.run(f'poetry export -f requirements.txt -o "{requirements_path}" --dev')
+        ctx.run(f'safety check --full-report -r "{requirements_path}"')
     finally:
         os.remove(requirements_path)
 
@@ -526,4 +526,4 @@ def verify_tag(ctx, tag):
 def verify_file(ctx, file):
     """Verify a file signed by minisign."""
     pubkeyfile = Path(__file__).parent / 'minisign.pub'
-    ctx.run(f'minisign -Vm "{file}" -p {pubkeyfile}', echo=True)
+    ctx.run(f'minisign -Vm "{file}" -p "{pubkeyfile}"', echo=True)
