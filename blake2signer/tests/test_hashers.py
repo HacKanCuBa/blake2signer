@@ -120,7 +120,8 @@ class TestsBLAKE2Hasher(BaseTests[BLAKE2Hasher]):
         mock_derive_key.assert_has_calls(calls)
 
         # Ensure the hasher gets called properly
-        with mock.patch(f'blake2signer.hashers.blakehashers.hashlib.{choice}') as mock_hasher:
+        hasher_to_patch = f'blake2signer.hashers.blakehashers.hashlib.{choice.value}'
+        with mock.patch(hasher_to_patch) as mock_hasher:
             mock_hasher.PERSON_SIZE = 8
             mock_hasher.MAX_KEY_SIZE = 12
             mock_hasher.MAX_DIGEST_SIZE = 16
