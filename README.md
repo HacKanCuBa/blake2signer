@@ -8,7 +8,7 @@
 
 # ![Logo](https://assets.gitlab-static.net/uploads/-/system/project/avatar/21560006/icon_d_dark.png?width=40) Blake2Signer
 
-The goal of this project is to provide a simple and straightforward way to securely sign data using [BLAKE in keyed hashing mode](https://docs.python.org/3/library/hashlib.html#keyed-hashing).
+The goal of this project is to provide a simple and straightforward way to securely sign data using [BLAKE in keyed hashing mode](https://docs.python.org/3/library/hashlib.html#keyed-hashing), using a secret key. This can be used, in example, when you need to send some data that could be tampered by the user, like a payment authorization, or a login token. This data travels in plaintext, and can be read, but it can't be modified in any way!.
 
 ## Why would I need to use it?
 

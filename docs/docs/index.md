@@ -2,7 +2,7 @@
 
 ![Blake2Signer](img/title.svg)
 
-The goal of this project is to provide a simple and straightforward way to securely sign data using [BLAKE in keyed hashing mode](https://docs.python.org/3/library/hashlib.html#keyed-hashing).
+The goal of this project is to provide a simple and straightforward way to securely sign data using [BLAKE in keyed hashing mode](https://docs.python.org/3/library/hashlib.html#keyed-hashing), using a secret key. This can be used, in example, when you need to send some data that could be tampered by the user, like a payment authorization, or a login token. This data travels in plaintext, and can be read, but it can't be modified in any way!.
 
 !!! question "Looking for another documentation version?"
     Check out [stable](https://blake2signer.hackan.net/en/stable/) (current tagged version), [latest](https://blake2signer.hackan.net/en/latest/) (current development version) or [each tagged version](https://readthedocs.org/projects/blake2signer).
