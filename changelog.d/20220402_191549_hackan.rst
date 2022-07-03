@@ -1,4 +1,0 @@
-Security
---------
-
-- Implement `minisign <https://jedisct1.github.io/minisign/>`_ to sign all release packages, and tags (using `git-minisign <https://gitlab.com/hackancuba/git-minisign>`_), instead of `gpg <https://gist.github.com/HacKanCuBa/afe0073fe35fddf01642220acd4cde17>`_.

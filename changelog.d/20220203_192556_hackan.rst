@@ -1,4 +1,0 @@
-Added
------
-
-- Add valid unsigned data to the `ExpiredSignatureError` exception: even if the signature is expired, its unsigned value is valid and safe, so now it can be used.

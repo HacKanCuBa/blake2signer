@@ -1,5 +1,22 @@
 # Changelog
 
+## 2.5.0 - 2022-07-02
+
+**Added**
+
+- Add valid unsigned data to the [`ExpiredSignatureError` exception](examples.md#the-expired-signature-exception): even if the signature is expired, its unsigned value is valid and safe, so now it can be used.
+- Add new linters: pylint, and perflint.
+
+**Changed**
+
+- Move docs to its own environment, due to some incompatibility between dev dependencies. This results in better handling of docs dependencies, using Poetry.
+- Several docs, and docstrings improvements.
+
+**Security**
+
+- Implement [minisign](https://jedisct1.github.io/minisign/) to sign all release packages, and tags (using [git-minisign](https://gitlab.com/hackancuba/git-minisign>)), instead of [PGP](https://gist.github.com/HacKanCuBa/afe0073fe35fddf01642220acd4cde17). Read more [in the docs](signatures.md).
+- Run `safety` scanner over docs dependencies too.
+
 ## 2.4.0 - 2022-03-27
 
 **Added**
