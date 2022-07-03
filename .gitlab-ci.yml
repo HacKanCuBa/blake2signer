@@ -158,12 +158,22 @@ packages security:
 .tests:
   stage: test
   script:
-    - time poetry run inv tests
+    - time poetry run inv tests --report
+    - poetry run coverage report --show-missing --fail-under 100
+    - poetry run coverage xml
   cache:
     key: "python-${CI_COMMIT_REF_SLUG}"
     policy: pull
     paths:
       - .cache/poetry/
+  coverage: '/(?i)total.*? (100(?:\.0+)?\%|[1-9]?\d(?:\.\d+)?\%)$/'
+  artifacts:
+    when: always
+    reports:
+      junit: report.xml
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage.xml
   except:
     - main
     - tags
@@ -217,8 +227,10 @@ tests py3.11rc:
     - packages security
   script:
     # ToDo: Invoke is not working in Python 3.11, see https://github.com/pyinvoke/invoke/issues/833
-    - poetry run pytest --suppress-no-test-exit-code blake2signer
-    - poetry run pytest --suppress-no-test-exit-code --cov-append tests
+    - poetry run pytest --suppress-no-test-exit-code --junitxml=report.xml blake2signer
+    - poetry run pytest --suppress-no-test-exit-code --cov-append --junitxml=report.xml tests
+    - poetry run coverage report --show-missing --fail-under 100
+    - poetry run coverage xml
   cache:
     key: "py311rc-${CI_COMMIT_REF_SLUG}"
   allow_failure: true

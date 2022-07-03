@@ -139,14 +139,18 @@ def clean(ctx):
         'watch': 'run tests continuously with pytest-watch',
         'seed': 'seed number to repeat a randomization sequence',
         'coverage': 'run with coverage (or not)',
+        'report': 'produce a JUnit XML report file as "report.xml" (requires coverage)',
     },
 )
-def tests(ctx, watch=False, seed=0, coverage=True):
+def tests(ctx, watch=False, seed=0, coverage=True, report=False):  # noqa: C901,R701
     """Run tests."""
     if watch:
         cmd = ['pytest-watch', '--']
     else:
         cmd = ['pytest', '--suppress-no-test-exit-code']
+
+    if report and coverage:
+        cmd.append('--junitxml=report.xml')
 
     if seed:
         cmd.append(f'--randomly-seed="{seed}"')
