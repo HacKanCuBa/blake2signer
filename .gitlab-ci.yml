@@ -17,7 +17,10 @@ variables:
   script:
     - time poetry install --no-ansi --remove-untracked
   cache:
-    key: "python-${CI_COMMIT_REF_SLUG}"  # Prevent cache poisoning
+    key:
+      prefix: "py"
+      files:
+        - poetry.lock
     policy: pull-push
     paths:
       - .cache/poetry/
@@ -29,25 +32,37 @@ poetry cache py3.7:
   extends: .poetry cache
   image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.12-3.7"
   cache:
-    key: "py37-${CI_COMMIT_REF_SLUG}"
+    key:
+      prefix: "py37"
+      files:
+        - poetry.lock
 
 poetry cache py3.8:
   extends: .poetry cache
   image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.12-3.8"
   cache:
-    key: "py38-${CI_COMMIT_REF_SLUG}"
+    key:
+      prefix: "py38"
+      files:
+        - poetry.lock
 
 poetry cache py3.9:
   extends: .poetry cache
   image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.12-3.9"
   cache:
-    key: "py39-${CI_COMMIT_REF_SLUG}"
+    key:
+      prefix: "py39"
+      files:
+        - poetry.lock
 
 poetry cache py3.10:
   extends: .poetry cache
   image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.12-3.10"
   cache:
-    key: "py310-${CI_COMMIT_REF_SLUG}"
+    key:
+      prefix: "py310"
+      files:
+        - poetry.lock
 
 poetry cache py3.11rc:
   extends: .poetry cache
@@ -68,7 +83,10 @@ poetry cache py3.11rc:
     - time poetry install --no-ansi --remove-untracked
   allow_failure: true
   cache:
-    key: "py311rc-${CI_COMMIT_REF_SLUG}"
+    key:
+      prefix: "py311"
+      files:
+        - poetry.lock
 
 poetry cache pypy3.7:
   extends: .poetry cache
@@ -98,27 +116,39 @@ poetry cache pypy3.7:
     - time poetry remove --no-ansi --dev mypy  # Runs install by itself
     - time poetry install --no-ansi --remove-untracked
   cache:
-    key: "pypy37-${CI_COMMIT_REF_SLUG}"
+    key:
+      prefix: "pypy37"
+      files:
+        - poetry.lock
   allow_failure: true
 
 poetry cache pypy3.8:
   extends: poetry cache pypy3.7
   image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.12-3.8pypy"
   cache:
-    key: "pypy38-${CI_COMMIT_REF_SLUG}"
+    key:
+      prefix: "pypy38"
+      files:
+        - poetry.lock
 
 poetry cache stackless3.7:
   extends: .poetry cache
   image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.12-3.7stackless"
   cache:
-    key: "stackless37-${CI_COMMIT_REF_SLUG}"
+    key:
+      prefix: "stackless37"
+      files:
+        - poetry.lock
   allow_failure: true
 
 poetry cache stackless3.8:
   extends: .poetry cache
   image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.12-3.8stackless"
   cache:
-    key: "stackless38-${CI_COMMIT_REF_SLUG}"
+    key:
+      prefix: "stackless38"
+      files:
+        - poetry.lock
   allow_failure: true
 
 python lint:
@@ -131,7 +161,10 @@ python lint:
     - if [ -n "$changes" ]; then printf "Code is not properly formatted\n%s" "$changes"; exit 1; fi
     - time poetry run inv lint
   cache:
-    key: "py310-${CI_COMMIT_REF_SLUG}"
+    key:
+      prefix: "py310"
+      files:
+        - poetry.lock
     policy: pull
     paths:
       - .cache/poetry/
@@ -144,10 +177,12 @@ packages security:
   needs:
     - poetry cache py3.10
   script:
-    - time poetry export -f requirements.txt -o requirements.txt --dev
-    - time poetry run safety check --full-report -r requirements.txt
+    - time poetry run inv safety
   cache:
-    key: "py310-${CI_COMMIT_REF_SLUG}"
+    key:
+      prefix: "py310"
+      files:
+        - poetry.lock
     policy: pull
     paths:
       - .cache/poetry/
@@ -186,7 +221,10 @@ tests py3.7:
     - python lint
     - packages security
   cache:
-    key: "py37-${CI_COMMIT_REF_SLUG}"
+    key:
+      prefix: "py37"
+      files:
+        - poetry.lock
 
 tests py3.8:
   extends: .tests
@@ -196,7 +234,10 @@ tests py3.8:
     - python lint
     - packages security
   cache:
-    key: "py38-${CI_COMMIT_REF_SLUG}"
+    key:
+      prefix: "py38"
+      files:
+        - poetry.lock
 
 tests py3.9:
   extends: .tests
@@ -206,7 +247,10 @@ tests py3.9:
     - python lint
     - packages security
   cache:
-    key: "py39-${CI_COMMIT_REF_SLUG}"
+    key:
+      prefix: "py39"
+      files:
+        - poetry.lock
 
 tests py3.10:
   extends: .tests
@@ -216,7 +260,10 @@ tests py3.10:
     - python lint
     - packages security
   cache:
-    key: "py310-${CI_COMMIT_REF_SLUG}"
+    key:
+      prefix: "py310"
+      files:
+        - poetry.lock
 
 tests py3.11rc:
   extends: .tests
@@ -232,7 +279,10 @@ tests py3.11rc:
     - poetry run coverage report --show-missing --fail-under 100
     - poetry run coverage xml
   cache:
-    key: "py311rc-${CI_COMMIT_REF_SLUG}"
+    key:
+      prefix: "py311"
+      files:
+        - poetry.lock
   allow_failure: true
 
 tests pypy3.7:
@@ -243,7 +293,10 @@ tests pypy3.7:
     - python lint
     - packages security
   cache:
-    key: "pypy37-${CI_COMMIT_REF_SLUG}"
+    key:
+      prefix: "pypy37"
+      files:
+        - poetry.lock
   allow_failure: true
 
 tests pypy3.8:
@@ -254,7 +307,10 @@ tests pypy3.8:
     - python lint
     - packages security
   cache:
-    key: "pypy38-${CI_COMMIT_REF_SLUG}"
+    key:
+      prefix: "pypy38"
+      files:
+        - poetry.lock
   allow_failure: true
 
 tests stackless3.7:
@@ -267,7 +323,10 @@ tests stackless3.7:
   script:
     - time poetry run inv tests --no-coverage  # with coverage is segfaulting for some reason
   cache:
-    key: "stackless37-${CI_COMMIT_REF_SLUG}"
+    key:
+      prefix: "stackless37"
+      files:
+        - poetry.lock
   allow_failure: true
 
 tests stackless3.8:
@@ -280,7 +339,10 @@ tests stackless3.8:
   script:
     - time poetry run inv tests --no-coverage  # with coverage is segfaulting for some reason
   cache:
-    key: "stackless38-${CI_COMMIT_REF_SLUG}"
+    key:
+      prefix: "stackless38"
+      files:
+        - poetry.lock
   allow_failure: true
 
 # https://aquasecurity.github.io/trivy/v0.18.0/integrations/gitlab-ci/
