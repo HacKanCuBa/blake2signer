@@ -1330,7 +1330,7 @@ print(len(signed))  # 12: 11 for the encoded 8B digest, 1 for the separator
 You can create your own *SerializerSigner* using provided [`Blake2SerializerSignerBase`](bases.md#blake2signer.bases.Blake2SerializerSignerBase) and any of the mixins: [`SerializerMixin`](mixins.md#blake2signer.mixins.SerializerMixin) or [`CompressorMixin`](mixins.md#blake2signer.mixins.CompressorMixin) ([`EncoderMixin`](mixins.md#blake2signer.mixins.EncoderMixin) is included in the base class) or even creating your own mixin inheriting from [`Mixin`](mixins.md#blake2signer.mixins.Mixin) (note that the class inheritance order matters, and the mixins must come first leaving the chosen base class last).
 
 !!! danger
-    This is rather advanced, and you should think if this is what you really need to do.
+    This is rather advanced, and you should think if this is what you really need to do. Bear in mind that _private API_ backwards compatibility _is not guaranteed_ between minors nor major versions, only on patch versions!
 
 ```python
 """Custom encoder compressor signer class example."""
