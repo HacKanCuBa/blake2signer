@@ -75,11 +75,12 @@ plugins:
       default_handler: python
       handlers:
         python:
-          docstring_style: 'google'
-          rendering:
+          options:
+            docstring_style: 'google'
             show_root_heading: true
-      watch:
-        - ../blake2signer
+
+watch:
+  - ../blake2signer
 
 markdown_extensions:
   - toc:
