@@ -23,7 +23,7 @@ from .serializers import JSONSerializer
 from .utils import force_bytes
 
 
-class Mixin(ABC):  # pylint: disable=R0903
+class Mixin(ABC):  # pylint: disable=R0903  # noqa: B024  # false positives
     """Base class for a Blake2Signer mixin."""
 
     @staticmethod
