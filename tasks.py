@@ -252,7 +252,7 @@ def docs(ctx, build=False, verbose=False):
         args.append('--verbose')
 
     if build:
-        args.extend(['build', '--clean', '--strict'])
+        args.extend(['build', '--clean'])
     else:
         args.append('serve')
 
