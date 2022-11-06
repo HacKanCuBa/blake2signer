@@ -1110,7 +1110,7 @@ blake3 = ["blake3"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "90adab46e26e248b4aca4bbb5ff46ab18ec6e9ee06ac434138847ba85afca77f"
+content-hash = "8a594b39774219f7f3ca4a3adfd334c85a5f07be25f55650f29f4dc897b57e7c"
 
 [metadata.files]
 add-trailing-comma = [

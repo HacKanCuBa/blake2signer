@@ -432,6 +432,29 @@ security scanning:
       - tags
       - main
 
+fuzz:
+  stage: security_analysis
+  needs:
+    - poetry cache py3.10
+  before_script:
+    - poetry add --group dev --source pythonfuzz pythonfuzz
+  script:
+    - time poetry run inv fuzz --short
+  cache:
+    - key:
+        prefix: "py310"
+        files:
+          - poetry.lock
+      policy: pull
+      paths:
+        - .cache/poetry/
+    - key: "fuzz-0"
+      policy: pull-push
+      paths:
+        - .fuzzed/
+  only:
+    - /^release\/.+$/
+
 publish test:
   stage: publish
   script:

@@ -74,9 +74,18 @@ radon = "^5.0.0"
 scriv = "^0"
 invoke = "^1.3.0"
 blake3 = ">0.2.0"
+# ToDo: pythonfuzz==1.0.10 requires a psutil version that has a security issue, thus I'm not
+#  adding it here yet
+# pythonfuzz = {version = "^1.0.10", source = "pythonfuzz"}
 
 [tool.poetry.extras]
 blake3 = ["blake3"]
+
+[[tool.poetry.source]]
+name = "pythonfuzz"
+url = "https://gitlab.com/api/v4/projects/19904939/packages/pypi/simple"
+default = false
+secondary = true
 
 [build-system]
 requires = ["poetry>=0.12"]

@@ -20,6 +20,9 @@ from .mixins import CompressorMixin
 from .mixins import SerializerMixin
 from .serializers import JSONSerializer
 
+# When adding a new signer, please add a fuzzer for it in `fuzz.py`, and update the `fuzz`
+# invoke task accordingly.
+
 
 class Blake2Signer(Blake2SignerBase):
     """BLAKE in keyed hashing mode for signing data.

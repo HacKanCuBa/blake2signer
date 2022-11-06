@@ -31,6 +31,7 @@ def flake8(ctx):
     ctx.run('flake8 --ignore=S101,R701,C901 blake2signer/tests/', echo=True)
     ctx.run('flake8 --ignore=S101,R701,C901 tests/', echo=True)
     ctx.run('flake8 tasks.py', echo=True)
+    ctx.run('flake8 fuzz.py', echo=True)
 
 
 @task
@@ -39,6 +40,7 @@ def pydocstyle(ctx):
     ctx.run('pydocstyle --explain blake2signer/', echo=True)
     ctx.run('pydocstyle --explain tests/', echo=True)
     ctx.run('pydocstyle --explain tasks.py', echo=True)
+    ctx.run('pydocstyle --explain fuzz.py', echo=True)
 
 
 @task
@@ -47,6 +49,7 @@ def darglint(ctx):
     ctx.run('darglint -v2 blake2signer/', echo=True)
     ctx.run('darglint -v2 tests/', echo=True)
     ctx.run('darglint -v2 tasks.py', echo=True)
+    ctx.run('darglint -v2 fuzz.py', echo=True)
 
 
 @task
@@ -56,6 +59,7 @@ def bandit(ctx):
     ctx.run('bandit -i -r -s B101 blake2signer/tests/', echo=True)
     ctx.run('bandit -i -r -s B101 tests/', echo=True)
     ctx.run('bandit -i -r tasks.py', echo=True)
+    ctx.run('bandit -i -r fuzz.py', echo=True)
 
 
 @task
@@ -63,6 +67,7 @@ def mypy(ctx):
     """Lint code with mypy."""
     ctx.run('mypy blake2signer/', echo=True, pty=True)
     ctx.run('mypy tests/', echo=True, pty=True)
+    ctx.run('mypy fuzz.py', echo=True, pty=True)
 
 
 @task
@@ -77,6 +82,7 @@ def yapf(ctx, diff=False):
     cmd.append('blake2signer/')
     cmd.append('tests/')
     cmd.append('tasks.py')
+    cmd.append('fuzz.py')
 
     ctx.run(' '.join(cmd), echo=True)
 
@@ -88,6 +94,7 @@ def trailing_commas(ctx):
     ctx.run('find blake2signer/ ' + opts, echo=True, pty=True, warn=True)
     ctx.run('find tests/ ' + opts, echo=True, pty=True, warn=True)
     ctx.run('add-trailing-comma tasks.py', echo=True, pty=True, warn=True)
+    ctx.run('add-trailing-comma fuzz.py', echo=True, pty=True, warn=True)
 
 
 # noinspection PyUnusedLocal
@@ -103,6 +110,7 @@ def pylint(ctx):
     ctx.run('pylint blake2signer/tests/ --exit-zero', echo=True, pty=True, warn=True)
     ctx.run('pylint tests/ --exit-zero', echo=True, pty=True, warn=True)
     ctx.run('pylint tasks.py --exit-zero', echo=True, pty=True, warn=True)
+    ctx.run('pylint fuzz.py --exit-zero', echo=True, pty=True, warn=True)
 
 
 # noinspection PyUnusedLocal
@@ -531,3 +539,45 @@ def verify_file(ctx, file):
     """Verify a file signed by minisign."""
     pubkeyfile = Path(__file__).parent / 'minisign.pub'
     ctx.run(f'minisign -Vm "{file}" -p "{pubkeyfile}"', echo=True)
+
+
+@task(
+    help={
+        'short': 'run a short fuzzing session',
+    },
+)
+def fuzz(ctx, short=True):
+    """Run an infinite fuzzer over all signers, unless a short session is specified.
+
+    This command will store session files per signer in the ".fuzzed" directory.
+
+    Use CTRL+C to cancel current fuzzing session.
+    """
+    fuzzed_dir = '.fuzzed'  # If changed, make sure to also change it in the CI job, and gitignore
+    (Path(ctx.cwd) / Path(fuzzed_dir)).mkdir(mode=0o755, exist_ok=True)
+
+    args = ('python', 'fuzz.py')
+    signers = ('blake2signer', 'blake2timestampsigner', 'blake2serializersigner')
+    additional_args = ()
+
+    if short:
+        additional_args += ('--runs', '500000')  # Around 5' on a modern CPU
+
+    print(
+        'Starting',
+        'short' if short else 'infinite',
+        'fuzzing session, press CTRL+C to cancel at any time, and proceed with the next signer...',
+    )
+    print()
+    for signer in signers:
+        ctx.run(
+            ' '.join(args + (signer, f'{fuzzed_dir}/{signer}/') + additional_args),
+            warn=True,  # So user can cancel one run, and proceed w/ the next one.
+        )
+
+        print()
+
+
+@task(reformat, lint, tests, safety, fuzz)
+def check(_):
+    """Run all checks."""
