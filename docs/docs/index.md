@@ -70,11 +70,14 @@ Versions currently tested (check the [pipelines](https://gitlab.com/hackancuba/b
 * CPython 3.8
 * CPython 3.9
 * CPython 3.10
-* CPython 3.11rc
+* CPython 3.11
+* CPython 3.12rc
 * [PyPy](https://www.pypy.org) 3.7
     * If you are contributing to this project under PyPy, [read the contrib notes first](contrib.md#working-under-pypy).
 * [PyPy](https://www.pypy.org) 3.8
-  * If you are contributing to this project under PyPy, [read the contrib notes first](contrib.md#working-under-pypy).
+    * If you are contributing to this project under PyPy, [read the contrib notes first](contrib.md#working-under-pypy).
+* [PyPy](https://www.pypy.org) 3.9
+    * If you are contributing to this project under PyPy, [read the contrib notes first](contrib.md#working-under-pypy).
 * [Stackless](https://github.com/stackless-dev/stackless/wiki) 3.7
     * If you are contributing to this project under Stackless, [read the contrib notes first](contrib.md#working-under-stackless).
 * [Stackless](https://github.com/stackless-dev/stackless/wiki) 3.8
