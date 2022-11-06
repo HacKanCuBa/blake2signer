@@ -140,6 +140,15 @@ poetry cache pypy3.8:
       files:
         - poetry.lock
 
+poetry cache pypy3.9:
+  extends: poetry cache pypy3.7
+  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.2.2-3.9pypy"
+  cache:
+    key:
+      prefix: "pypy39"
+      files:
+        - poetry.lock
+
 poetry cache stackless3.7:
   extends: .poetry cache
   image: "registry.gitlab.com/nevrona/public/poetry-docker:1.2.2-3.7stackless"
@@ -338,6 +347,20 @@ tests pypy3.8:
   cache:
     key:
       prefix: "pypy38"
+      files:
+        - poetry.lock
+  allow_failure: true
+
+tests pypy3.9:
+  extends: .tests
+  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.2.2-3.9pypy"
+  needs:
+    - poetry cache pypy3.9
+    - python lint
+    - packages security
+  cache:
+    key:
+      prefix: "pypy39"
       files:
         - poetry.lock
   allow_failure: true
