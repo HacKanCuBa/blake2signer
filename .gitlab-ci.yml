@@ -73,6 +73,30 @@ poetry cache py3.11:
       files:
         - poetry.lock
 
+poetry cache py3.12rc:
+  extends: .poetry cache
+  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.2.2-3.12rc"
+  script:
+    # ToDo: there's no blake3 wheel yet for 3.12, remove this when there's one.
+    # Check if we need to install everything or just check for changes in the package lock
+    - set -euo pipefail
+    - if poetry env info -p; then
+        echo "We have a cached venv";
+      else
+        echo "No cache, installing everything...";
+        apt-get update && apt-get install -y curl;
+        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs > rustup.sh;
+        sh rustup.sh -v -y;
+        source $HOME/.cargo/env;
+      fi;
+    - time poetry install --no-ansi --sync
+  allow_failure: true
+  cache:
+    key:
+      prefix: "py312rc"
+      files:
+        - poetry.lock
+
 poetry cache pypy3.7:
   extends: .poetry cache
   image: "registry.gitlab.com/nevrona/public/poetry-docker:1.2.2-3.7pypy"
@@ -266,6 +290,26 @@ tests py3.11:
   cache:
     key:
       prefix: "py311"
+      files:
+        - poetry.lock
+  allow_failure: true
+
+tests py3.12rc:
+  extends: .tests
+  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.2.2-3.12rc"
+  needs:
+    - poetry cache py3.12rc
+    - python lint
+    - packages security
+  script:
+    # ToDo: Invoke is not working in Python 3.11+, see https://github.com/pyinvoke/invoke/issues/833
+    - poetry run pytest --suppress-no-test-exit-code --junitxml=report.xml blake2signer
+    - poetry run pytest --suppress-no-test-exit-code --cov-append --junitxml=report.xml tests
+    - poetry run coverage report --show-missing --fail-under 100
+    - poetry run coverage xml
+  cache:
+    key:
+      prefix: "py312rc"
       files:
         - poetry.lock
   allow_failure: true
