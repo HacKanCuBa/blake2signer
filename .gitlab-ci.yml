@@ -1,4 +1,4 @@
-image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.12"
+image: "registry.gitlab.com/nevrona/public/poetry-docker:1.2.2-3.10"
 
 stages:
   - setup
@@ -15,7 +15,7 @@ variables:
 .poetry cache:
   stage: setup
   script:
-    - time poetry install --no-ansi --remove-untracked
+    - time poetry install --no-ansi --sync
   cache:
     key:
       prefix: "py"
@@ -30,7 +30,7 @@ variables:
 
 poetry cache py3.7:
   extends: .poetry cache
-  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.12-3.7"
+  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.2.2-3.7"
   cache:
     key:
       prefix: "py37"
@@ -39,7 +39,7 @@ poetry cache py3.7:
 
 poetry cache py3.8:
   extends: .poetry cache
-  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.12-3.8"
+  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.2.2-3.8"
   cache:
     key:
       prefix: "py38"
@@ -48,7 +48,7 @@ poetry cache py3.8:
 
 poetry cache py3.9:
   extends: .poetry cache
-  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.12-3.9"
+  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.2.2-3.9"
   cache:
     key:
       prefix: "py39"
@@ -57,31 +57,16 @@ poetry cache py3.9:
 
 poetry cache py3.10:
   extends: .poetry cache
-  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.12-3.10"
+  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.2.2-3.10"
   cache:
     key:
       prefix: "py310"
       files:
         - poetry.lock
 
-poetry cache py3.11rc:
+poetry cache py3.11:
   extends: .poetry cache
-  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.12-3.11rc"
-  script:
-    # ToDo: there's no blake3 wheel yet for 3.11, remove this when there's one.
-    # Check if we need to install everything or just check for changes in the package lock
-    - set -euo pipefail
-    - if poetry env info -p; then
-        echo "We have a cached venv";
-      else
-        echo "No cache, installing everything...";
-        apt-get update && apt-get install -y curl;
-        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs > rustup.sh;
-        sh rustup.sh -v -y;
-        source $HOME/.cargo/env;
-      fi;
-    - time poetry install --no-ansi --remove-untracked
-  allow_failure: true
+  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.2.2-3.11"
   cache:
     key:
       prefix: "py311"
@@ -90,7 +75,7 @@ poetry cache py3.11rc:
 
 poetry cache pypy3.7:
   extends: .poetry cache
-  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.12-3.7pypy"
+  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.2.2-3.7pypy"
   script:
     # ToDo: there's no blake3 wheel yet for PyPy3.7, remove this when there's one (if ever).
     # Check if we need to install everything or just check for changes in the package lock
@@ -113,8 +98,8 @@ poetry cache pypy3.7:
     # Running `poetry install` fails because `mypy` uses `typed_ast` which doesn't
     # build in PyPy and probably never will, see:
     # https://github.com/python/typed_ast/issues/111
-    - time poetry remove --no-ansi --dev mypy  # Runs install by itself
-    - time poetry install --no-ansi --remove-untracked
+    - time poetry remove --no-ansi --group dev mypy  # Runs install by itself
+    - time poetry install --no-ansi --sync
   cache:
     key:
       prefix: "pypy37"
@@ -124,7 +109,7 @@ poetry cache pypy3.7:
 
 poetry cache pypy3.8:
   extends: poetry cache pypy3.7
-  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.12-3.8pypy"
+  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.2.2-3.8pypy"
   cache:
     key:
       prefix: "pypy38"
@@ -133,7 +118,7 @@ poetry cache pypy3.8:
 
 poetry cache stackless3.7:
   extends: .poetry cache
-  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.12-3.7stackless"
+  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.2.2-3.7stackless"
   cache:
     key:
       prefix: "stackless37"
@@ -143,7 +128,7 @@ poetry cache stackless3.7:
 
 poetry cache stackless3.8:
   extends: .poetry cache
-  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.12-3.8stackless"
+  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.2.2-3.8stackless"
   cache:
     key:
       prefix: "stackless38"
@@ -215,7 +200,7 @@ packages security:
 
 tests py3.7:
   extends: .tests
-  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.12-3.7"
+  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.2.2-3.7"
   needs:
     - poetry cache py3.7
     - python lint
@@ -228,7 +213,7 @@ tests py3.7:
 
 tests py3.8:
   extends: .tests
-  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.12-3.8"
+  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.2.2-3.8"
   needs:
     - poetry cache py3.8
     - python lint
@@ -241,7 +226,7 @@ tests py3.8:
 
 tests py3.9:
   extends: .tests
-  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.12-3.9"
+  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.2.2-3.9"
   needs:
     - poetry cache py3.9
     - python lint
@@ -254,7 +239,7 @@ tests py3.9:
 
 tests py3.10:
   extends: .tests
-  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.12-3.10"
+  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.2.2-3.10"
   needs:
     - poetry cache py3.10
     - python lint
@@ -265,11 +250,11 @@ tests py3.10:
       files:
         - poetry.lock
 
-tests py3.11rc:
+tests py3.11:
   extends: .tests
-  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.12-3.11rc"
+  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.2.2-3.11"
   needs:
-    - poetry cache py3.11rc
+    - poetry cache py3.11
     - python lint
     - packages security
   script:
@@ -287,7 +272,7 @@ tests py3.11rc:
 
 tests pypy3.7:
   extends: .tests
-  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.12-3.7pypy"
+  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.2.2-3.7pypy"
   needs:
     - poetry cache pypy3.7
     - python lint
@@ -301,7 +286,7 @@ tests pypy3.7:
 
 tests pypy3.8:
   extends: .tests
-  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.12-3.8pypy"
+  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.2.2-3.8pypy"
   needs:
     - poetry cache pypy3.8
     - python lint
@@ -315,7 +300,7 @@ tests pypy3.8:
 
 tests stackless3.7:
   extends: .tests
-  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.12-3.7stackless"
+  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.2.2-3.7stackless"
   needs:
     - poetry cache stackless3.7
     - python lint
@@ -331,7 +316,7 @@ tests stackless3.7:
 
 tests stackless3.8:
   extends: .tests
-  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.12-3.8stackless"
+  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.2.2-3.8stackless"
   needs:
     - poetry cache stackless3.8
     - python lint
@@ -365,9 +350,9 @@ security scanning:
     - time trivy --cache-dir .cache/trivy/ fs --exit-code 1 --ignore-unfixed --no-progress .
   cache:
     key: "trivy-${CI_COMMIT_REF_SLUG}"
+    policy: pull-push
     paths:
       - .cache/trivy/
-    policy: pull-push
   artifacts:
     reports:
       # Enables https://docs.gitlab.com/ee/user/application_security/container_scanning/
