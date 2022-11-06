@@ -57,10 +57,32 @@ Splitting dependencies like this is a bit annoying, but it was necessary due to 
 
 Therefore, you will need two virtualenv: one for the project, and one for the docs. However, if you use `invoke` then this is taken care for you, and you don't have to worry about the docs venv: it will be created automatically as needed. If you need to interact with said virtualenv, make sure to activate it when entering the docs subdir (poetry should take care of this for you, too).
 
+#### Upgrading dependencies
+
+To upgrade dependencies, run `poetry upgrade`; then check outdated pins with `poetry show -o`, analise, and adjust pins accordingly; run `poetry upgrade` again.
+
+Proceed to update docs dependencies using `inv docs-reqs --update`, or `cd docs`, and repeating the `poetry upgrade` stanza.
+
+After upgrading dependencies, run all checks: `inv check`, which does the following:
+
+- Run code formatting: `inv reformat`
+- Run code linting: `inv lint`
+- Run all tests: `inv tests`
+- Run security checks: `inv safety`
+- Run a short fuzzing session: `inv fuzz`
+
+Finally, ensure docs are working properly: `inv docs`, and navigate through some of them, specially autodocs.
+
 ### Special considerations
 
+#### BLAKE3
+
 When working with BLAKE3, please import the `blake3` function from the `hashers` submodule: `from blake2signer.hashers import blake3` instead of importing it directly from its package. This is due to the fact that the package is optional, and it may not be installed.  
-That module handles it properly and will raise an exception when the function is called without the package installed.
+That module handles it properly, and will raise an exception when the function is called without the package installed.
+
+#### What's the fuzz
+
+When adding a new signer, or a new public method to a signer, please add a fuzzer for it in `fuzz.py`, and update the `fuzz` invoke task accordingly.
 
 ### Making PRs
 
@@ -78,7 +100,7 @@ Finally, the following commands must succeed locally:
 * `inv safety`: run a security analysis over dependencies using `safety`.
 
 !!! tip
-    You can alternatively run `inv commit` to run all the above and commit afterwards.
+    You can alternatively run `inv commit` (or `inv ci`) to run all the above, and commit afterwards.
 
 If the linter complains about *code too complex*, run `inv cc -c` (or the long expression `inv cyclomatic-complexity --complex`) for more information.
 
@@ -101,10 +123,11 @@ Once everything is ready for release, follow these steps:
 1. Create a new release branch from `develop`: `git flow release start <M.m.p>`
 1. Edit `pyproject.toml` and change `version` (you can use `poetry version major|minor|patch` accordingly to one-up said version part).
 1. Edit `blake2signer/__init__.py` and change `__version__`: `__version__ = '<M.m.p>'`.
-1. Collect changelog fragments: `scriv collect`.
+1. Collect changelog fragments: `scriv collect`
 1. Edit the changelog to properly indicate the version.
 1. Copy the edition to the changelog in the docs.
 1. If necessary, write the upgrade guide in the docs.
+1. Run all checks, including fuzzing: `inv check`
 1. Commit, push branch and create MR to `main`. A CI job will publish the package to Test PyPy as a prerelease. If something went wrong, fix, commit and push again; the CI job will change the release number and publish it again.
 1. Merge into `main` and create MR to `develop`.
 1. Merge into `develop`, create and push signed tag: `git tag -s <M.m.p>`. A CI job will publish the package to PyPi.
