@@ -46,7 +46,7 @@ class Blake2Signer(Blake2SignerBase):
 
     """
 
-    def sign(self, data: typing.AnyStr) -> bytes:
+    def sign(self, data: typing.Union[str, bytes]) -> bytes:
         """Sign given data and produce a stream composed of it, salt and signature.
 
         Note that given data is _not_ encrypted, only signed. To recover data from
@@ -77,7 +77,7 @@ class Blake2Signer(Blake2SignerBase):
 
         return self._compose(data_b, signature=self._sign(data_b))
 
-    def sign_parts(self, data: typing.AnyStr) -> Blake2Signature:
+    def sign_parts(self, data: typing.Union[str, bytes]) -> Blake2Signature:
         """Sign given data and produce a container with it and salted signature.
 
         This method is identical to `sign`, but it produces a container instead
@@ -111,7 +111,7 @@ class Blake2Signer(Blake2SignerBase):
 
         return Blake2Signature(data=data_b, signature=self._sign(data_b))
 
-    def unsign(self, signed_data: typing.AnyStr) -> bytes:
+    def unsign(self, signed_data: typing.Union[str, bytes]) -> bytes:
         """Verify a stream signed by `sign` and recover original data.
 
         If given data is not bytes, a conversion will be applied assuming it's
@@ -189,7 +189,7 @@ class Blake2TimestampSigner(Blake2TimestampSignerBase):
 
     """
 
-    def sign(self, data: typing.AnyStr) -> bytes:
+    def sign(self, data: typing.Union[str, bytes]) -> bytes:
         """Sign given data and produce a stream of it, timestamp, salt and signature.
 
         Note that given data is _not_ encrypted, only signed. To recover data from
@@ -220,7 +220,7 @@ class Blake2TimestampSigner(Blake2TimestampSignerBase):
 
         return self._compose(data_b, signature=self._sign_with_timestamp(data_b))
 
-    def sign_parts(self, data: typing.AnyStr) -> Blake2Signature:
+    def sign_parts(self, data: typing.Union[str, bytes]) -> Blake2Signature:
         """Sign given data and produce a container of it, timestamp, salt and signature.
 
         This method is identical to `sign`, but it produces a container instead
@@ -256,7 +256,7 @@ class Blake2TimestampSigner(Blake2TimestampSignerBase):
 
     def unsign(
         self,
-        signed_data: typing.AnyStr,
+        signed_data: typing.Union[str, bytes],
         *,
         max_age: typing.Union[None, int, float, timedelta],
     ) -> bytes:
@@ -777,7 +777,7 @@ class Blake2SerializerSigner(
 
         return signed
 
-    def loads(self, signed_data: typing.AnyStr) -> typing.Any:
+    def loads(self, signed_data: typing.Union[str, bytes]) -> typing.Any:
         """Recover original data from a signed serialized string from `dumps`.
 
         If `max_age` was specified then it will be ensured that the signature is

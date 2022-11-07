@@ -1,0 +1,4 @@
+Changed
+-------
+
+- Change the usage of AnyStr in signer's public methods with Union[str, bytes], which is not the same, and they are not generally interchangeably like this, but for this particular usage Union makes more sense, and MyPy seems to agree with this.
