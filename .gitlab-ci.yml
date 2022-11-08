@@ -292,8 +292,10 @@ tests py3.11:
     - packages security
   script:
     # ToDo: Invoke is not working in Python 3.11, see https://github.com/pyinvoke/invoke/issues/833
-    - poetry run pytest --suppress-no-test-exit-code --junitxml=report.xml blake2signer
-    - poetry run pytest --suppress-no-test-exit-code --cov-append --junitxml=report.xml tests
+    - poetry run pytest --suppress-no-test-exit-code --junitxml=report0.xml blake2signer
+    - poetry run pytest --suppress-no-test-exit-code --cov-append --junitxml=report1.xml tests
+    - poetry run pytest --suppress-no-test-exit-code --cov-append --cov fuzz --junitxml=report2.xml test_fuzz.py
+    - poetry run python -c 'from junitparser import JUnitXml; (JUnitXml().fromfile("report0.xml") + JUnitXml().fromfile("report1.xml") + JUnitXml().fromfile("report2.xml")).write("report.xml")'
     - poetry run coverage report --show-missing --fail-under 100
     - poetry run coverage xml
   cache:
@@ -312,8 +314,10 @@ tests py3.12rc:
     - packages security
   script:
     # ToDo: Invoke is not working in Python 3.11+, see https://github.com/pyinvoke/invoke/issues/833
-    - poetry run pytest --suppress-no-test-exit-code --junitxml=report.xml blake2signer
-    - poetry run pytest --suppress-no-test-exit-code --cov-append --junitxml=report.xml tests
+    - poetry run pytest --suppress-no-test-exit-code --junitxml=report0.xml blake2signer
+    - poetry run pytest --suppress-no-test-exit-code --cov-append --junitxml=report1.xml tests
+    - poetry run pytest --suppress-no-test-exit-code --cov-append --cov fuzz --junitxml=report2.xml test_fuzz.py
+    - poetry run python -c 'from junitparser import JUnitXml; (JUnitXml().fromfile("report0.xml") + JUnitXml().fromfile("report1.xml") + JUnitXml().fromfile("report2.xml")).write("report.xml")'
     - poetry run coverage report --show-missing --fail-under 100
     - poetry run coverage xml
   cache:

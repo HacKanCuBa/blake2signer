@@ -15,6 +15,7 @@ from invoke import Context
 from invoke import Exit
 from invoke import Result
 from invoke import task
+from junitparser import JUnitXml
 
 from blake2signer import Blake2SerializerSigner
 from blake2signer import Blake2Signer
@@ -160,13 +161,12 @@ def clean(ctx):
 )
 def tests(ctx, watch=False, seed=0, coverage=True, report=False):  # noqa: C901,R701
     """Run tests."""
+    junit_report = report and coverage
+
     if watch:
         cmd = ['pytest-watch', '--']
     else:
         cmd = ['pytest', '--suppress-no-test-exit-code']
-
-    if report and coverage:
-        cmd.append('--junitxml=report.xml')
 
     if seed:
         cmd.append(f'--randomly-seed="{seed}"')
@@ -175,6 +175,11 @@ def tests(ctx, watch=False, seed=0, coverage=True, report=False):  # noqa: C901,
         cmd.append('--no-cov')
 
     cmd0, cmd1, cmd2 = cmd.copy(), cmd.copy(), cmd.copy()
+
+    if junit_report:
+        cmd0.append('--junitxml=report0.xml')
+        cmd1.append('--junitxml=report1.xml')
+        cmd2.append('--junitxml=report2.xml')
 
     if coverage:
         cmd1.append('--cov-append')
@@ -187,6 +192,14 @@ def tests(ctx, watch=False, seed=0, coverage=True, report=False):  # noqa: C901,
     ctx.run(' '.join(cmd0), pty=True, echo=True)
     ctx.run(' '.join(cmd1), pty=True, echo=True)
     ctx.run(' '.join(cmd2), pty=True, echo=True)
+
+    if junit_report:
+        report0 = JUnitXml().fromfile('report0.xml')
+        report1 = JUnitXml().fromfile('report1.xml')
+        report2 = JUnitXml().fromfile('report2.xml')
+        xml = report0 + report1 + report2
+        xml.write('report.xml')
+        print('JUnit reports merged into report.xml')
 
 
 @task

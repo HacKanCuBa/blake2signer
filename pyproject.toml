@@ -69,6 +69,7 @@ pytest-cov = "^4"
 pytest-custom_exit_code = "^0"
 pytest-xdist = {extras = ["psutil"], version = "^3"}
 pytest-randomly = "^3.8.0"
+junitparser = "^2.8.0"
 coverage = "^6.2"
 radon = "^5.0.0"
 scriv = "^0"
