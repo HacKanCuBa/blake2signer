@@ -290,14 +290,6 @@ tests py3.11:
     - poetry cache py3.11
     - python lint
     - packages security
-  script:
-    # ToDo: Invoke is not working in Python 3.11, see https://github.com/pyinvoke/invoke/issues/833
-    - poetry run pytest --suppress-no-test-exit-code --junitxml=report0.xml blake2signer
-    - poetry run pytest --suppress-no-test-exit-code --cov-append --junitxml=report1.xml tests
-    - poetry run pytest --suppress-no-test-exit-code --cov-append --cov fuzz --junitxml=report2.xml test_fuzz.py
-    - poetry run python -c 'from junitparser import JUnitXml; (JUnitXml().fromfile("report0.xml") + JUnitXml().fromfile("report1.xml") + JUnitXml().fromfile("report2.xml")).write("report.xml")'
-    - poetry run coverage report --show-missing --fail-under 100
-    - poetry run coverage xml
   cache:
     key:
       prefix: "py311"
@@ -312,14 +304,6 @@ tests py3.12rc:
     - poetry cache py3.12rc
     - python lint
     - packages security
-  script:
-    # ToDo: Invoke is not working in Python 3.11+, see https://github.com/pyinvoke/invoke/issues/833
-    - poetry run pytest --suppress-no-test-exit-code --junitxml=report0.xml blake2signer
-    - poetry run pytest --suppress-no-test-exit-code --cov-append --junitxml=report1.xml tests
-    - poetry run pytest --suppress-no-test-exit-code --cov-append --cov fuzz --junitxml=report2.xml test_fuzz.py
-    - poetry run python -c 'from junitparser import JUnitXml; (JUnitXml().fromfile("report0.xml") + JUnitXml().fromfile("report1.xml") + JUnitXml().fromfile("report2.xml")).write("report.xml")'
-    - poetry run coverage report --show-missing --fail-under 100
-    - poetry run coverage xml
   cache:
     key:
       prefix: "py312rc"

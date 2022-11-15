@@ -2,15 +2,19 @@
 
 import codecs
 import os
+import sys
 import typing
+from collections import namedtuple
 from contextlib import contextmanager
 from datetime import datetime
 from datetime import timezone
 from functools import partial
+from inspect import getfullargspec
 from pathlib import Path
 from tempfile import mkstemp
 from unittest.mock import patch
 
+import invoke
 from invoke import Context
 from invoke import Exit
 from invoke import Result
@@ -23,6 +27,37 @@ from blake2signer import Blake2TimestampSigner
 # noinspection PyProtectedMember
 from blake2signer import __version__
 from blake2signer.utils import b64decode
+
+
+def fix_invoke() -> None:
+    """Monkepatch Invoke for Python 3.11+.
+
+    Pyinvoke doesn't accept annotations by default, this fix that
+    Based on: @zelo's fix in https://github.com/pyinvoke/invoke/pull/606
+    Context in: https://github.com/pyinvoke/invoke/issues/357
+        Python 3.11 https://github.com/pyinvoke/invoke/issues/833
+    Source: https://github.com/pyinvoke/invoke/issues/833#issuecomment-1312420546
+    """
+    # I just need Invoke to run under Py 3.11+, that's all I want from this patch
+    if sys.version_info < (3, 11):
+        return
+
+    ArgSpec = namedtuple('ArgSpec', ['args', 'defaults'])
+
+    def patched_inspect_getargspec(func):
+        spec = getfullargspec(func)
+        return ArgSpec(spec.args, spec.defaults)
+
+    org_task_argspec = invoke.tasks.Task.argspec
+
+    def patched_task_argspec(*args, **kwargs):
+        with patch(target='inspect.getargspec', new=patched_inspect_getargspec, create=True):
+            return org_task_argspec(*args, **kwargs)
+
+    invoke.tasks.Task.argspec = patched_task_argspec
+
+
+fix_invoke()
 
 
 @task
