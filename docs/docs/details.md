@@ -40,26 +40,36 @@ Additionally, [*Blake2SerializerSigner*](signers.md#blake2signer.signers.Blake2S
 On all signers a secure pseudorandom salt of the maximum allowed size for the hasher is generated for each signature internally and can't be manually set (salted signatures helps to prevent breakage of a low-entropy key), meaning that every produced signature is non-deterministic so even if the payload doesn't change each signature will be different and unique. This, however, has a [performance cost](performance.md#randomness-is-expensive): non-deterministic signatures are a bit more expensive than deterministic ones.
 
 ??? example "Checking non-deterministic signatures"
-    ```python
-    """Checking non-deterministic signatures."""
+    === "Source"
 
-    from blake2signer import Blake2Signer
+        ```python
+        """Checking non-deterministic signatures."""
 
-    secret = b'one key to rule them all!'
-    data = b'samwise the brave'
+        from blake2signer import Blake2Signer 
 
-    signer = Blake2Signer(secret)
+        secret = b'one key to rule them all!'
+        data = b'samwise the brave' 
 
-    signed1 = signer.sign(data)
-    print(signed1)
+        signer = Blake2Signer(secret) 
 
-    signed2 = signer.sign(data)
-    print(signed2)
+        signed1 = signer.sign(data)
+        print('Signed 1:', signed1) 
 
-    # Signatures are different because they're non-deterministic: they contain
-    # a salt
-    print(signed1 != signed2)  # True
-    ```
+        signed2 = signer.sign(data)
+        print('Signed 2:', signed2) 
+
+        # Signatures are different because they're non-deterministic: they contain
+        # a salt
+        print('Are signatures different?', signed1 != signed2)  # True
+        ```
+
+    === "Output"
+
+        ```
+        Signed 1: b'-QWpoUsxfjaYZ9ZdtClUNebzWKljrcUCQQnf5Q.samwise the brave'
+        Signed 2: b'sYH3NoSGUyL0RVnxpq6y2eD42pdrnQrFRbHYhg.samwise the brave'
+        Are signatures different? True
+        ```
 
 Since v1.2.0, it is possible to generate deterministic signatures (meaning, without salt) using the `deterministic` option when instantiating any signer. For [`Blake2SerializerSigner`](signers.md#blake2signer.signers.Blake2SerializerSigner) this assumes that the serializer and compressor are always deterministic: if that is not true, then the signature won't be deterministic (encoders always are, and provided serializers and compressors are too), which isn't a problem on itself but just to clarify that the parameter doesn't do any magic.
 
@@ -77,8 +87,9 @@ It is important to note that the `personalisation` value doesn't need to be secr
     from blake2signer import Blake2Signer, Blake2TimestampSigner
 
     secret = b'secret' * 3
-    signer = Blake2Signer(secret, personalisation=b'signer for the form CSRF')
-    timestamp_signer = Blake2TimestampSigner(
+
+    csrf_signer = Blake2Signer(secret, personalisation=b'signer for the form CSRF')
+    cookies_signer = Blake2TimestampSigner(
         secret,
         personalisation=b'timed_signer_for_cookies',
     )
@@ -88,61 +99,86 @@ It is important to note that the `personalisation` value doesn't need to be secr
 
 ### Mixing signers
 
-You can't mix and match signers, and that's on purpose: internally, to protect signed data to be mishandled, the `personalisation` parameter is populated with the signer characteristics such as its encoder, its class, its serializer and compressor if any, etc - additionally to the given value -. This prevents a malicious user to use certain signed data to unsign it with a different signer.
+You can't mix and match signers, and that's on purpose: internally, to protect signed data to be mishandled, the `personalisation` parameter is populated with the signer characteristics such as its encoder, its class, its serializer, and compressor if any, etc - additionally to the given value -. This prevents a malicious user to use certain signed data to unsign it with a different signer.
 
 However, you shouldn't solely rely on this characteristic: always set a proper `personalisation` value for the signer, even if it is the only signer in your application. See [examples](examples.md#using-personalisation) to know more.
 
 ??? example "Mixing signers example 1"
-    ```python
-    """Mixing signers example 1."""
+    === "Source"
 
-    from blake2signer import Blake2Signer
-    from blake2signer.encoders import HexEncoder
-    from secrets import token_hex
+        ```python
+        """Mixing signers example 1."""
 
-    secret = b'it is OK to use the same secret for all signers'
+        from blake2signer import Blake2Signer
+        from blake2signer.encoders import HexEncoder
+        from secrets import token_hex 
 
-    s = Blake2Signer(secret, encoder=HexEncoder)
-    signed = s.sign(token_hex(8))
-    print(signed)
+        secret = b'it is OK to use the same secret for all signers' 
 
-    s = Blake2Signer(secret)  # Use default base64 encoder
-    s.unsign(signed)  # InvalidSignatureError: signature is not valid
-    ```
+        s = Blake2Signer(secret, encoder=HexEncoder)
+        signed = s.sign(token_hex(8))
+        print('Signed:', signed) 
+
+        s = Blake2Signer(secret)  # Use default base64 encoder
+        s.unsign(signed)  # InvalidSignatureError: signature is not valid
+        ```
+
+    === "Output"
+
+        ```
+        Signed: b'41A815EB18C4EEE5086A7ABE247C4A59EFE4226A00FF0E29.471990bd764ee8de'
+        Traceback (most recent call last):
+          File "<stdin>", line 1, in <module>
+          File ".../blake2signer/blake2signer/signers.py", line 135, in unsign
+            return self._unsign(self._decompose(self._force_bytes(signed_data)))
+          File ".../blake2signer/blake2signer/bases.py", line 480, in _unsign
+            raise InvalidSignatureError('signature is not valid')
+        blake2signer.errors.InvalidSignatureError: signature is not valid
+        ```
 
 ??? example "Mixing signers example 2"
-    ```python
-    """Mixing signers example 2."""
+    === "Source"
 
-    from blake2signer import Blake2SerializerSigner
-    from blake2signer import Blake2Signer
-    from blake2signer import Blake2TimestampSigner
-    from blake2signer import errors
+        ```python
+        """Mixing signers example 2."""
 
-    secret = 'el problema es estructural'
-    data = 'facundo castro presente'
+        from blake2signer import Blake2SerializerSigner
+        from blake2signer import Blake2Signer
+        from blake2signer import Blake2TimestampSigner
+        from blake2signer import errors 
 
-    t_signer = Blake2TimestampSigner(secret)
-    s_signer = Blake2SerializerSigner(secret)
-    signer = Blake2Signer(secret)
+        secret = 'el problema es estructural'
+        data = 'facundo castro presente' 
 
-    try:
-        t_signer.unsign(s_signer.dumps(data), max_age=5.5)
-    except errors.InvalidSignatureError as exc:
-        print(repr(exc))  # InvalidSignatureError('signature is not valid')
+        t_signer = Blake2TimestampSigner(secret)
+        s_signer = Blake2SerializerSigner(secret)
+        signer = Blake2Signer(secret) 
 
-    try:
-        signer.unsign(t_signer.sign(data))
-    except errors.InvalidSignatureError as exc:
-        print(repr(exc))  # InvalidSignatureError('signature is not valid')
+        try:
+            t_signer.unsign(s_signer.dumps(data), max_age=5.5)
+        except errors.InvalidSignatureError as exc:
+            print('Error:', repr(exc))  # InvalidSignatureError('signature is not valid') 
 
-    try:
-        s_signer.loads(signer.sign(data))
-    except errors.InvalidSignatureError as exc:
-        print(repr(exc))  # InvalidSignatureError('signature is not valid')
+        try:
+            signer.unsign(t_signer.sign(data))
+        except errors.InvalidSignatureError as exc:
+            print('Error:', repr(exc))  # InvalidSignatureError('signature is not valid') 
 
-    # Any and all combinations will produce an `InvalidSignatureError`...
-    ```
+        try:
+            s_signer.loads(signer.sign(data))
+        except errors.InvalidSignatureError as exc:
+            print('Error:', repr(exc))  # InvalidSignatureError('signature is not valid') 
+
+        # Any and all combinations will produce an `InvalidSignatureError`...
+        ```
+
+    === "Output"
+
+        ```
+        Error: InvalidSignatureError('signature is not valid')
+        Error: InvalidSignatureError('signature is not valid')
+        Error: InvalidSignatureError('signature is not valid')
+        ```
 
 !!! note
     You could find your way to trick one class into accepting data generated by the other, but you really shouldn't! (the [tests](https://gitlab.com/hackancuba/blake2signer/-/tree/main/blake2signer/tests) may show you how if you are interested).
@@ -203,24 +239,37 @@ To change the limit, set the class attribute [`MIN_SECRET_SIZE`](bases.md#blake2
 !!! info "This can be done in every signer"
 
 ??? example "Changing the secret size limit"
-    ```python
-    """Changing the secret size limit."""
+    === "Source"
 
-    from blake2signer import Blake2Signer
-    from blake2signer import errors
+        ```python
+        """Changing the secret size limit."""
 
-    secret = b'Han shot first'
-    data = b"didn't he?"
+        from blake2signer import Blake2Signer
+        from blake2signer import errors
 
-    try:
-        signer = Blake2Signer(secret)
-    except errors.InvalidOptionError as exc:
-        print(exc)  # secret should be longer than 16 bytes
+        secret = b'Han shot first'
+        data = b"didn't he?"
+
+        try:
+            signer = Blake2Signer(secret)
+        except errors.InvalidOptionError as exc:
+            print('Error:', repr(exc))  # secret should be longer than 16 bytes
+
         Blake2Signer.MIN_SECRET_SIZE = 8  # Size in bytes
         signer = Blake2Signer(secret)
 
-    print(data == signer.unsign(signer.sign(data)))  # True
-    ```
+        print(
+            'Does signing and unsigning works w/ short secrets?',
+            data == signer.unsign(signer.sign(data)),  # True
+        )
+        ```
+
+    === "Output"
+
+        ```
+        Error: InvalidOptionError('the 1st secret should be longer than 16 bytes')
+        Does signing and unsigning works w/ short secrets? True
+        ```
 
 !!! warning
     All instances of the signer are affected by the class attribute change.
@@ -265,32 +314,48 @@ In this package, every exception is subclassed from [`SignerError`](errors.md#bl
 
 There is one particular exception that is different from the rest: [`ExpiredSignatureError`](errors.md#blake2signer.errors.ExpiredSignatureError). This exception, raised when a signature has expired, but is valid, can hold the timestamp indicating when the signature was done as an aware datetime object in UTC (since v2.0.0), and the _valid_ unsigned data payload (since v2.5.0).  Since the signature is valid and correct, it is OK to access its unsigned data value. Just be aware that its time-to-live has expired, according to your own settings.
 
-It is important to note that if said exception is raised by a serializer signer, then the data contained in it is not the original unsigned data but a serialized/compressed/encoded one. Therefore, in such cases, one must use the method [`data_from_exc`](signers.md#blake2signer.signers.Blake2SerializerSigner.data_from_exc):
+It is important to note that if said exception is raised by a serializer signer, then the data contained in it is not the original unsigned data but a serialized/compressed/encoded one. Therefore, in such cases, one must use the method [`data_from_exc`](signers.md#blake2signer.signers.Blake2SerializerSigner.data_from_exc).
 
-```python
-"""Reading data from an ExpiredSignatureError exception."""
-from time import sleep
+??? example "Reading data from an ExpiredSignatureError exception"
+    === "Source"
 
-from blake2signer import Blake2SerializerSigner, errors
+        ```python
+        """Reading data from an ExpiredSignatureError exception."""
+        from time import sleep
+
+        from blake2signer import Blake2SerializerSigner, errors
 
 
-data = {'some': 'data'}
-secret = 'just some very secret secret'
+        data = {'some': 'data'}
+        secret = 'just some very secret secret'
 
-signer = Blake2SerializerSigner(secret, max_age=3)
-signed = signer.dumps(data)
+        signer = Blake2SerializerSigner(secret, max_age=3)
+        signed = signer.dumps(data)
 
-sleep(3)
+        sleep(3)
 
-try:
-    signer.loads(signed)
-except errors.ExpiredSignatureError as exc:
-    # The signature expired, but it is a good sig, so data is safe
-    print(exc.data)  # It's a bytes value that is serialized/compressed/encoded
-    unsigned = signer.data_from_exc(exc)
-    print(unsigned)  # Now we have the original data
-    print(data == unsigned)  # True
-```
+        try:
+            signer.loads(signed)
+        except errors.ExpiredSignatureError as exc:
+            print('Error:', repr(exc))
+            # The signature expired, but it is a good sig, so data is safe
+            print(
+                'Serialized/compressed/encoded data in exc:',
+                exc.data,  # It's a bytes value that is serialized/compressed/encoded
+            )
+            unsigned = signer.data_from_exc(exc)
+            print('Data from exc:', unsigned)  # Now we have the original data
+            print('Does it match original data?', data == unsigned)  # True
+        ```
+
+    === "Output"
+
+        ```
+        Error: ExpiredSignatureError(signature has expired, age 3.036761522293091 > 3.0 seconds)
+        Serialized/compressed/encoded data in exc: b'eyJzb21lIjoiZGF0YSJ9'
+        Data from exc: {'some': 'data'}
+        Does it match original data? True
+        ```
 
 This can be used to act upon such event, like informing of something to a user. Again, do note that the signature is expired!.
 

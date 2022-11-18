@@ -150,27 +150,37 @@ class CookieHTTPMiddleware(BaseHTTPMiddleware):
 
 You can quickly get any python object serialized and signed using [`Blake2SerializerSigner`](signers.md#blake2signer.signers.Blake2SerializerSigner), which additionally compresses and encodes the output by default. It uses a JSON serializer by default, but it can be changed easily.
 
-```python
-"""Signing a data structure that requires serialization."""
+=== "Source"
 
-from blake2signer import Blake2SerializerSigner
+    ```python
+    """Signing a data structure that requires serialization."""
 
-secret = b'ZnVja3RoZXBvbGljZQ'
+    from blake2signer import Blake2SerializerSigner
 
-data = {
-    'username': 'hackan',
-    'id': 1,
-    'posts': [{'title': '...', 'body': '...'}] * 100  # Some big data structure
-}
-print(len(str(data)))  # 3342  # Approximated flattened size for reference
+    secret = b'ZnVja3RoZXBvbGljZQ'
 
-signer = Blake2SerializerSigner(secret)
-signed = signer.dumps(data)
-print(len(signed))  # 175  # Compression helped to reduce size heavily
+    data = {
+        'username': 'hackan',
+        'id': 1,
+        'posts': [{'title': '...', 'body': '...'}] * 100  # Some big data structure
+    }
+    print('Data size approx:', len(str(data)))  # 3342  # Approximated flattened size for reference
 
-unsigned = signer.loads(signed)
-print(data == unsigned)  # True
-```
+    signer = Blake2SerializerSigner(secret)
+    signed = signer.dumps(data)
+    print('Signed size:', len(signed))  # 159  # Compression helped to reduce size heavily
+
+    unsigned = signer.loads(signed)
+    print('Does it match original data?', data == unsigned)  # True
+    ```
+
+=== "Output"
+
+    ```
+    Data size approx: 3342
+    Signed size: 159
+    Does it match original data? True
+    ```
 
 !!! tip "Favor bytes over string"
     Even though [`Blake2SerializerSigner`](signers.md#blake2signer.signers.Blake2SerializerSigner) accepts parameters as string (`secret`, `personalisation`, `separator` and `compression_flag`) you should use bytes instead: it will try to convert any given string to bytes **assuming it's UTF-8 encoded** which might not be correct (an [`errors.ConversionError`](errors.md#blake2signer.errors.ConversionError) exception is raised); if you are certain that the string given is UTF-8 then it's OK, otherwise ensure encoding the string correctly and using bytes instead.
@@ -179,77 +189,133 @@ print(data == unsigned)  # True
 
 You may not want all that [`Blake2SerializerSigner`](signers.md#blake2signer.signers.Blake2SerializerSigner) does and instead require the serialization to be plain in the signature, perhaps to [split the signature](#splitting-signatures) and be able to read the payload from JS. In this situation you may want to use [`Blake2Signer`](signers.md#blake2signer.signers.Blake2Signer), or [`Blake2TimestampSigner`](signers.md#blake2signer.signers.Blake2TimestampSigner) if you also require to limit the lifetime of the signature.
 
-```python
-"""Signing a serialized data structure."""
+=== "Source"
+    ```python
+    """Signing a serialized data structure."""
 
-import json
+    import json
 
-from blake2signer import Blake2Signer
-from blake2signer.serializers import JSONSerializer
+    from blake2signer import Blake2Signer
+    from blake2signer.serializers import JSONSerializer
 
-secret = b'ZnVja3RoZXBvbGljZQ'
-data = {
-    'username': 'hackan',
-    'id': 1,
-    'is_admin': True,
-}
+    secret = b'ZnVja3RoZXBvbGljZQ'
+    data = {
+        'username': 'hackan',
+        'id': 1,
+        'is_admin': True,
+    }
 
-serialized_data = json.dumps(data)
+    serialized_data = json.dumps(data)
 
-signer = Blake2Signer(secret)
-signed = signer.sign(serialized_data)
-# In this case both the signature and payload are ASCII, so you can convert the
-# values to string safely
-print(signed.decode())  # ....{"username": "hackan", "id": 1, "is_admin": true}
+    signer = Blake2Signer(secret)
+    signed = signer.sign(serialized_data)
+    # In this case both the signature and payload are ASCII, so you can convert the
+    # values to string safely
+    print('Signed:', signed.decode())  # ....{"username": "hackan", "id": 1, "is_admin": true}
 
-unsigned = signer.unsign(signed)
-print(serialized_data == unsigned)  # True
+    unsigned = signer.unsign(signed)
+    print('Does it match original data?', serialized_data == unsigned.decode())  # True
 
-# Alternatively, use the JSONSerializer (it uses compact encoding)
-serialized_data = JSONSerializer().serialize(data)
-signed = signer.sign(serialized_data)
-print(signed.decode())  # ....{"username":"hackan","id":1,"is_admin":true}
+    # Alternatively, use the JSONSerializer (it uses compact encoding)
+    serialized_data = JSONSerializer().serialize(data)
+    signed = signer.sign(serialized_data)
+    print('Signed w/ JSON serializer:', signed.decode())  # ....{"username":"hackan","id":1,"is_admin":true}
 
-# New in v2.0.0
-# The signature can be split in parts, don't do it "by hand"
-signature = signer.sign_parts(serialized_data)
-print(signature)
-# Blake2Signature(signature=b'...', data=b'{"username": "hackan", "id": 1, "is_admin": true}')
+    # New in v2.0.0
+    # The signature can be split in parts, don't do it "by hand"
+    signature = signer.sign_parts(serialized_data)
+    print('Signature:', signature)
+    # Blake2Signature(signature=b'...', data=b'{"username": "hackan", "id": 1, "is_admin": true}')
 
-# Now you can transmit the parts separately and then check the signature
-unsigned = signer.unsign_parts(signature)
-print(serialized_data == unsigned)  # True
-```
+    # Now you can transmit the parts separately and then check the signature
+    unsigned = signer.unsign_parts(signature)
+    print('Does it match original data?', serialized_data == unsigned)  # True
+    ```
+
+=== "Output"
+
+    ```
+    Signed: P-N2T5Zn6YgWbS8bXrrioaDDttEJzLkoilqM3w.{"username": "hackan", "id": 1, "is_admin": true}
+    Does it match original data? True
+    Signed w/ JSON serializer: XwGsnfXOR1wvh-6BljOW3cCuOGnWIQ-J9YlKzA.{"username":"hackan","id":1,"is_admin":true}
+    Signature: Blake2Signature(signature=b'1hQSDhjsxOOslBxptT_SYLP2wNxCGf8hXZxblA', data=b'{"username":"hackan","id":1,"is_admin":true}')
+    Does it match original data? True
+    ```
 
 ### Changing the serializer
 
 There are two [serializers provided by this package](details.md#encoders-serializers-and-compressors): a JSON serializer (default) and a Null serializer, which is useful to [deal with bytes using `Blake2SerializerSigner`](#using-the-nullserializer).
 
-```python
-"""Changing the serializer in Blake2SerializerSigner."""
+=== "Source"
 
-from blake2signer import Blake2SerializerSigner
-from blake2signer.serializers import JSONSerializer
-from blake2signer.serializers import NullSerializer
+    ```python
+    """Changing the serializer in Blake2SerializerSigner."""
 
-secret = 'may the force be with you'
-data = 'always'
+    from blake2signer import Blake2SerializerSigner
+    from blake2signer.serializers import JSONSerializer
+    from blake2signer.serializers import NullSerializer
 
-signer1 = Blake2SerializerSigner(secret, serializer=JSONSerializer)  # Default
-signed = signer1.dumps(data)
-unsigned = signer1.loads(signed)
-print(data == unsigned)  # True
+    secret = 'may the force be with you'
+    data = 'always'
 
-# The NullSerializer is useful to use this class with bytes (see example below)
-signer2 = Blake2SerializerSigner(secret, serializer=NullSerializer)
-signed = signer2.dumps(data)
-unsigned = signer2.loads(signed)
-print(data == unsigned.decode())  # True
+    signer1 = Blake2SerializerSigner(secret, serializer=JSONSerializer)  # Default
+    signed = signer1.dumps(data)
+    unsigned = signer1.loads(signed)
+    print('Does it match original data?', data == unsigned)  # True
 
-# Mixing the signers is protected as always
-signer1.loads(signed)
-# blake2signer.errors.InvalidSignatureError: signature is not valid
-```
+    # The NullSerializer is useful to use this class with bytes (see example below)
+    signer2 = Blake2SerializerSigner(secret, serializer=NullSerializer)
+    signed = signer2.dumps(data)
+    unsigned = signer2.loads(signed)
+    print('Does it match original data?', data == unsigned.decode())  # True
+
+    # Mixing the signers is protected as always
+    print('Can you mix the signers?')
+    signer1.loads(signed)
+    # blake2signer.errors.InvalidSignatureError: signature is not valid
+    ```
+
+=== "Output"
+
+    ```
+    Does it match original data? True
+    Does it match original data? True
+    Can you mix the signers?
+    ---------------------------------------------------------------------------
+    InvalidSignatureError                     Traceback (most recent call last)
+    Input In [1], in <cell line: 22>()
+         19 print('Does it match original data?', data == unsigned.decode())  # True
+         21 # Mixing the signers is protected as always
+    ---> 22 signer1.loads(signed)
+    
+    File .../blake2signer/blake2signer/signers.py:811, in Blake2SerializerSigner.loads(self, signed_data)
+        784 """Recover original data from a signed serialized string from `dumps`.
+        785 
+        786 If `max_age` was specified then it will be ensured that the signature is
+       (...)
+        807     UnserializationError: Signed data can't be unserialized.
+        808 """
+        809 parts = self._decompose(self._force_bytes(signed_data))
+    --> 811 return self._loads(self._proper_unsign(parts))
+    
+    File .../blake2signer/blake2signer/bases.py:725, in Blake2DualSignerBase._proper_unsign(self, parts)
+        710 """Unsign signed data properly with the corresponding signer.
+        711 
+        712 Args:
+       (...)
+        722     DecodeError: Timestamp can't be decoded.
+        723 """
+        724 if self._max_age is None:
+    --> 725     return self._unsign(parts)
+        727 return self._unsign_with_timestamp(parts, max_age=self._max_age)
+    
+    File .../blake2signer/blake2signer/bases.py:480, in Blake2SignerBase._unsign(self, parts)
+        477     if compare_digest(signature, parts.signature):
+        478         return parts.data
+    --> 480 raise InvalidSignatureError('signature is not valid')
+    
+    InvalidSignatureError: signature is not valid
+    ```
 
 !!! tip "Custom serializer"
     You can [create a custom serializer](#using-a-custom-serializer).
@@ -263,78 +329,100 @@ You can use a custom JSON encoder to serialize values that are not supported by 
 
 === "v2"
 
-    ```python
-    """Sample of custom JSON encoder for v2+."""
+    === "Source"
 
-    from decimal import Decimal
-    from json import JSONEncoder
+        ```python
+        """Sample of custom JSON encoder for v2+."""
 
-    from blake2signer import Blake2SerializerSigner
+        from decimal import Decimal
+        from json import JSONEncoder
 
-
-    class CustomJSONEncoder(JSONEncoder):
-
-        def default(self, o):
-            if isinstance(o, Decimal):
-                return str(o)
-            elif isinstance(o, bytes):
-                return o.decode()
-
-            return super().default(o)
+        from blake2signer import Blake2SerializerSigner
 
 
-    secret = 'que-paso-con-Tehuel'
-    data = [1, b'2', Decimal('3.4')]
+        class CustomJSONEncoder(JSONEncoder):
 
-    signer = Blake2SerializerSigner(secret)
-    # New in v2.0.0
-    # You can pass any keyword argument to the serializer directly from `dumps`
-    signed = signer.dumps(data, serializer_kwargs={'cls': CustomJSONEncoder})
+            def default(self, o):
+                if isinstance(o, Decimal):
+                    return str(o)
+                elif isinstance(o, bytes):
+                    return o.decode()
 
-    unsigned = signer.loads(signed)
-    print(unsigned)  # [1, '2', '3.4']
-    ```
+                return super().default(o)
+
+
+        secret = 'que-paso-con-Tehuel'
+        data = [1, b'2', Decimal('3.4')]
+        print('Data:', data)
+
+        signer = Blake2SerializerSigner(secret)
+        # New in v2.0.0
+        # You can pass any keyword argument to the serializer directly from `dumps`
+        signed = signer.dumps(data, serializer_kwargs={'cls': CustomJSONEncoder})
+
+        unsigned = signer.loads(signed)
+        print('Unsigned:', unsigned)  # [1, '2', '3.4']
+        # You need to deal with the data conversion after loading accordingly
+        ```
+
+    === "Output"
+
+        ```
+        Data: [1, b'2', Decimal('3.4')]
+        Unsigned: [1, '2', '3.4']
+        ```
 
 === "v1"
 
     For versions older than v2, you need to create a custom serializer from the JSONSerializer:
 
-    ```python
-    """Sample of custom JSON encoder for versions < v2."""
+    === "Source"
 
-    import typing
-    from decimal import Decimal
-    from json import JSONEncoder
+        ```python
+        """Sample of custom JSON encoder for versions < v2."""
 
-    from blake2signer import Blake2SerializerSigner
-    from blake2signer.serializers import JSONSerializer
+        import typing
+        from decimal import Decimal
+        from json import JSONEncoder
 
-
-    class CustomJSONEncoder(JSONEncoder):
-
-        def default(self, o):
-            if isinstance(o, Decimal):
-                return str(o)
-            elif isinstance(o, bytes):
-                return o.decode()
-
-            return super().default(o)
+        from blake2signer import Blake2SerializerSigner
+        from blake2signer.serializers import JSONSerializer
 
 
-    class MyJSONSerializer(JSONSerializer):
+        class CustomJSONEncoder(JSONEncoder):
 
-        def serialize(self, data: typing.Any, **kwargs: typing.Any) -> bytes:
-            return super().serialize(data, cls=CustomJSONEncoder, **kwargs)
+            def default(self, o):
+                if isinstance(o, Decimal):
+                    return str(o)
+                elif isinstance(o, bytes):
+                    return o.decode()
+
+                return super().default(o)
 
 
-    secret = 'que-paso-con-Tehuel'
-    data = [1, b'2', Decimal('3.4')]
+        class MyJSONSerializer(JSONSerializer):
 
-    signer = Blake2SerializerSigner(secret, serializer=MyJSONSerializer)
+            def serialize(self, data: typing.Any, **kwargs: typing.Any) -> bytes:
+                return super().serialize(data, cls=CustomJSONEncoder, **kwargs)
 
-    unsigned = signer.loads(signer.dumps(data))
-    print(unsigned)  # [1, '2', '3.4']
-    ```
+
+        secret = 'que-paso-con-Tehuel'
+        data = [1, b'2', Decimal('3.4')]
+        print('Data:', data)
+
+        signer = Blake2SerializerSigner(secret, serializer=MyJSONSerializer)
+
+        unsigned = signer.loads(signer.dumps(data))
+        print('Unsigned:', unsigned)  # [1, '2', '3.4']
+        # You need to deal with the data conversion after loading accordingly
+        ```
+
+    === "Output"
+
+        ```
+        Data: [1, b'2', Decimal('3.4')]
+        Unsigned: [1, '2', '3.4']
+        ```
 
 !!! warning
     Using a custom JSON encoder to deal with data that is pure bytes is a bad idea performance-wise. You should prefer using the [`NullSerializer`](#using-the-nullserializer) or [other signers](#signing-raw-bytes-or-strings) instead.
@@ -348,104 +436,139 @@ All you need to do is implement [`SerializerInterface`](interfaces.md#blake2sign
 !!! warning
     **Never** use `pickle` as serializer given that if for some implementation error a malicious user can sign arbitrary data, then unsigning it will cause code execution (JSON and msgpack are safe against such situations).
 
-```python
-"""Creating a custom serializer."""
+=== "Source"
 
-import typing
+    ```python
+    """Creating a custom serializer."""
 
-import msgpack
+    import typing
 
-from blake2signer import Blake2SerializerSigner
-from blake2signer.interfaces import SerializerInterface
+    import msgpack
 
-
-# Custom serializer with msgpack (same idea would be for orjson)
-class MsgpackSerializer(SerializerInterface):
-    """Msgpack serializer."""
-
-    def serialize(self, data: typing.Any, **kwargs: typing.Any) -> bytes:
-        """Serialize given data as msgpack."""
-        return msgpack.packb(data, **kwargs)
-
-    def unserialize(self, data: bytes, **kwargs: typing.Any) -> typing.Any:
-        """Unserialize given msgpack data."""
-        return msgpack.unpackb(data, **kwargs)
+    from blake2signer import Blake2SerializerSigner
+    from blake2signer.interfaces import SerializerInterface
 
 
-secret = b'que-paso-con-Tehuel'
-data = {'data': [1, b'2', 3.4]}
+    # Custom serializer with msgpack (same idea would be for orjson)
+    class MsgpackSerializer(SerializerInterface):
+        """Msgpack serializer."""
 
-signer = Blake2SerializerSigner(secret, serializer=MsgpackSerializer)
-signed = signer.dumps(data)
-print(signed)  # ....gaRkYXRhkwHEATLLQAszMzMzMzM
+        def serialize(self, data: typing.Any, **kwargs: typing.Any) -> bytes:
+            """Serialize given data as msgpack."""
+            return msgpack.packb(data, **kwargs)
 
-unsigned = signer.loads(signed)
-print(unsigned)  # {'data': [1, b'2', 3.4]}
-print(data == unsigned)  # True
-```
+        def unserialize(self, data: bytes, **kwargs: typing.Any) -> typing.Any:
+            """Unserialize given msgpack data."""
+            return msgpack.unpackb(data, **kwargs)
+
+
+    secret = b'que-paso-con-Tehuel'
+    data = {'data': [1, b'2', 3.4]}
+
+    signer = Blake2SerializerSigner(secret, serializer=MsgpackSerializer)
+    signed = signer.dumps(data)
+    print('Signed:', signed)  # ....gaRkYXRhkwHEATLLQAszMzMzMzM
+
+    unsigned = signer.loads(signed)
+    print('Unsigned:', unsigned)  # {'data': [1, b'2', 3.4]}
+    print('Does it match original data?', data == unsigned)  # True
+    ```
+
+=== "Output"
+
+    ```
+    Signed: WXK8dGmZBBUw-4YBhiLzK8zzt0yR2PtnRNTkAA.gaRkYXRhkwHEATLLQAszMzMzMzM
+    Unsigned: {'data': [1, b'2', 3.4]}
+    Does it match original data? True
+    ```
 
 ### Compressing data
 
 There are several options regarding the compression capabilities of [`Blake2SerializerSigner`](signers.md#blake2signer.signers.Blake2SerializerSigner). By default, it will check if compressing given data is working out positively or not, and may decide to not compress after all. This behaviour can be changed to not compress at all or force the compression nevertheless. The [compression level](details.md#compression-level) can also be tweaked to your needs.
 
-```python
-"""Signing a data structure and playing with compression capabilities."""
+=== "Source"
 
-from secrets import token_hex
+    ```python
+    """Signing a data structure and playing with compression capabilities."""
 
-from blake2signer import Blake2SerializerSigner
-from blake2signer.compressors import GzipCompressor
+    from secrets import token_hex
+    
+    from blake2signer import Blake2SerializerSigner
+    from blake2signer.compressors import GzipCompressor
 
-secret = b'ZnVja3RoZXBvbGljZQ'
-data = {
-    'username': 'hackan',
-    'id': 1,
-    'posts': [{'title': '...', 'body': '...'}] * 100  # Some big data structure
-}
-print(len(str(data)))  # 3342  # Approximated flattened size for reference
+    secret = b'ZnVja3RoZXBvbGljZQ'
+    data = {
+        'username': 'hackan',
+        'id': 1,
+        'posts': [{'title': '...', 'body': '...'}] * 100  # Some big data structure
+    }
+    print('Data size approx:', len(str(data)))  # 3342  # Approximated flattened size for reference
 
-signer = Blake2SerializerSigner(
-    secret,
-    compressor=GzipCompressor,  # Gzip compressor instead of the default Zlib
-)
-signed = signer.dumps(data, compress=False)  # Without compression
-print(len(signed))  # 3957  # Significantly bigger than actual data
+    signer = Blake2SerializerSigner(
+        secret,
+        compressor=GzipCompressor,  # Gzip compressor instead of the default Zlib
+    )
+    signed = signer.dumps(data, compress=False)  # Without compression
+    print('Signed size:', len(signed))  # 3957  # Significantly bigger than actual data
 
-# As a general rule of thumb if you have highly compressible data such
-# as human-readable text, then you should leave compression enabled.
-# Otherwise, when dealing with somewhat random data compression won't
-# help much (but probably won't hurt either unless you're dealing with
-# a huge amount of random data). A check is done when compression is
-# enabled and if it turns out to be detrimental then data won't be
-# compressed, so you can leave it on as it is by default (read about compression
-# ratio further below).
-# In this example dumping the output of `token_hex` won't be compressed
-# even though it is enabled.
-print(len(signer.dumps(token_hex(16))) > len(signer.dumps('a' * 16)))  # True
+    # As a general rule of thumb if you have highly compressible data such
+    # as human-readable text, then you should leave compression enabled.
+    # Otherwise, when dealing with somewhat random data compression won't
+    # help much (but probably won't hurt either unless you're dealing with
+    # a huge amount of random data). A check is done when compression is
+    # enabled and if it turns out to be detrimental then data won't be
+    # compressed, so you can leave it on as it is by default (read about compression
+    # ratio further below).
+    # In this example dumping the output of `token_hex` won't be compressed
+    # even though it is enabled.
+    signed_uncompressible = signer.dumps(token_hex(16))
+    signed_compressible = signer.dumps('a' * 16)
+    print(
+        'token_hex:', signed_uncompressible,
+        "\nsome a's: ", signed_compressible,
+        "\ntoken_hex larger than some a's?",
+        len(signed_uncompressible) > len(signed_compressible),
+    )  # True
 
-# New in v1.1.0
-# However, you can force compressing the data, even if the result might actually
-# be bigger than it was initially (detrimental compression).
-random_data = token_hex(16)
-print(
-    len(signer.dumps(random_data, force_compression=True)) >
-    len(signer.dumps(random_data))
-)  # True
+    # New in v1.1.0
+    # However, you can force compressing the data, even if the result might actually
+    # be bigger than it was initially (detrimental compression).
+    random_data = token_hex(16)
+    print(
+        'Compression can be forced?',
+        len(signer.dumps(random_data, force_compression=True)) >
+        len(signer.dumps(random_data))
+    )  # True
 
-# You can also set the desired compression level where 1 is the fastest
-# and least compressed and 9 the slowest and most compressed (the default value
-# is up to the compressor).
-signed = signer.dumps(data, compression_level=9)
-print(len(signed))  # 175
-signed = signer.dumps(data, compression_level=1)
-print(len(signed))  # 197  # Less size reduction, but compression is faster
-# Since sample data is the same structure repeated many times, it's highly
-# compressible so even the lowest compression level works excellent here.
-# That won't always be the case; the default value is usually a good balance.
+    # You can also set the desired compression level where 1 is the fastest
+    # and least compressed and 9 the slowest and most compressed (the default value
+    # is up to the compressor).
+    signed = signer.dumps(data, compression_level=9)
+    print('Signed most compressed length:', len(signed))  # 175
+    signed = signer.dumps(data, compression_level=1)
+    print('Signed least compressed length:', len(signed))  # 197  
+    # Less size reduction, but compression is faster
+    # Since sample data is the same structure repeated many times, it's highly
+    # compressible so even the lowest compression level works excellent here.
+    # That won't always be the case; the default value is usually a good balance.
 
-unsigned = signer.loads(signed)
-print(data == unsigned)  # True
-```
+    unsigned = signer.loads(signed)
+    print('Does it match original data?', data == unsigned)  # True
+    ```
+
+=== "Output"
+
+    ```
+    Data size approx: 3342
+    Signed size: 3957
+    token_hex: APSwtQDVgX4oT-EXNHHasZyEN-8ADQKskEA4Rw.IjlmYTg3YzgyZDQ3YTNmMzgxM2I4ODkzMDA3N2JlYzJhIg 
+    some a's:  i1JHIZBDFDBa2n2u_ZQtdCN3eDxbZiiJ54q7gg.ImFhYWFhYWFhYWFhYWFhYWEi 
+    token_hex larger than some a's? True
+    Compression can be forced? True
+    Signed most compressed length: 175
+    Signed least compressed length: 196
+    Does it match original data? True
+    ```
 
 ### Changing the compression ratio
 
@@ -453,26 +576,40 @@ print(data == unsigned)  # True
 
 You can set the compression ratio to your needs, and define when is data considered to be sufficiently compressed. This plays very well when [using a custom compressor](#using-a-custom-compressor), and lets you tweak the auto-compression mechanism. It can be any value between 0 and 99. The default value is 5, meaning that data is considered sufficiently compressed when its size is reduced more than 5%.
 
-```python
-"""Changing the compression ratio."""
+=== "Source"
+    
+    ```python
+    """Changing the compression ratio."""
 
-from blake2signer import Blake2SerializerSigner
+    from blake2signer import Blake2SerializerSigner
 
-secret = b'ZnVja3RoZXBvbGljZQ'
-data = 'acab' * 4  # Only somewhat compressible
+    secret = b'ZnVja3RoZXBvbGljZQ'
+    data = 'acab' * 4  # Only somewhat compressible
 
-signer1 = Blake2SerializerSigner(secret)  # Default compression ratio of 5
-signed1 = signer1.dumps(data)  # Compressed
-signed2 = signer1.dumps(data, compress=False)  # Not compressed
+    signer1 = Blake2SerializerSigner(secret)  # Default compression ratio of 5
+    signed1 = signer1.dumps(data)  # Compressed
+    print('Compressed (default):', len(signed1))
+    signed2 = signer1.dumps(data, compress=False)  # Not compressed
+    print('Uncompressed:', len(signed2))
 
-signer2 = Blake2SerializerSigner(secret, compression_ratio=20)
-signed3 = signer2.dumps(data)  # Won't compress because of ratio
+    signer2 = Blake2SerializerSigner(secret, compression_ratio=20)
+    signed3 = signer2.dumps(data)  # Won't compress because of ratio
+    print("Won't compress:", len(signed3))
 
-print(
-    len(signed1), '<', len(signed2), '=', len(signed3), ':',
-    len(signed1) < len(signed2) == len(signed3),
-)  # 61 < 63 = 63 : True
-```
+    print(
+        len(signed1), '<', len(signed2), '=', len(signed3), ':',
+        len(signed1) < len(signed2) == len(signed3),
+    )  # 60 < 63 = 63 : True
+    ```
+
+=== "Output"
+
+    ```
+    Compressed (default): 60
+    Uncompressed: 63
+    Won't compress: 63
+    60 < 63 = 63 : True
+    ```
 
 !!! note
     For versions older than v2, *compression ratio* can be set through the class attribute `COMPRESSION_RATIO`. Note that this change affects all instances of the class, which is why said value was refactored to be an instance attribute.
@@ -481,31 +618,76 @@ print(
 
 There are two [compressors provided by this package](details.md#encoders-serializers-and-compressors): a [Zlib compressor](compressors.md#blake2signer.compressors.ZlibCompressor) (default) and a [Gzip compressor](compressors.md#blake2signer.compressors.GzipCompressor).
 
-```python
-"""Changing the compressor in Blake2SerializerSigner."""
+=== "Source"
 
-from blake2signer import Blake2SerializerSigner
-from blake2signer.compressors import GzipCompressor
-from blake2signer.compressors import ZlibCompressor
+    ```python
+    """Changing the compressor in Blake2SerializerSigner."""
 
-secret = 'may the force be with you'
-data = 'always'
+    from blake2signer import Blake2SerializerSigner
+    from blake2signer.compressors import GzipCompressor
+    from blake2signer.compressors import ZlibCompressor
 
-signer1 = Blake2SerializerSigner(secret, compressor=ZlibCompressor)  # Default
-signed = signer1.dumps(data)
-unsigned = signer1.loads(signed)
-print(data == unsigned)  # True
+    secret = 'may the force be with you'
+    data = 'always'
 
-# The Gzip compressor may be faster, with compression being relatively worst.
-signer2 = Blake2SerializerSigner(secret, compressor=GzipCompressor)
-signed = signer2.dumps(data)
-unsigned = signer2.loads(signed)
-print(data == unsigned)  # True
+    signer1 = Blake2SerializerSigner(secret, compressor=ZlibCompressor)  # Default
+    signed = signer1.dumps(data)
+    unsigned = signer1.loads(signed)
+    print('Does it match original data?', data == unsigned)  # True
 
-# Mixing the signers is protected as always
-signer1.loads(signed)
-# blake2signer.errors.InvalidSignatureError: signature is not valid
-```
+    # The Gzip compressor may be faster, with compression being relatively worst.
+    signer2 = Blake2SerializerSigner(secret, compressor=GzipCompressor)
+    signed = signer2.dumps(data)
+    unsigned = signer2.loads(signed)
+    print('Does it match original data?', data == unsigned)  # True
+
+    # Mixing the signers is protected as always
+    print('Can you mix the signers?')
+    signer1.loads(signed)
+    # blake2signer.errors.InvalidSignatureError: signature is not valid
+    ```
+
+=== "Output"
+
+    ```
+    Does it match original data? True
+    Does it match original data? True
+    Can you mix the signers?
+    ---------------------------------------------------------------------------
+    InvalidSignatureError                     Traceback (most recent call last)
+    Input In [1], in <cell line: 22>()
+         19 print('Does it match original data?', data == unsigned)  # True
+         21 # Mixing the signers is protected as always
+    ---> 22 signer1.loads(signed)
+
+    File .../blake2signer/blake2signer/signers.py:811, in Blake2SerializerSigner.loads(self, signed_data)
+        784 """Recover original data from a signed serialized string from `dumps`.
+        785 
+        786 If `max_age` was specified then it will be ensured that the signature is
+       (...)
+        807     UnserializationError: Signed data can't be unserialized.
+        808 """
+        809 parts = self._decompose(self._force_bytes(signed_data))
+    --> 811 return self._loads(self._proper_unsign(parts))
+
+    File .../blake2signer/blake2signer/bases.py:725, in Blake2DualSignerBase._proper_unsign(self, parts)
+        710 """Unsign signed data properly with the corresponding signer.
+        711 
+        712 Args:
+       (...)
+        722     DecodeError: Timestamp can't be decoded.
+        723 """
+        724 if self._max_age is None:
+    --> 725     return self._unsign(parts)
+        727 return self._unsign_with_timestamp(parts, max_age=self._max_age)
+
+    File .../blake2signer/blake2signer/bases.py:480, in Blake2SignerBase._unsign(self, parts)
+        477     if compare_digest(signature, parts.signature):
+        478         return parts.data
+    --> 480 raise InvalidSignatureError('signature is not valid')
+
+    InvalidSignatureError: signature is not valid
+    ```
 
 !!! tip "Custom compressor"
     You can [create a custom compressor](#using-a-custom-compressor).
@@ -517,44 +699,56 @@ You can use custom compressors such as BZ2 or LZMA, or any other. All you need t
 !!! note
     If you get an import error for `bz2` then [your python build doesn't support it](https://stackoverflow.com/questions/12806122/missing-python-bz2-module/12806325#12806325).
 
-```python
-"""Creating a custom compressor."""
+=== "Source"
 
-import bz2
+    ```python
+    """Creating a custom compressor."""
 
-from blake2signer import Blake2SerializerSigner
-from blake2signer.interfaces import CompressorInterface
+    import bz2
 
-
-class Bz2Compressor(CompressorInterface):
-    """Bzip2 compressor."""
-
-    @property
-    def default_compression_level(self) -> int:  # New in 2.1.0
-        """Get the default compression level."""
-        return 9  # According to https://docs.python.org/3/library/bz2.html#bz2.compress
-
-    def compress(self, data: bytes, *, level: int) -> bytes:
-        """Compress given data."""
-        return bz2.compress(data, compresslevel=level)
-
-    def decompress(self, data: bytes) -> bytes:
-        """Decompress given compressed data."""
-        return bz2.decompress(data)
+    from blake2signer import Blake2SerializerSigner
+    from blake2signer.interfaces import CompressorInterface
 
 
-secret = b'we do not forget...'
-data = [i for i in range(100)]
-print(len(str(data)))  # 390
+    class Bz2Compressor(CompressorInterface):
+        """Bzip2 compressor."""
 
-signer = Blake2SerializerSigner(secret, compressor=Bz2Compressor)
-signed = signer.dumps(data)
-print(signed)  # ...oMgclQNA3KgNhqVAODMqAOnkqAFsVUALlR-x_F3JFOFCQjBBOmw
-print(len(signed))  # 195
+        @property
+        def default_compression_level(self) -> int:  # New in 2.1.0
+            """Get the default compression level."""
+            # According to https://docs.python.org/3/library/bz2.html#bz2.compress
+            return 9
 
-unsigned = signer.loads(signed)
-print(data == unsigned)  # True
-```
+        def compress(self, data: bytes, *, level: int) -> bytes:
+            """Compress given data."""
+            return bz2.compress(data, compresslevel=level)
+
+        def decompress(self, data: bytes) -> bytes:
+            """Decompress given compressed data."""
+            return bz2.decompress(data)
+
+
+    secret = b'we do not forget...'
+    data = [i for i in range(100)]
+    print('Data length:', len(str(data)))  # 390
+
+    signer = Blake2SerializerSigner(secret, compressor=Bz2Compressor)
+    signed = signer.dumps(data)
+    print('Signed:', signed)  # ...yVA0DcqA2GpUA4MyoA6eSoAWxVQAuVH7H8XckU4UJCMEE6bA
+    print('Signed length:', len(signed))  # 195
+
+    unsigned = signer.loads(signed)
+    print('Does it match original data?', data == unsigned)  # True
+    ```
+
+=== "Output"
+    
+    ```
+    Data length: 390
+    Signed: MANTHZjrlJ6AkUSkjc6jEAoNY1_CxrSfmcB_Pw..QlpoOTFBWSZTWYwQTpsAAJCaAAAEf-AACjAAuAgGgAgGgAaSYN-qojHuM63ztvengDgyBsNA0DYZA4PAHTABaAB9d3d3d-38AXKh4A7KgyByVA0DcqA2GpUA4MyoA6eSoAWxVQAuVH7H8XckU4UJCMEE6bA
+    Signed length: 195
+    Does it match original data? True
+    ```
 
 ### Changing the compression flag
 
@@ -566,19 +760,28 @@ It is used internally to mark a compressed payload to prevent [zip bombs](https:
 !!! info
     It defaults to a dot (`.`).
 
-```python
-"""Changing the compression flag."""
+=== "Source"
 
-from blake2signer import Blake2SerializerSigner
+    ```python
+    """Changing the compression flag."""
 
-secret = b'setec astronomy.'
-data = 'too many secrets'
+    from blake2signer import Blake2SerializerSigner
 
-signer = Blake2SerializerSigner(secret, compression_flag=b'!')
-signed = signer.dumps(data, force_compression=True)
-print(signed)  # ....!eJxTKsnPV8hNzKtUKE5NLkotKVYCADzjBoU
-print(data == signer.loads(signed))  # True
-```
+    secret = b'setec astronomy.'
+    data = 'too many secrets'
+
+    signer = Blake2SerializerSigner(secret, compression_flag=b'!')
+    signed = signer.dumps(data, force_compression=True)
+    print('Signed:', signed)  # ....!eJxTKsnPV8hNzKtUKE5NLkotKVYCADzjBoU
+    print('Does it match original data?', data == signer.loads(signed))  # True
+    ```
+
+=== "Output"
+
+    ```
+    Signed: W3vdnToSNqdMcwrB25Un7uXcU_jBJbt4qV4Ogg.!eJxTKsnPV8hNzKtUKE5NLkotKVYCADzjBoU
+    Does it match original data? True
+    ```
 
 !!! note
     For versions older than v2, the *compression flag* can be set through the class attribute `COMPRESSION_FLAG`. Note that this change affects all instances of the class, which is why said value was refactored to be an instance attribute.
@@ -589,63 +792,93 @@ print(data == signer.loads(signed))  # True
 
 [`Blake2SerializerSigner`](signers.md#blake2signer.signers.Blake2SerializerSigner) has two convenient methods to deal with files: [`dump`](signers.md#blake2signer.signers.Blake2SerializerSigner.dump) (write signed data to file) and [`load`](signers.md#blake2signer.signers.Blake2SerializerSigner.load) (read signed data from file). These methods may raise [`errors.FileError`](errors.md#blake2signer.errors.FileError) while reading from/writing to the file.
 
-```python
-"""Dealing with files using Blake2SerializerSigner."""
+=== "Source"
 
-from blake2signer import Blake2SerializerSigner
+    ```python
+    """Dealing with files using Blake2SerializerSigner."""
 
-secret = b'using crypto is not a crime'
-data = 'free Ola Bini!!'
+    from blake2signer import Blake2SerializerSigner
 
-signer = Blake2SerializerSigner(secret)
+    secret = b'using crypto is not a crime'
+    data = 'free Ola Bini!!'
 
-with open('somefile', 'wt') as file:
-    signed = signer.dump(data, file)  # Signed data returned for convenience
-    print(signed)  # ....ImZyZWUgT2xhIEJpbmkhISI
+    signer = Blake2SerializerSigner(secret)
 
-with open('somefile', 'rt') as file:
-    print(signer.load(file))  # free Ola Bini!!
-```
+    with open('somefile', 'wt') as file:
+        signed = signer.dump(data, file)  # Signed data returned for convenience
+        print('Signed:', signed)  # ....ImZyZWUgT2xhIEJpbmkhISI
+
+    with open('somefile', 'rt') as file:
+        unsigned = signer.load(file)
+    print('Unsigned file content:', unsigned)  # free Ola Bini!!
+    print('Does it match original data?', data == unsigned)  # True
+    ```
+
+=== "Output"
+
+    ```
+    Signed: Ewp9h2UPXe7ow83cMmZTXb1weu7ro4p6P4jXLQ.ImZyZWUgT2xhIEJpbmkhISI
+    Unsigned file content: free Ola Bini!!
+    Does it match original data? True
+    ```
 
 !!! note "Text and binary modes supported"
     Both opening modes are supported, so given file can be opened in text or binary mode indistinctly.
 
-```python
-"""Dealing with files with additional content using Blake2SerializerSigner."""
+=== "Source"
 
-import io
+    ```python
+    """Dealing with files with additional content using Blake2SerializerSigner."""
 
-from blake2signer import Blake2SerializerSigner
+    import io
 
-secret = 'free Chelsea 🤘'
-data = {
-    'META': {'version': 1},
-    'uid': 'c61df3b7-66db-438a-9246-c77861597168',
-    'username': 'hackan',
-}
+    from blake2signer import Blake2SerializerSigner
 
-signer = Blake2SerializerSigner(secret)
+    secret = 'free Chelsea 🤘'
+    data = {
+        'META': {'version': 1},
+        'uid': 'c61df3b7-66db-438a-9246-c77861597168',
+        'username': 'hackan',
+    }
+    print('Data:', data)
 
-file = io.BytesIO()
-file.write(b'unsigned metadata: {"version": 1}\n')
+    signer = Blake2SerializerSigner(secret)
 
-# We need to remember the initial position to recover data later
-initial_position = file.tell()
+    file = io.BytesIO()
+    file.write(b'unsigned metadata: {"version": 1}\n')
 
-# `dump` will start writing from the current position
-signed = signer.dump(data, file, compression_level=9)
-print(file.tell() == (initial_position + len(signed)))  # True
+    # We need to remember the initial position to recover data later
+    initial_position = file.tell()
 
-# `load` will read the entirety of the file from the current position
-file.seek(initial_position)
-print(signer.load(file))
-# {'META': {'version': 1}, 'uid': 'c61df3b7-66db-438a-9246-c77861597168', 'username': 'hackan'}
+    # `dump` will start writing from the current position
+    signed = signer.dump(data, file, compression_level=9)
+    print('Does position matches?', file.tell() == (initial_position + len(signed)))  # True
 
-file.seek(0)
-print(file.read().decode())
-# unsigned metadata: {"version": 1}
-# ....eyJNRVRBIjp7InZlcnNpb24iOjF9LCJ1aWQiOiJjNjFkZjNiNy02NmRiLTQzOGEtOTI0Ni1jNzc4NjE1OTcxNjgiLCJ1c2VybmFtZSI6ImhhY2thbiJ9
-```
+    # `load` will read the entirety of the file from the current position
+    file.seek(initial_position)
+    unsigned = signer.load(file)
+    print('Unsigned:', unsigned)
+    # {'META': {'version': 1}, 'uid': 'c61df3b7-66db-438a-9246-c77861597168', 'username': 'hackan'}
+    print('Does it match original data?', data == unsigned)  # True
+
+    file.seek(0)
+    print('File contents:')
+    print(file.read().decode())
+    # unsigned metadata: {"version": 1}
+    # ....Ni1jNzc4NjE1OTcxNjgiLCJ1c2VybmFtZSI6ImhhY2thbiJ9
+    ```
+
+=== "Output"
+
+    ```
+    Data: {'META': {'version': 1}, 'uid': 'c61df3b7-66db-438a-9246-c77861597168', 'username': 'hackan'}
+    Does position matches? True
+    Unsigned: {'META': {'version': 1}, 'uid': 'c61df3b7-66db-438a-9246-c77861597168', 'username': 'hackan'}
+    Does it match original data? True
+    File contents:
+    unsigned metadata: {"version": 1}
+    cRGv1LWkI1i2CdrwxGb9JHV5yYFfurygft9dgw.eyJNRVRBIjp7InZlcnNpb24iOjF9LCJ1aWQiOiJjNjFkZjNiNy02NmRiLTQzOGEtOTI0Ni1jNzc4NjE1OTcxNjgiLCJ1c2VybmFtZSI6ImhhY2thbiJ9
+    ```
 
 !!! note
     Both methods uses the file as-is: this means that for [`dump`](signers.md#blake2signer.signers.Blake2SerializerSigner.dump), data is written at the current position (so the cursor advances equally to the written size), and for [`load`](signers.md#blake2signer.signers.Blake2SerializerSigner.load), data is read entirely from the current position (so the cursor will sit at the end).
@@ -654,66 +887,79 @@ print(file.read().decode())
 
 Sometimes you don't have to deal with a complex data structure and all you need is to do is sign a simple string, or the output of a computation as bytes, without any serialization. You could serialize the string, but the performance impact is big, so it would not be recommended.
 
-```python
-"""Signing data as raw bytes or strings."""
+=== "Source"
 
-from datetime import timedelta
-from time import sleep
+    ```python
+    """Signing data as raw bytes or strings."""
 
-from blake2signer import Blake2Signer
-from blake2signer import Blake2TimestampSigner
-from blake2signer import errors
-from blake2signer.encoders import HexEncoder
+    from datetime import timedelta
+    from time import sleep
 
-secret = b'ZnVja3RoZXBvbGljZQ'
-data = b'facundo castro presente'
+    from blake2signer import Blake2Signer
+    from blake2signer import Blake2TimestampSigner
+    from blake2signer import errors
+    from blake2signer.encoders import HexEncoder
 
-signer = Blake2Signer(
-    secret,
-    hasher=Blake2Signer.Hashers.blake2s,  # Using Blake2s instead of Blake2b
-    encoder=HexEncoder,  # Using the hex encoder for the signature (new in v2.0.0)
-    digest_size=32,  # Setting the maximum digest size for Blake2s
-)
-signed = signer.sign(data)
-print(signed)  # The signature only has hex characters (data is not encoded!)
+    secret = b'ZnVja3RoZXBvbGljZQ'
+    data = b'facundo castro presente'
 
-unsigned = signer.unsign(signed)
-print(data == unsigned)  # True
+    signer = Blake2Signer(
+        secret,
+        hasher=Blake2Signer.Hashers.blake2s,  # Using Blake2s instead of Blake2b
+        encoder=HexEncoder,  # Using the hex encoder for the signature (new in v2.0.0)
+        digest_size=32,  # Setting the maximum digest size for Blake2s
+    )
+    signed = signer.sign(data)
+    print('Signed:', signed)  # The signature only has hex characters (data is not encoded!)
 
-# Using the timestamp signer
-t_signer = Blake2TimestampSigner(secret)
-signed = t_signer.sign(data)
-print(len(signed))  # 69
+    unsigned = signer.unsign(signed)
+    print('Does it match original data?', data == unsigned)  # True
 
-unsigned = t_signer.unsign(signed, max_age=10)
-# Signature is valid if it's not older than that many seconds (10)
-print(data == unsigned)  # True
+    # Using the timestamp signer
+    t_signer = Blake2TimestampSigner(secret)
+    signed = t_signer.sign(data)
+    print('Signed length:', len(signed))  # 69 
 
-# The timestamp is checked when unsigning so that if that many seconds
-# since the data was signed passed then the signature is considered
-# expired. The signature is verified before checking the timestamp so it
-# must be valid too.
-# You can use both an integer, or a float to represent seconds or a timedelta
-# with the time value you want.
-signed = t_signer.sign(data)
-max_age = timedelta(seconds=2)
-sleep(2)
+    unsigned = t_signer.unsign(signed, max_age=10)
+    # Signature is valid if it's not older than that many seconds (10)
+    print('Does it match original data?', data == unsigned)  # True
 
-try:
-    t_signer.unsign(signed, max_age=max_age)
-except errors.ExpiredSignatureError as exc:
-    print(repr(exc), 'expired on', (exc.timestamp + max_age).isoformat())
-    # ExpiredSignatureError('signature has expired, age 2.0024588108062744 > 2.0 seconds') expired on 2021-04-24T21:56:47+00:00
-# The `ExpiredSignatureError` exception contains the signature timestamp as an
-# aware datetime object (in UTC) in case you need that information to display
-# something meaningful to the user.
+    # The timestamp is checked when unsigning so that if that many seconds
+    # since the data was signed passed then the signature is considered
+    # expired. The signature is verified before checking the timestamp so it
+    # must be valid too.
+    # You can use both an integer, or a float to represent seconds or a timedelta
+    # with the time value you want.
+    signed = t_signer.sign(data)
+    max_age = timedelta(seconds=2)
+    sleep(2)
 
-# New in v2.4.0
-# If `max_age` is None, then the timestamp is not checked (but the signature is
-# always checked!).
-unsigned = t_signer.unsign(signed, max_age=None)
-print(data == unsigned)  # True
-```
+    try:
+        t_signer.unsign(signed, max_age=max_age)
+    except errors.ExpiredSignatureError as exc:
+        print('Error:', repr(exc), 'expired on', (exc.timestamp + max_age).isoformat())
+        # ExpiredSignatureError('signature has expired, age 2.0024588108062744 > 2.0 seconds') expired on 2021-04-24T21:56:47+00:00
+    # The `ExpiredSignatureError` exception contains the signature timestamp as an
+    # aware datetime object (in UTC) in case you need that information to display
+    # something meaningful to the user. 
+
+    # New in v2.4.0
+    # If `max_age` is None, then the timestamp is not checked (but the signature is
+    # always checked!).
+    unsigned = t_signer.unsign(signed, max_age=None)
+    print('Does it match original data?', data == unsigned)  # True
+    ```
+
+=== "Output"
+
+    ```
+    Signed: b'ACB977097ADEB83ECFBB484BDFE73620AC6F67A0FD4817B3906E40952FFA6D8C8111A8C2.facundo castro presente'
+    Does it match original data? True
+    Signed length: 69
+    Does it match original data? True
+    Error: ExpiredSignatureError('signature has expired, age 2.381035327911377 > 2.0 seconds') expired on 2022-11-17T01:23:26+00:00
+    Does it match original data? True
+    ```
 
 !!! tip "Favor bytes over string"
     Even though both [`Blake2Signer`](signers.md#blake2signer.signers.Blake2Signer) and [`Blake2TimestampSigner`](signers.md#blake2signer.signers.Blake2TimestampSigner) accepts data and parameters (`secret`, `personalisation` and `separator`) as string you should use bytes instead: both classes will try to convert any given string to bytes **assuming it's UTF-8 encoded** which might not be correct (an [`errors.ConversionError`](errors.md#blake2signer.errors.ConversionError) exception is raised); if you are certain that the string given is UTF-8 then it's OK, otherwise ensure encoding the string correctly and using bytes instead. Additionally, when *unsigned*, the data type will be bytes and not string (again, you can convert it if you know the encoding).
@@ -733,25 +979,34 @@ Usually to work with bytes or string one can choose to use either [`Blake2Signer
 
 The [`NullSerializer`](serializers.md#blake2signer.serializers.NullSerializer) is useful when one needs to deal with bytes but want compression and encoding capabilities. Otherwise [`Blake2Signer`](signers.md#blake2signer.signers.Blake2Signer) or [`Blake2TimestampSigner`](signers.md#blake2signer.signers.Blake2TimestampSigner) should be preferred.
 
-```python
-"""Using the NullSerializer with Blake2SerializerSigner."""
+=== "Source"
 
-from blake2signer import Blake2SerializerSigner
-from blake2signer.serializers import NullSerializer
+    ```python
+    """Using the NullSerializer with Blake2SerializerSigner."""
 
-secret = b'ZnVja3RoZXBvbGljZQ'
-data = b'facundo castro presente'
+    from blake2signer import Blake2SerializerSigner
+    from blake2signer.serializers import NullSerializer
 
-signer = Blake2SerializerSigner(
-    secret,
-    serializer=NullSerializer,  # A serializer that doesn't serialize
-)
-signed = signer.dumps(data)
-print(signed)  # ....ZmFjdW5kbyBjYXN0cm8gcHJlc2VudGU
+    secret = b'ZnVja3RoZXBvbGljZQ'
+    data = b'facundo castro presente'
 
-unsigned = signer.loads(signed)
-print(data == unsigned)  # True
-```
+    signer = Blake2SerializerSigner(
+        secret,
+        serializer=NullSerializer,  # A serializer that doesn't serialize
+    )
+    signed = signer.dumps(data)
+    print('Signed:', signed)  # ....ZmFjdW5kbyBjYXN0cm8gcHJlc2VudGU
+
+    unsigned = signer.loads(signed)
+    print('Does it match original data?', data == unsigned)  # True
+    ```
+
+=== "Output"
+
+    ```
+    Signed: 8wv0U-5sEKwu4dkdKDhyhEkYPpEekblscw8Zog.ZmFjdW5kbyBjYXN0cm8gcHJlc2VudGU
+    Does it match original data? True
+    ```
 
 !!! tip
     For versions older than v2, you can copy [the code of the `NullSerializer`](https://gitlab.com/hackancuba/blake2signer/-/blob/develop/blake2signer/serializers.py) and [create it as custom serializer](#using-a-custom-serializer) .
@@ -760,65 +1015,76 @@ print(data == unsigned)  # True
 
 You can limit the lifetime of the signature with both [`Blake2SerializerSigner`](signers.md#blake2signer.signers.Blake2SerializerSigner) and [`Blake2TimestampSigner`](signers.md#blake2signer.signers.Blake2TimestampSigner): a timestamp is appended to the signature and is checked to the current time when verifying it.
 
-```python
-"""Signing a data structure that requires a limited lifetime."""
+=== "Source"
 
-import json
-from datetime import timedelta
+    ```python
+    """Signing a data structure that requires a limited lifetime."""
 
-from blake2signer import Blake2SerializerSigner
-from blake2signer import Blake2TimestampSigner
-from blake2signer import errors
+    import json
+    from datetime import timedelta
 
-secret = b'ZnVja3RoZXBvbGljZQ'
-data = {
-    'username': 'hackan',
-    'id': 1,
-    'posts': [{'title': '...', 'body': '...'}] * 100  # Some big data structure
-}
-ttl = timedelta(hours=1)  # int or float value can also be used, as seconds
+    from blake2signer import Blake2SerializerSigner
+    from blake2signer import Blake2TimestampSigner
+    from blake2signer import errors
 
-signer = Blake2SerializerSigner(
-    secret,
-    max_age=ttl,  # With timestamp
-)
-signed = signer.dumps(data)
-print(len(signed))  # 166  # Compression is active by default
+    secret = b'ZnVja3RoZXBvbGljZQ'
+    data = {
+        'username': 'hackan',
+        'id': 1,
+        'posts': [{'title': '...', 'body': '...'}] * 100  # Some big data structure
+    }
+    ttl = timedelta(hours=1)  # int or float value can also be used, as seconds
 
-try:
-    unsigned = signer.loads(signed)
-except errors.ExpiredSignatureError as exc:
-    # Should an hour had passed, then this exception would be raised
-    print(repr(exc), 'expired on', (exc.timestamp + ttl).isoformat())
-    # ExpiredSignatureError('signature has expired, age ... > 3600.0 seconds') expired on 2021-05-19T22:50:27+00:00
+    signer = Blake2SerializerSigner(
+        secret,
+        max_age=ttl,  # With timestamp
+    )
+    signed = signer.dumps(data)
+    print('Signed length:', len(signed))  # 166  # Compression is active by default
 
-    # Since v2.5.0, valid unsigned data as bytes is available in the exception.
-    # However, it is serialized/compressed/encoded when raised from a serializer
-    # signer, so to recover it:
-    print(data == signer.data_from_exc(exc))  # True
-else:
-    print(data == unsigned)  # True
+    try:
+        unsigned = signer.loads(signed)
+    except errors.ExpiredSignatureError as exc:
+        # Should an hour had passed, then this exception would be raised
+        print('Error:', repr(exc), 'expired on', (exc.timestamp + ttl).isoformat())
+        # ExpiredSignatureError('signature has expired, age ... > 3600.0 seconds') expired on 2021-05-19T22:50:27+00:00
 
-# The same goes for Blake2TimestampSigner, but without compression nor
-# serialization capabilities, it only handles raw bytes and strings
-signer = Blake2TimestampSigner(secret)
-serialized_data = json.dumps(data)
-signed = signer.sign(serialized_data)
-print(len(signed))  # 3388  # No compression capabilities
+        # Since v2.5.0, valid unsigned data as bytes is available in the exception.
+        # However, it is serialized/compressed/encoded when raised from a serializer
+        # signer, so to recover it:
+        print('Does it match original data?', data == signer.data_from_exc(exc))  # True
+    else:
+        print('Does it match original data?', data == unsigned)  # True
 
-try:
-    # `max_age` can be either a timedelta, or an integer or float expressing seconds
-    unsigned = signer.unsign(signed, max_age=ttl.total_seconds())
-except errors.ExpiredSignatureError as exc:
-    # Should an hour had passed, then this exception would be raised
-    print(repr(exc), 'expired on', (exc.timestamp + ttl).isoformat())
-    # ExpiredSignatureError('signature has expired, age ... > 3600.0 seconds') expired on 2021-05-19T22:50:27+00:00
+    # The same goes for Blake2TimestampSigner, but without compression nor
+    # serialization capabilities, it only handles raw bytes and strings
+    signer = Blake2TimestampSigner(secret)
+    serialized_data = json.dumps(data)
+    signed = signer.sign(serialized_data)
+    print('Signed length:', len(signed))  # 3388  # No compression capabilities 
 
-    # Since v2.5.0, valid unsigned data as bytes is available in the exception
-    print(serialized_data == exc.data.decode())  # True
-else:
-    print(serialized_data == unsigned.decode())  # True
-```
+    try:
+        # `max_age` can be either a timedelta, or an integer or float expressing seconds
+        unsigned = signer.unsign(signed, max_age=ttl.total_seconds())
+    except errors.ExpiredSignatureError as exc:
+        # Should an hour had passed, then this exception would be raised
+        print('Error:', repr(exc), 'expired on', (exc.timestamp + ttl).isoformat())
+        # ExpiredSignatureError('signature has expired, age ... > 3600.0 seconds') expired on 2021-05-19T22:50:27+00:00
+
+        # Since v2.5.0, valid unsigned data as bytes is available in the exception
+        print('Does it match original data?', serialized_data == exc.data.decode())  # True
+    else:
+        print('Does it match original data?',   serialized_data == unsigned.decode())  # True
+    ```
+
+=== "Output"
+
+    ```
+    Signed length: 166
+    Does it match original data? True
+    Signed length: 3388
+    Does it match original data? True
+    ```
 
 !!! tip
     Sice v2.0.0, the [`ExpiredSignatureError`](errors.md#blake2signer.errors.ExpiredSignatureError) exception contains the signature timestamp as an aware datetime object (in UTC) in case you need that information to display something meaningful to the user, and since v2.5.0, it also contains the _valid_ unsigned data, which you can safely access (yet considering that it hasn't passed the timestamp check!). If the exception is raised by a serializer signer, you need to unserialize/uncompress/undecode it using the method [`data_from_exc`](signers.md#blake2signer.signers.Blake2SerializerSigner.data_from_exc). Read on for [details](details.md#exceptions).
@@ -834,21 +1100,29 @@ Sometimes it can be useful to make certain data expire, but there are situations
 Since v2.4.0, [`Blake2TimestampSigner`](signers.md#blake2signer.signers.Blake2TimestampSigner) can omit the timestamp check when needed, acting like both a timestamped and a regular signer.  
 This can be done in both [`unsign`](signers.md#blake2signer.signers.Blake2TimestampSigner.unsign) and [`unsign_parts`](signers.md#blake2signer.signers.Blake2TimestampSigner.unsign_parts) methods.
 
-```python
-"""Choosing when to check the timestamp."""
+=== "Source"
 
-from blake2signer import Blake2TimestampSigner
+    ```python
+    """Choosing when to check the timestamp."""
 
-secret = 'todo está guardado en la memoria'
-data = b'espina de la vida y de la historia'
+    from blake2signer import Blake2TimestampSigner
 
-signer = Blake2TimestampSigner(secret)
+    secret = 'todo está guardado en la memoria'
+    data = b'espina de la vida y de la historia'
 
-signed = signer.sign(data)
-unsigned = signer.unsign(signed, max_age=None)  # Omits checking the timestamp
+    signer = Blake2TimestampSigner(secret)
 
-print(data == unsigned)  # True
-```
+    signed = signer.sign(data)
+    unsigned = signer.unsign(signed, max_age=None)  # Omits checking the timestamp
+
+    print('Does it match original data?', data == unsigned)  # True
+    ```
+
+=== "Output"
+
+    ```
+    Does it match original data? True
+    ```
 
 ### The expired signature exception
 
@@ -860,11 +1134,119 @@ Check out the [details' page](details.md#exceptions) and the [errors reference](
 
 === "Blake2SerializerSigner"
 
-    ```python
-    """Using the information provided by the ExpiredSignatureError exception."""
+    === "Source"
 
-    from datetime import timedelta, timezone
-    from time import sleep
+        ```python
+        """Using the information provided by the ExpiredSignatureError exception."""
+
+        from datetime import timedelta, timezone
+        from time import sleep
+
+        from blake2signer import Blake2SerializerSigner
+        from blake2signer import errors
+
+        secret = b'ZnVja3RoZXBvbGljZQ'
+        data = {
+            'username': 'hackan',
+            'id': 1,
+            'timezone': -3,
+        }
+        ttl = timedelta(seconds=2)  # int or float value can also be used, as seconds
+
+        signer = Blake2SerializerSigner(
+            secret,
+            max_age=ttl,  # With timestamp
+        )
+        signed = signer.dumps(data)
+
+        print('Doing things...')
+        sleep(2)
+
+        try:
+            unsigned = signer.loads(signed)
+        except errors.ExpiredSignatureError as exc:
+            # Since v2.5.0, valid unsigned data is available in the exception. However,
+            # it is serialized/compressed/encoded when raised from a serializer signer,
+            # so to recover it use `data_from_exc`.
+            data = signer.data_from_exc(exc)
+            expired_since = exc.timestamp + ttl
+            # You may want to convert the computed time to the user's timezone
+            user_tz = timezone(timedelta(hours=data['timezone']))
+            print(
+                f'Dear user {data["username"]}: your login is expired since',
+                expired_since.astimezone(user_tz),
+            )
+            print('Please, log in again')
+        else:
+            print('Does it match original data?', data == unsigned)  # True
+        ```
+
+    === "Output"
+
+        ```
+        Doing things...
+        Dear user hackan: your login is expired since 2022-11-17 00:47:49-03:00
+        Please, log in again
+        ```
+
+=== "Blake2TimestampSigner"
+
+    === "Source"
+
+        ```python
+        """Using the information provided by the ExpiredSignatureError exception."""
+
+        from datetime import timedelta, timezone
+        from time import sleep
+
+        from blake2signer import Blake2TimestampSigner
+        from blake2signer import errors
+
+        secret = b'ZnVja3RoZXBvbGljZQ'
+        username = 'hackan'
+        ttl = timedelta(seconds=2)  # int or float value can also be used, as seconds
+
+        signer = Blake2TimestampSigner(secret)
+        signed = signer.sign(username)
+
+        print('Doing things...')
+        sleep(2)
+
+        try:
+            unsigned = signer.unsign(signed, max_age=ttl)
+        except errors.ExpiredSignatureError as exc:
+            # Since v2.5.0, valid unsigned data is available in the exception.
+            username = exc.data.decode()  # it's `bytes`!
+            expired_since = exc.timestamp + ttl
+            # You may want to convert the computed time to the user's timezone
+            user_tz = timezone(timedelta(hours=-3))
+            print(
+                f'Dear user {username}: your login is expired since',
+                expired_since.astimezone(user_tz),
+            )
+            print('Please, log in again')
+        else:
+            print('Does it match original data?', data == unsigned)  # True
+        ```
+
+    === "Output"
+
+        ```
+        Doing things...
+        Dear user hackan: your login is expired since 2022-11-17 00:47:49-03:00
+        Please, log in again
+        ```
+
+## Using personalisation
+
+The [personalisation parameter](details.md#about-salt-and-personalisation) is very important and prevents [mixing the signers](details.md#mixing-signers). It is referred in other packages as salt, and helps to defeat the abuse of using a signed stream for different signers that share the same key by changing the digest computation result.
+
+!!! info "This can be done in every signer"
+
+=== "Source"
+
+    ```python
+    """Signing with personalisation."""
 
     from blake2signer import Blake2SerializerSigner
     from blake2signer import errors
@@ -873,115 +1255,37 @@ Check out the [details' page](details.md#exceptions) and the [errors reference](
     data = {
         'username': 'hackan',
         'id': 1,
-        'timezone': -3,
+        'is_admin': True,
     }
-    ttl = timedelta(seconds=3)  # int or float value can also be used, as seconds
 
-    signer = Blake2SerializerSigner(
+    cookie_signer = Blake2SerializerSigner(
         secret,
-        max_age=ttl,  # With timestamp
+        personalisation=b'my-cookie-signer',
     )
-    signed = signer.dumps(data)
+    signed = cookie_signer.dumps(data)
 
-    print('Doing things...')
-    sleep(3)
-
+    upgs_signer = Blake2SerializerSigner(
+        secret,
+        personalisation=b'commercial upgrades signer',
+    )
+    print('Can you mix the signers?')
     try:
-        unsigned = signer.loads(signed)
-    except errors.ExpiredSignatureError as exc:
-        # Since v2.5.0, valid unsigned data is available in the exception. However,
-        # it is serialized/compressed/encoded when raised from a serializer signer,
-        # so to recover it use `data_from_exc`.
-        data = signer.data_from_exc(exc)
-        expired_since = exc.timestamp + ttl
-        # You may want to convert the computed time to the user's timezone
-        user_tz = timezone(timedelta(hours=data['timezone']))
-        print(
-            f'Dear user {data["username"]}: your login has expired since',
-            expired_since.astimezone(user_tz),
-        )
-        print('Please, log in again')
-    else:
-        print(data == unsigned)  # True
+        upgs_signer.loads(signed)  # Signed with same secret and signer class, but...
+    except errors.InvalidSignatureError as exc:
+        print('Error:', repr(exc))  # InvalidSignatureError('signature is not valid')
+    # Using the `personalisation` parameter made the sig to fail, thus protecting
+    # signed data to be loaded incorrectly.
     ```
 
-=== "Blake2TimestampSigner"
+=== "Output"
 
-    ```python
-    """Using the information provided by the ExpiredSignatureError exception."""
-
-    from datetime import timedelta, timezone
-    from time import sleep
-
-    from blake2signer import Blake2TimestampSigner
-    from blake2signer import errors
-
-    secret = b'ZnVja3RoZXBvbGljZQ'
-    username = 'hackan'
-    ttl = timedelta(seconds=3)  # int or float value can also be used, as seconds
-
-    signer = Blake2TimestampSigner(secret)
-    signed = signer.sign(username)
-
-    print('Doing things...')
-    sleep(3)
-
-    try:
-        unsigned = signer.unsign(signed, max_age=ttl)
-    except errors.ExpiredSignatureError as exc:
-        # Since v2.5.0, valid unsigned data is available in the exception.
-        username = exc.data.decode()  # it's `bytes`!
-        expired_since = exc.timestamp + ttl
-        # You may want to convert the computed time to the user's timezone
-        user_tz = timezone(timedelta(hours=-3))
-        print(
-            f'Dear user {username}: your login has expired since',
-            expired_since.astimezone(user_tz),
-        )
-        print('Please, log in again')
-    else:
-        print(data == unsigned)  # True
     ```
-
-## Using personalisation
-
-The [personalisation parameter](details.md#about-salt-and-personalisation) is very important and prevents [mixing the signers](details.md#mixing-signers). It is referred in other packages as salt, and helps to defeat the abuse of using a signed stream for different signers that share the same key by changing the digest computation result.
-
-!!! info "This can be done in every signer"
-
-```python
-"""Signing with personalisation."""
-
-from blake2signer import Blake2SerializerSigner
-from blake2signer import errors
-
-secret = b'ZnVja3RoZXBvbGljZQ'
-data = {
-    'username': 'hackan',
-    'id': 1,
-    'is_admin': True,
-}
-
-cookie_signer = Blake2SerializerSigner(
-    secret,
-    personalisation=b'my-cookie-signer',
-)
-signed = cookie_signer.dumps(data)
-
-upgs_signer = Blake2SerializerSigner(
-    secret,
-    personalisation=b'commercial upgrades signer',
-)
-try:
-    upgs_signer.loads(signed)  # Signed with same secret and signer class, but...
-except errors.InvalidSignatureError as exc:
-    print(repr(exc))  # InvalidSignatureError('signature is not valid')
-# Using the `personalisation` parameter made the sig to fail, thus protecting
-# signed data to be loaded incorrectly.
-```
+    Can you mix the signers?
+    Error: InvalidSignatureError('signature is not valid')
+    ```
 
 !!! tip "Always use personalisation"
-    You can set the personalisation parameter in every signer, and it is a good idea to always do it.
+    You can set the personalisation parameter in every signer, and it is a good idea to always do it: simply set it to some unique value, it doesn't have to be random, nor secret.
 
 ## Splitting signatures
 
@@ -991,31 +1295,42 @@ There are some situations were you need to transmit data and signature through d
 
 !!! info "This can be done in every signer"
 
-```python
-"""Splitting signatures."""
+=== "Source"
 
-from blake2signer import Blake2SerializerSigner
-from blake2signer import Blake2Signer
+    ```python
+    """Splitting signatures."""
 
-secret = 'Dónde está, dónde está'
-data = 'Tehuel de la Torre'
+    from blake2signer import Blake2SerializerSigner
+    from blake2signer import Blake2Signer
 
-# Blake2Signer and Blake2TimestampSigner provides `sign_parts` and
-# `unsign_parts`
-signer = Blake2Signer(secret)
-signature = signer.sign_parts(data)
-print(signature)  # Blake2Signature(signature=b'...', data=b'Tehuel de la Torre')
-unsigned = signer.unsign_parts(signature)
-print(data.encode() == unsigned)  # True
+    secret = 'Dónde está, dónde está'
+    data = 'Tehuel de la Torre'
 
-# Blake2SerializerSigner has the equivalent methods `dumps_parts` and
-# `loads_parts` instead
-signer = Blake2SerializerSigner(secret)
-signature = signer.dumps_parts(data)
-print(signature)  # Blake2SignatureDump(signature='...', data='IlRlaHVlbCBkZSBsYSBUb3JyZSI')
-unsigned = signer.loads_parts(signature)
-print(data == unsigned)  # True
-```
+    # Blake2Signer and Blake2TimestampSigner provides `sign_parts` and
+    # `unsign_parts`
+    signer = Blake2Signer(secret)
+    signature = signer.sign_parts(data)
+    print('Signature:', signature)  # Blake2Signature(signature=b'...', data=b'Tehuel de la Torre')
+    unsigned = signer.unsign_parts(signature)
+    print('Does it match original data?', data == unsigned.decode())  # True
+
+    # Blake2SerializerSigner has the equivalent methods `dumps_parts` and
+    # `loads_parts` instead
+    signer = Blake2SerializerSigner(secret)
+    signature = signer.dumps_parts(data)
+    print('Signature:', signature)  # Blake2SignatureDump(signature='...', data='IlRlaHVlbCBkZSBsYSBUb3JyZSI')
+    unsigned = signer.loads_parts(signature)
+    print('Does it match original data?', data == unsigned)  # True
+    ```
+
+=== "Output"
+
+    ```
+    Signature: Blake2Signature(signature=b'y4tIL5qEYxnIAlgPKzF9w7RLTdFwqKsjBzj5DA', data=b'Tehuel de la Torre')
+    Does it match original data? True
+    Signature: Blake2SignatureDump(signature='1ytqs1mcWmicTHQWCbpOmV0gTVcD-BGKIsKoVg', data='IlRlaHVlbCBkZSBsYSBUb3JyZSI')
+    Does it match original data? True
+    ```
 
 !!! note
     Signature containers [`Blake2Signature`](bases.md#blake2signer.bases.Blake2Signature) and [`Blake2SignatureDump`](bases.md#blake2signer.bases.Blake2SignatureDump) are equivalent, but the first one contains only bytes whereas the second one, only strings.
@@ -1028,66 +1343,94 @@ By default, signatures are non-deterministic, but it is possible to generate det
 
 !!! info "This can be done in every signer"
 
-```python
-"""Generating deterministic signatures (the same goes for every signer!)."""
+=== "Source"
 
-from blake2signer import Blake2Signer
+    ```python
+    """Generating deterministic signatures (the same goes for every signer!)."""
 
-secret = 'ZnVja3RoZXBvbGljZQ'
-data = b'facundo castro presente'
+    from blake2signer import Blake2Signer
 
-signer = Blake2Signer(secret, deterministic=True)
-signed = signer.sign(data)
-print(len(signed))  # 46
-# Shorter sig obtained as a consequence of not having salt
-signed2 = signer.sign(data)
-print(signed == signed2)  # True  # The signatures are equal
+    secret = 'ZnVja3RoZXBvbGljZQ'
+    data = b'facundo castro presente'
 
-unsigned = signer.unsign(signed)
-print(data == unsigned)  # True
-```
+    signer = Blake2Signer(secret, deterministic=True)
+    signed = signer.sign(data)
+    print('Signed 1:', signed)
+    print('Signed length:', len(signed))  # 46
+    # Shorter sig obtained as a consequence of not having salt
+    signed2 = signer.sign(data)
+    print('Signed 2:', signed2)
+    print('Are signatures equal?', signed == signed2)  # True  # The signatures are equal
+
+    unsigned = signer.unsign(signed)
+    print('Does it match original data?', data == unsigned)  # True
+    ```
+
+=== "Output"
+
+    ```
+    Signed 1: b'N9MiIyDC_rhWPeJohlujEg.facundo castro presente'
+    Signed length: 46
+    Signed 2: b'N9MiIyDC_rhWPeJohlujEg.facundo castro presente'
+    Are signatures equal? True
+    Does it match original data? True
+    ```
 
 ## Rotating the secret
 
 !!! info "New in v2.3.0"
 
-Secrets can be rotated by an external mechanism, and passed to a signer as a sequence through the `secret` parameter. Read more about [rotating secrets](details.md#secret-rotation) in its section. 
+Secrets can be rotated by an external mechanism, and passed to a signer as a sequence through the `secret` parameter. Read more about [rotating secrets](details.md#secret-rotation) in its section, but in short: signatures are made with the newest secret (the _last one_ of the sequence), whereas signed data is verified using all of them, until a match is found.
 
 !!! info "This can be done in every signer"
 
-```python
-"""Rotating the secret."""
+=== "Source"
 
-from blake2signer import Blake2Signer, errors
+    ```python
+    """Rotating the secret."""
 
-secrets = [b'justicia' * 3, 'eXV0YSBhc2VzaW5hLCBubyBlcyBzb2xvIHVubyEhIQ']
-data = 'lucas gonzález presente'
+    from blake2signer import Blake2Signer, errors
 
-signer = Blake2Signer(secrets)
-signed = signer.sign(data)  # Signed with the latest, newest, secret
+    secrets = [b'justicia' * 3, 'eXV0YSBhc2VzaW5hLCBubyBlcyBzb2xvIHVubyEhIQ']
+    data = 'lucas gonzález presente'
 
-# Let's rotate and add a new secret
-secrets.append('QmFzdGEgZGUgZ2F0aWxsbyBmw6FjaWw')
-signer = Blake2Signer(secrets)
+    signer = Blake2Signer(secrets)
+    signed = signer.sign(data)  # Signed with the latest, newest, secret
 
-# Previously signed data is still valid
-unsigned = signer.unsign(signed)
-print(data == unsigned.decode())  # True
+    # Let's rotate and add a new secret
+    print('Adding new secret...')
+    secrets.append('QmFzdGEgZGUgZ2F0aWxsbyBmw6FjaWw')
+    signer = Blake2Signer(secrets)
 
-# Once the old secret is rotated, old signatures won't be valid anymore
-secrets = secrets[-1:]
-signer = Blake2Signer(secrets)
-try:
-    signer.unsign(signed)
-except errors.InvalidSignatureError as exc:
-    print(exc)  # signature is not valid
+    # Previously signed data is still valid
+    unsigned = signer.unsign(signed)
+    print('Does it match original data?', data == unsigned.decode())  # True
 
-# New signatures are made with the newest secret
-secrets.append(b'no tolerance to injustice :)')
-signed = Blake2Signer(secrets).sign(data)
-unsigned = Blake2Signer(secrets[-1]).unsign(signed)
-print(data == unsigned.decode())  # True
-```
+    # Once the old secret is rotated, old signatures won't be valid anymore
+    print('Removing old secret...')
+    secrets = secrets[1:]
+    signer = Blake2Signer(secrets)
+    try:
+        signer.unsign(signed)
+    except errors.InvalidSignatureError as exc:
+        print('Error:', exc)  # signature is not valid
+
+    # New signatures are made with the newest secret
+    secrets.append(b'no tolerance to injustice :)')
+    signed = Blake2Signer(secrets).sign(data)
+    unsigned = Blake2Signer(secrets[-1]).unsign(signed)
+    print('Does it match original data?', data == unsigned.decode())  # True
+    ```
+
+=== "Output"
+
+    ```
+    Adding new secret...
+    Does it match original data? True
+    Removing old secret...
+    Error: signature is not valid
+    Does it match original data? True
+    ```
 
 ## Changing the hasher
 
@@ -1095,28 +1438,37 @@ You can use either `blake2b` or `blake2s`: the first one is optimized for 64b pl
 
 !!! info "This can be done in every signer"
 
-```python
-"""Signing with another hasher (the same goes for every signer!)."""
+=== "Source"
 
-from blake2signer import Blake2SerializerSigner
+    ```python
+    """Signing with another hasher (the same goes for every signer!)."""
 
-secret = b'ZnVja3RoZXBvbGljZQ'
-data = {
-    'username': 'hackan',
-    'id': 1,
-    'is_admin': True,
-}
+    from blake2signer import Blake2SerializerSigner
 
-signer = Blake2SerializerSigner(
-    secret,
-    hasher=Blake2SerializerSigner.Hashers.blake2s,
-)
-signed = signer.dumps(data)
-print(signed)
+    secret = b'ZnVja3RoZXBvbGljZQ'
+    data = {
+        'username': 'hackan',
+        'id': 1,
+        'is_admin': True,
+    }
 
-unsigned = signer.loads(signed)
-print(data == unsigned)  # True
-```
+    signer = Blake2SerializerSigner(
+        secret,
+        hasher=Blake2SerializerSigner.Hashers.blake2s,
+    )
+    signed = signer.dumps(data)
+    print('Signed:', signed)  # ...eyJ1c2VybmFtZSI6ImhhY2thbiIsImlkIjoxLCJpc19hZG1pbiI6dHJ1ZX0
+
+    unsigned = signer.loads(signed)
+    print('Does it match original data?', data == unsigned)  # True
+    ```
+
+=== "Output"
+
+    ```
+    Signed: yYA_5HuYY1C2zqFGHXXmFY16Zv6M6g.eyJ1c2VybmFtZSI6ImhhY2thbiIsImlkIjoxLCJpc19hZG1pbiI6dHJ1ZX0
+    Does it match original data? True
+    ```
 
 !!! tip "Changing the hasher"
     All signers have the attribute `Hashers` to use in the selection of a hasher, or you can use strings directly:
@@ -1130,26 +1482,42 @@ print(data == unsigned)  # True
 
 You can use BLAKE3 if you have the [`blake3`](https://pypi.org/project/blake3/) package installed. Check the [comparison against BLAKE2](performance.md#blake-versions).
 
+!!! tip "Installing this package with BLAKE3"
+    You can install this package with extras instead of installing `blake3` separately:
+
+    * `python3 -m pip install blake2signer[blake3]`
+    * `poetry add blake2signer[blake3]`
+    * `pipenv install blake2signer[blake3]`
+
 !!! info "This can be done in every signer"
 
-```python
-"""Signing with BLAKE3 (the same goes for every signer!)."""
+=== "Source"
 
-from blake2signer import Blake2Signer
+    ```python
+    """Signing with BLAKE3 (the same goes for every signer!)."""
 
-secret = b'civil disobedience is necessary'
-data = b'remember Aaron Swartz'
+    from blake2signer import Blake2Signer
 
-signer = Blake2Signer(
-    secret,
-    hasher=Blake2Signer.Hashers.blake3,  # 'blake3'
-)
-signed = signer.sign(data)
-print(signed)
+    secret = b'civil disobedience is necessary'
+    data = b'remember Aaron Swartz'
 
-unsigned = signer.unsign(signed)
-print(data == unsigned)  # True
-```
+    signer = Blake2Signer(
+        secret,
+        hasher=Blake2Signer.Hashers.blake3,  # Alternatively, use the string 'blake3'
+    )
+    signed = signer.sign(data)
+    print('Signed:', signed)
+
+    unsigned = signer.unsign(signed)
+    print('Does it match original data?', data == unsigned)  # True
+    ```
+
+=== "Output"
+
+    ```
+    Signed: b'RoQDzKyh9WiyqFcIoLuyCXEdKQxS3B1jXUhEhA.remember Aaron Swartz'
+    Does it match original data? True
+    ```
 
 ## Changing the encoder
 
@@ -1157,43 +1525,94 @@ There are three [encoders provided by this package](details.md#encoders-serializ
 
 !!! info "This can be done in every signer since v2.0.0"
 
-```python
-"""Changing the encoder."""
+=== "Source"
 
-from blake2signer import Blake2SerializerSigner
-from blake2signer import Blake2Signer
-from blake2signer import Blake2TimestampSigner
-from blake2signer.encoders import B32Encoder
-from blake2signer.encoders import B64URLEncoder
-from blake2signer.encoders import HexEncoder
+    ```python
+    """Changing the encoder."""
 
-secret = b'may the force be with you'
-data = 'always'
+    from blake2signer import Blake2SerializerSigner
+    from blake2signer import Blake2Signer
+    from blake2signer import Blake2TimestampSigner
+    from blake2signer.encoders import B32Encoder
+    from blake2signer.encoders import B64URLEncoder
+    from blake2signer.encoders import HexEncoder
 
-signer1 = Blake2SerializerSigner(secret, encoder=B64URLEncoder)  # Default
-signed = signer1.dumps(data)
-print(signed)  # The signature and payload have only base 64 url safe chars
-unsigned = signer1.loads(signed)
-print(data == unsigned)  # True
+    secret = b'may the force be with you'
+    data = 'always'
 
-signer2 = Blake2Signer(secret, encoder=B32Encoder)
-signed = signer2.sign(data)
-print(signed)  # The signature only has base 32 chars
-unsigned = signer2.unsign(signed)
-print(data == unsigned.decode())  # True
+    signer1 = Blake2SerializerSigner(secret, encoder=B64URLEncoder)  # Default
+    signed = signer1.dumps(data)
+    print('Signed (B64):', signed)  # The signature and payload have only base 64 url safe chars
+    unsigned = signer1.loads(signed)
+    print('Does it match original data?', data == unsigned)  # True
 
-signer3 = Blake2TimestampSigner(secret, encoder=HexEncoder)
-signed = signer3.sign(data)
-print(signed)  # The signature only has hex chars
-unsigned = signer3.unsign(signed, max_age=5)
-print(data == unsigned.decode())  # True
+    signer2 = Blake2Signer(secret, encoder=B32Encoder)
+    signed = signer2.sign(data)
+    print('Signed (B32):', signed)  # The signature only has base 32 chars
+    unsigned = signer2.unsign(signed)
+    print('Does it match original data?', data == unsigned.decode())  # True
 
-# Mixing the signers is protected as always
-signer1.loads(signed)
-# blake2signer.errors.InvalidSignatureError: signature is not valid
-signer2.unsign(signed)
-# blake2signer.errors.InvalidSignatureError: signature is not valid
-```
+    signer3 = Blake2TimestampSigner(secret, encoder=HexEncoder)
+    signed = signer3.sign(data)
+    print('Signed (HEX):', signed)  # The signature only has hex chars
+    unsigned = signer3.unsign(signed, max_age=5)
+    print('Does it match original data?', data == unsigned.decode())  # True
+
+    # Mixing the signers is protected as always
+    print('Can you mix the signers?')
+    signer1.loads(signed)
+    # blake2signer.errors.InvalidSignatureError: signature is not valid
+    signer2.unsign(signed)
+    # blake2signer.errors.InvalidSignatureError: signature is not valid
+    ```
+
+=== "Output"
+
+    ```
+    Signed (B64): HPdtOrSJOQeJeO7V5pVTeAfmuF1q2DwIyZfr_g.ImFsd2F5cyI
+    Does it match original data? True
+    Signed (B32): b'OBZXUOV7VYKEPONIT7BN2PHOCFED3SG646VG5KE5DI.always'
+    Does it match original data? True
+    Signed (HEX): b'878DC18ACD28963A76A36F9E24CADAAE4B56643ED0F53EF8.6375B72B.always'
+    Does it match original data? True
+    Can you mix the signers?
+    ---------------------------------------------------------------------------
+    InvalidSignatureError                     Traceback (most recent call last)
+    Input In [31], in <cell line: 32>()
+         29 print('Does it match original data?', data == unsigned.decode())  # True
+         31 # Mixing the signers is protected as always
+    ---> 32 signer1.loads(signed)
+         33 # blake2signer.errors.InvalidSignatureError: signature is not valid
+         34 signer2.unsign(signed)
+    
+    File .../blake2signer/blake2signer/signers.py:811, in Blake2SerializerSigner.loads(self, signed_data)
+        784 """Recover original data from a signed serialized string from `dumps`.
+        785 
+        786 If `max_age` was specified then it will be ensured that the signature is
+       (...)
+        807     UnserializationError: Signed data can't be unserialized.
+        808 """
+        809 parts = self._decompose(self._force_bytes(signed_data))
+    --> 811 return self._loads(self._proper_unsign(parts))
+    
+    File .../blake2signer/blake2signer/bases.py:725, in Blake2DualSignerBase._proper_unsign(self, parts)
+        710 """Unsign signed data properly with the corresponding signer.
+        711 
+        712 Args:
+       (...)
+        722     DecodeError: Timestamp can't be decoded.
+        723 """
+        724 if self._max_age is None:
+    --> 725     return self._unsign(parts)
+        727 return self._unsign_with_timestamp(parts, max_age=self._max_age)
+    
+    File .../blake2signer/blake2signer/bases.py:480, in Blake2SignerBase._unsign(self, parts)
+        477     if compare_digest(signature, parts.signature):
+        478         return parts.data
+    --> 480 raise InvalidSignatureError('signature is not valid')
+    
+    InvalidSignatureError: signature is not valid
+    ```
 
 !!! tip "Custom encoder"
     You can [create a custom encoder](#using-a-custom-encoder).
@@ -1205,42 +1624,57 @@ If you need to use an encoder that is not implemented by this package, such as A
 !!! note
     The separator and compression flag characters must not belong to the encoder alphabet. This is to correctly split the signature and payload before decoding (it would be dangerous to do it the other way around), and to unequivocally identify a compressed payload, respectively.
 
-```python
-"""Sample of custom encoder."""
+=== "Source"
 
-import base64
-import typing
+    ```python
+    """Sample of custom encoder."""
 
-from blake2signer import Blake2SerializerSigner
-from blake2signer.interfaces import EncoderInterface
-from blake2signer.utils import force_bytes
+    import base64
+    import typing
 
-
-class Ascii85Encoder(EncoderInterface):
-    """Ascii85 encoder."""
-
-    @property
-    def alphabet(self) -> bytes:
-        return b''.join(bytes((i,)) for i in range(33, 118))
-
-    def encode(self, data: typing.AnyStr) -> bytes:
-        return base64.a85encode(force_bytes(data))
-
-    def decode(self, data: typing.AnyStr) -> bytes:
-        return base64.a85decode(force_bytes(data))
+    from blake2signer import Blake2SerializerSigner
+    from blake2signer.interfaces import EncoderInterface
+    from blake2signer.utils import force_bytes
 
 
-secret = b'TRIPS waiver please!'
-data = {'wish': 'vaccines'}
+    class Ascii85Encoder(EncoderInterface):
+        """Ascii85 encoder."""
 
-signer = Blake2SerializerSigner(secret, encoder=Ascii85Encoder, separator=b'y')
-signed = signer.dumps(data)
-print(signed)  # ...yHQmZJF(caY,'IC)@qfglF!?#
+        @property
+        def alphabet(self) -> bytes:
+            return b''.join(bytes((i,)) for i in range(33, 118))
 
-unsigned = signer.loads(signed)
-print(unsigned)  # {'wish': 'vaccines'}
-print(data == unsigned)  # True
-```
+        def encode(self, data: typing.AnyStr) -> bytes:
+            return base64.a85encode(force_bytes(data))
+
+        def decode(self, data: typing.AnyStr) -> bytes:
+            return base64.a85decode(force_bytes(data))
+
+
+    secret = b'TRIPS waiver please!'
+    data = {'wish': 'vaccines'}
+
+    signer = Blake2SerializerSigner(
+        secret,
+        encoder=Ascii85Encoder,
+        separator=b' ',
+        compression_flag=b'\t',
+    )
+    signed = signer.dumps(data)
+    print('Signed:', signed)  # ...yHQmZJF(caY,'IC)@qfglF!?#
+
+    unsigned = signer.loads(signed)
+    print('Unsigned:', unsigned)  # {'wish': 'vaccines'}
+    print('Does it match original data?', data == unsigned)  # True
+    ```
+
+=== "Output"
+
+    ```
+    Signed: Y+X!IDCR/b9XTDR,TEo@sb3\@gI:X9M1'SW= HQmZJF(caY,'IC)@qfglF!?#
+    Unsigned: {'wish': 'vaccines'}
+    Does it match original data? True
+    ```
 
 ## Changing the separator character
 
@@ -1251,20 +1685,29 @@ If you are limited to a certain character range in your signed data transport, y
 
 !!! info "This can be done in every signer"
 
-```python
-"""Changing the separator character."""
+=== "Source"
 
-from blake2signer import Blake2Signer
+    ```python
+    """Changing the separator character."""
 
-secret = 'there is no knowledge that is no power'
-data = b'42'
+    from blake2signer import Blake2Signer
 
-signer = Blake2Signer(secret, separator=':')
+    secret = 'there is no knowledge that is no power'
+    data = b'42'
 
-signed = signer.sign(data)
-print(signed)  # ...:42
-print(data == signer.unsign(signed))  # True
-```
+    signer = Blake2Signer(secret, separator=':')
+
+    signed = signer.sign(data)
+    print('Signed:', signed)  # ...:42
+    print('Does it match original data?', data == signer.unsign(signed))  # True
+    ```
+
+=== "Output"
+
+    ```
+    Signed: b'51x92lxjIN932BizeosMhd-nbJcQQ2xJ9UhtgA:42'
+    Does it match original data? True
+    ```
 
 !!! note
     For versions older than v2, the *separator* can be set through the class attribute `SEPARATOR`. Note that this change affects all instances of the class, which is why said value was refactored to be an instance attribute.
@@ -1278,18 +1721,39 @@ One advantage of BLAKE2+ is that it is very flexible, and tweakable, and one of 
 
 !!! info "This can be done in every signer"
 
-```python
-"""Changing the digest size."""
+=== "Source"
 
-from blake2signer import Blake2Signer
+    ```python
+    """Changing the digest size."""
 
-secret = b'Han shot first!!'
-data = b''
+    from blake2signer import Blake2Signer
 
-signer = Blake2Signer(secret, digest_size=64)  # Size in bytes
-signed = signer.sign(data)
-print(len(signed))  # 103: 16 for salt, 86 for the encoded 64B digest, 1 for the separator
-```
+    secret = b'Han shot first!!'
+    data = b''
+
+    signer = Blake2Signer(secret)
+    signed = signer.sign(data)
+    print('Using digest size of 16')
+    print('Signed:', signed)
+    print('Signed length:', len(signed))  # 39: 16 for salt, 22 for the encoded 16B digest, 1 for the separator
+
+    print('Using digest size of 64')
+    signer = Blake2Signer(secret, digest_size=64)  # Size in bytes
+    signed = signer.sign(data)
+    print('Signed:', signed)
+    print('Signed length:', len(signed))  # 103: 16 for salt, 86 for the encoded 64B digest, 1 for the separator
+    ```
+
+=== "Output"
+
+    ```
+    Using digest size of 16
+    Signed: b'PGYb3xKTT5ABasKatBtP5eAMT_0AUEUG7K_h4w.'
+    Signed length: 39
+    Using digest size of 64
+    Signed: b'u-GqbQ1GywPVnn-Z7NveRh5kIg31b5-cQpm9rEMpYcKmVlfiYXxVcBvK9mgY_xhroxTXwWUcKK9IEd4oK3-VjzvcphKwRPnH8yG3yg.'
+    Signed length: 103
+    ```
 
 !!! note
     The maximum digest size depends on the hasher: 64 bytes for *blake2b*, and 32 for *blake2s* (check the [Python docs](https://docs.python.org/3/library/hashlib.html#creating-hash-objects) for more info); *blake3* has no size limit.
@@ -1304,23 +1768,40 @@ To change the limit, set the class attribute `MIN_DIGEST_SIZE` to the desired va
 
 !!! info "This can be done in every signer"
 
-```python
-"""Changing the digest size limit."""
+=== "Source"
 
-from blake2signer import Blake2Signer
+    ```python
+    """Changing the digest size limit."""
 
-secret = b'Han shot first!!'
-data = b''
-Blake2Signer.MIN_DIGEST_SIZE = 8  # Size in bytes
+    from blake2signer import Blake2Signer
 
-signer = Blake2Signer(secret, digest_size=8)
-signed = signer.sign(data)
-print(len(signed))  # 28: 16 for salt, 11 for the encoded 8B digest, 1 for the separator
+    secret = b'Han shot first!!'
+    data = b''
+    Blake2Signer.MIN_DIGEST_SIZE = 8  # Size in bytes
 
-signer = Blake2Signer(secret, digest_size=8, deterministic=True)
-signed = signer.sign(data)
-print(len(signed))  # 12: 11 for the encoded 8B digest, 1 for the separator
-```
+    print('Using digest size of 8')
+    signer = Blake2Signer(secret, digest_size=8)
+    signed = signer.sign(data)
+    print('Signed:', signed)
+    print('Signed length:', len(signed))  # 28: 16 for salt, 11 for the encoded 8B digest, 1 for the separator
+
+    print('Using deterministic')
+    signer = Blake2Signer(secret, digest_size=8, deterministic=True)
+    signed = signer.sign(data)
+    print('Signed:', signed)
+    print('Signed length:', len(signed))  # 12: 11 for the encoded 8B digest, 1 for the separator
+    ```
+
+=== "Output"
+
+    ```
+    Using digest size of 8
+    Signed: b'J39ogIYpVJWrI4BEcsOkzgoOoBk.'
+    Signed length: 28
+    Using deterministic
+    Signed: b'-QTw2K3OnHs.'
+    Signed length: 12
+    ```
 
 !!! warning
     All instances of the signer are affected by the class attribute change.
@@ -1332,87 +1813,110 @@ You can create your own *SerializerSigner* using provided [`Blake2SerializerSign
 !!! danger
     This is rather advanced, and you should think if this is what you really need to do. Bear in mind that _private API_ backwards compatibility _is not guaranteed_ between minors nor major versions, only on patch versions!
 
-```python
-"""Custom encoder compressor signer class example."""
+=== "Custom Compressor Signer Class"
 
-import typing
+    === "Source"
 
-from blake2signer.bases import Blake2SerializerSignerBase
-from blake2signer.mixins import CompressorMixin
+        ```python
+        """Custom encoder compressor signer class example."""
 
+        import typing
 
-class MyEncoderCompressorSigner(CompressorMixin, Blake2SerializerSignerBase):
-
-    def _dumps(self, data: typing.Any, **kwargs: typing.Any) -> bytes:
-        data_bytes = self._force_bytes(data)
-
-        compressed, is_compressed = self._compress(data_bytes)
-
-        encoded = self._encode(compressed)
-
-        if is_compressed:
-            encoded = self._add_compression_flag(encoded)
-
-        return encoded
-
-    def _loads(self, dumped_data: bytes, **kwargs: typing.Any) -> typing.Any:
-        data, is_compressed = self._remove_compression_flag_if_compressed(dumped_data)
-
-        decoded = self._decode(data)
-
-        return self._decompress(decoded) if is_compressed else decoded
-
-    def dumps(self, data: typing.AnyStr) -> str:
-        dump = self._dumps(data)
-
-        return self._compose(dump, signature=self._proper_sign(dump)).decode()
-
-    def loads(self, signed_data: typing.AnyStr) -> bytes:
-        parts = self._decompose(self._force_bytes(signed_data))
-
-        return self._loads(self._proper_unsign(parts))
+        from blake2signer.bases import Blake2SerializerSignerBase
+        from blake2signer.mixins import CompressorMixin
 
 
-secret = b'super-secret-value'
-signer = MyEncoderCompressorSigner(secret)
-data = b'acab' * 100
-signed = signer.dumps(data)
-print(len(signed) < len(data))  # True
-print(signed)  # .....eJxLTE5MShzFgwYDAKeVmL0
-print(signer.loads(signed) == data)  # True
-```
+        class MyEncoderCompressorSigner(CompressorMixin, Blake2SerializerSignerBase):
 
-```python
-"""Custom SerializerSigner class example."""
+            def _dumps(self, data: typing.Any, **kwargs: typing.Any) -> bytes:
+                data_bytes = self._force_bytes(data)
 
-import typing
+                compressed, is_compressed = self._compress(data_bytes)
 
-from blake2signer.bases import Blake2SerializerSignerBase
+                encoded = self._encode(compressed)
 
+                if is_compressed:
+                    encoded = self._add_compression_flag(encoded)
 
-class MySerializerSigner(Blake2SerializerSignerBase):  # Contains encoder mixin
+                return encoded
 
-    def _dumps(self, data: typing.Any, **kwargs: typing.Any) -> bytes:
-        return self._encode(self._force_bytes(data))
+            def _loads(self, dumped_data: bytes, **kwargs: typing.Any) -> typing.Any:
+                data, is_compressed = self._remove_compression_flag_if_compressed(dumped_data)
 
-    def _loads(self, dumped_data: bytes, **kwargs: typing.Any) -> typing.Any:
-        return self._decode(dumped_data).decode()
+                decoded = self._decode(data)
 
-    def dumps(self, data: typing.Any) -> str:
-        dump = self._dumps(data)
+                return self._decompress(decoded) if is_compressed else decoded
 
-        return self._compose(dump, signature=self._proper_sign(dump)).decode()
+            def dumps(self, data: typing.AnyStr) -> str:
+                dump = self._dumps(data)
 
-    def loads(self, signed_data: typing.AnyStr) -> typing.Any:
-        parts = self._decompose(self._force_bytes(signed_data))
+                return self._compose(dump, signature=self._proper_sign(dump)).decode()
 
-        return self._loads(self._proper_unsign(parts))
+            def loads(self, signed_data: typing.AnyStr) -> bytes:
+                parts = self._decompose(self._force_bytes(signed_data))
+
+                return self._loads(self._proper_unsign(parts))
 
 
-secret = b'super-secret-value'
-signer = MySerializerSigner(secret)
-data = 'memoria y justicia'
-signed = signer.dumps(data)
-print(signed)  # ....bWVtb3JpYSB5IGp1c3RpY2lh
-print(signer.loads(signed) == data)  # True
-```
+        secret = b'super-secret-value'
+        signer = MyEncoderCompressorSigner(secret)
+        data = b'acab' * 100
+        signed = signer.dumps(data)
+        print('Does it compress?', len(signed) < len(data))  # True
+        print('Signed:', signed)  # .....eJxLTE5MShzFgwYDAKeVmL0
+        print('Does it match original data?', signer.loads(signed) == data)  # True
+        ```
+
+    === "Output"
+
+        ```
+        Does it compress? True
+        Signed: 3bN1m-Jfj-zhIGIJGWGW0bN_T3RtXdPVXBY63A..eJxLTE5MShzFgwYDAKeVmL0
+        Does it match original data? True
+        ```
+
+=== "Custom Serializer Signer Class"
+
+    === "Source"
+
+        ```python
+        """Custom Serializer Signer class example."""
+
+        import typing
+
+        from blake2signer.bases import Blake2SerializerSignerBase
+
+
+        class MySerializerSigner(Blake2SerializerSignerBase):  # Contains encoder mixin
+
+            def _dumps(self, data: typing.Any, **kwargs: typing.Any) -> bytes:
+                return self._encode(self._force_bytes(data))
+
+            def _loads(self, dumped_data: bytes, **kwargs: typing.Any) -> typing.Any:
+                return self._decode(dumped_data).decode()
+
+            def dumps(self, data: typing.Any) -> str:
+                dump = self._dumps(data)
+
+                return self._compose(dump, signature=self._proper_sign(dump)).decode()
+
+            def loads(self, signed_data: typing.AnyStr) -> typing.Any:
+                parts = self._decompose(self._force_bytes(signed_data))
+
+                return self._loads(self._proper_unsign(parts))
+
+
+        secret = b'super-secret-value'
+        signer = MySerializerSigner(secret)
+        data = 'memoria y justicia'
+        signed = signer.dumps(data)
+        print('Signed:', signed)  # ....bWVtb3JpYSB5IGp1c3RpY2lh
+        print('Does it match original data?', signer.loads(signed) == data)  # True
+        ```
+
+    === "Output"
+
+        ```
+        Signed: kIcqY_CHNm4XIfdytYpyBCyNa6gUaI-fosc1Fw.bWVtb3JpYSB5IGp1c3RpY2lh
+        Does it match original data? True
+        ```
