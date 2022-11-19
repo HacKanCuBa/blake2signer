@@ -73,7 +73,7 @@ pytest-randomly = "^3.8.0"
 junitparser = "^2.8.0"
 coverage = "^6.2"
 radon = "^5.0.0"
-scriv = "^0"
+scriv = "^1"
 invoke = "^1.3.0"
 blake3 = ">0.2.0"
 # ToDo: pythonfuzz==1.0.10 requires a psutil version that has a security issue, thus I'm not
