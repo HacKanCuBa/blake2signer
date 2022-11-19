@@ -1,4 +1,20 @@
 
+2.5.1 - 2022-12-04
+==================
+
+Added
+-----
+
+- Patch Invoke so it works under Python 3.11+.
+
+Changed
+-------
+
+- Improve the fuzzing script, add instructions on running it, and add it as a CI job for releases.
+- Change the usage of AnyStr in signer's public methods with Union[str, bytes], which is not the same, and they are not generally interchangeably like this, but for this particular usage Union makes more sense, and MyPy seems to agree with this.
+- Several improvements in the CI: fixed coverage report, updated Python versions and Poetry, added fuzzing, etc.
+- Update dev dependencies.
+
 2.5.0 - 2022-07-02
 ==================
 

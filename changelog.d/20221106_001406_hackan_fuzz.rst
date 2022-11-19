@@ -1,4 +1,0 @@
-Changed
--------
-
-- Improve the fuzzing script, add instructions on running it, and add it as a CI job for releases.
