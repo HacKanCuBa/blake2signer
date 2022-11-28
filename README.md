@@ -140,6 +140,13 @@ Check out this [project docs online](https://blake2signer.hackan.net) or locally
 
 I'm not a cryptoexpert, so *this project needs a security review*. If you are one and can do it, please [contact me](https://hackan.net).
 
+## Contributors
+
+In alphabetical ordering, with short description about contribution:
+
+* [Erus](https://gitlab.com/erudin): docs title logo, code review.
+* [NoonSleeper](https://gitlab.com/noonsleeper): project icons.
+
 ## License
 
 **Blake2Signer** is made by [HacKan](https://hackan.net) under MPL v2.0. You are free to use, share, modify and share modifications under the terms of that [license](LICENSE).  Derived works may link back to the canonical repository: `https://gitlab.com/hackancuba/blake2signer`.
@@ -154,3 +161,5 @@ I'm not a cryptoexpert, so *this project needs a security review*. If you are on
 [![CC BY-SA 4.0](https://i.creativecommons.org/l/by-sa/4.0/80x15.png)](https://creativecommons.org/licenses/by-sa/4.0/) *Blake2Signer icons* by [NoonSleeper](https://gitlab.com/noonsleeper) are licensed under a [Creative Commons Attribution-ShareAlike 4.0 International License](https://creativecommons.org/licenses/by-sa/4.0/). You are free to use, share, modify and share modifications under the terms of that [license](https://creativecommons.org/licenses/by-sa/4.0/). They were based on *Blake2Signer logo* by [HacKan](https://hackan.net) which was based on [this sword](https://thenounproject.com/term/samurai-sword/2044449/) by *Hamza Wahbi* and [this signature](https://thenounproject.com/term/sign/184638/) by *Nick Bluth*, both licensed under [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/), and inspired by [It's dangerous logo](https://itsdangerous.palletsprojects.com/en/1.1.x/_images/itsdangerous-logo.png).
 
 Check them out in the [icons](https://gitlab.com/hackancuba/blake2signer/-/blob/develop/icons) subdir.
+
+[![CC BY-SA 4.0](https://i.creativecommons.org/l/by-sa/4.0/80x15.png)](https://creativecommons.org/licenses/by-sa/4.0/) *[Blake2Signer with Logo](https://gitlab.com/hackancuba/blake2signer/-/blob/develop/docs/docs/img/title.svg)* by [Erus](https://gitlab.com/erudin) is licensed under a [Creative Commons Attribution-ShareAlike 4.0 International License](https://creativecommons.org/licenses/by-sa/4.0/). You are free to use, share, modify and share modifications under the terms of that [license](https://creativecommons.org/licenses/by-sa/4.0/). It uses OFL licensed [Bilbo font](https://fontesk.com/bilbo-font).

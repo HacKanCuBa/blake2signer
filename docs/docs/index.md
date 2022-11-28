@@ -93,6 +93,13 @@ There are two major documentation versions, besides [each tagged version](https:
 
 I'm not a cryptoexpert, so *this project needs a security review*. If you are one and can do it, please [contact me](https://hackan.net).
 
+## Contributors
+
+In alphabetical ordering, with short description about contribution:
+
+* [Erus](https://gitlab.com/erudin): docs title logo, code review.
+* [NoonSleeper](https://gitlab.com/noonsleeper): project icons.
+
 ## License
 
 **Blake2Signer** is made by [HacKan](https://hackan.net) under MPL v2.0. You are free to use, share, modify and share modifications under the terms of that [license](https://gitlab.com/hackancuba/blake2signer/-/blob/bb95e04c7ff3eb73aa0d923898f5eff5abad9768/LICENSE).  Derived works may link back to the canonical repository: `https://gitlab.com/hackancuba/blake2signer`.
