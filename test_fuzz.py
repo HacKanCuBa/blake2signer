@@ -23,11 +23,10 @@ from blake2signer.hashers import HasherChoice
 def mock_pythonfuzz() -> Generator[mock.MagicMock, None, None]:
     """Mock pythonfuzz package, getting a mocked PythonFuzz decorator."""
     module_name = 'pythonfuzz.main'
-
-    old_module = sys.modules[module_name] if module_name in sys.modules else None
-
+    old_module = sys.modules.get(module_name)
     module = mock.MagicMock()
     sys.modules[module_name] = module
+
     yield module
 
     if old_module is not None:
@@ -48,7 +47,6 @@ def test_get_signer_happy_path(signer_kwargs: Dict[str, Any]) -> None:
     hasher = HasherChoice.blake2s
     klass = mock.MagicMock()
     secret = b'secret'
-
     signer = fuzz.get_signer(klass, hasher=hasher, secret=secret, **signer_kwargs)  # type: ignore
 
     assert isinstance(signer, mock.MagicMock)

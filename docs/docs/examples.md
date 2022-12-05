@@ -928,7 +928,7 @@ Sometimes you don't have to deal with a complex data structure and all you need 
     # since the data was signed passed then the signature is considered
     # expired. The signature is verified before checking the timestamp so it
     # must be valid too.
-    # You can use both an integer, or a float to represent seconds or a timedelta
+    # You can use both an integer, a float, or a timedelta to represent seconds
     # with the time value you want.
     signed = t_signer.sign(data)
     max_age = timedelta(seconds=2)
@@ -1033,7 +1033,7 @@ You can limit the lifetime of the signature with both [`Blake2SerializerSigner`]
         'id': 1,
         'posts': [{'title': '...', 'body': '...'}] * 100  # Some big data structure
     }
-    ttl = timedelta(hours=1)  # int or float value can also be used, as seconds
+    ttl = timedelta(hours=1)  # int or float value can also be used as seconds
 
     signer = Blake2SerializerSigner(
         secret,
@@ -1064,7 +1064,7 @@ You can limit the lifetime of the signature with both [`Blake2SerializerSigner`]
     print('Signed length:', len(signed))  # 3388  # No compression capabilities 
 
     try:
-        # `max_age` can be either a timedelta, or an integer or float expressing seconds
+        # `max_age` can be either a timedelta, an integer, or a float expressing seconds
         unsigned = signer.unsign(signed, max_age=ttl.total_seconds())
     except errors.ExpiredSignatureError as exc:
         # Should an hour had passed, then this exception would be raised
@@ -1151,7 +1151,7 @@ Check out the [details' page](details.md#exceptions) and the [errors reference](
             'id': 1,
             'timezone': -3,
         }
-        ttl = timedelta(seconds=2)  # int or float value can also be used, as seconds
+        ttl = timedelta(seconds=2)  # int or float value can also be used as seconds
 
         signer = Blake2SerializerSigner(
             secret,
@@ -1204,7 +1204,7 @@ Check out the [details' page](details.md#exceptions) and the [errors reference](
 
         secret = b'ZnVja3RoZXBvbGljZQ'
         username = 'hackan'
-        ttl = timedelta(seconds=2)  # int or float value can also be used, as seconds
+        ttl = timedelta(seconds=2)  # int or float value can also be used as seconds
 
         signer = Blake2TimestampSigner(secret)
         signed = signer.sign(username)
@@ -1830,9 +1830,7 @@ You can create your own *SerializerSigner* using provided [`Blake2SerializerSign
 
             def _dumps(self, data: typing.Any, **kwargs: typing.Any) -> bytes:
                 data_bytes = self._force_bytes(data)
-
                 compressed, is_compressed = self._compress(data_bytes)
-
                 encoded = self._encode(compressed)
 
                 if is_compressed:
@@ -1842,9 +1840,7 @@ You can create your own *SerializerSigner* using provided [`Blake2SerializerSign
 
             def _loads(self, dumped_data: bytes, **kwargs: typing.Any) -> typing.Any:
                 data, is_compressed = self._remove_compression_flag_if_compressed(dumped_data)
-
                 decoded = self._decode(data)
-
                 return self._decompress(decoded) if is_compressed else decoded
 
             def dumps(self, data: typing.AnyStr) -> str:
