@@ -134,7 +134,11 @@ This module provides three signer classes:
 
 ## Documentation
 
-Check out this [project docs online](https://blake2signer.hackan.net) or locally with `inv docs`. Alternatively, build them locally using `inv docs --build`.
+Check out this [project docs online](https://blake2signer.hackan.net), or locally with `inv docs`. Alternatively, build them locally using `inv docs --build`.
+
+## Getting help
+
+For help, support, and discussions, come to our [Matrix room](https://matrix.to/#/#blake2signer:mozilla.org). For issues, please use the [Gitlab issue tracker](https://gitlab.com/hackancuba/blake2signer/-/issues).
 
 ## Notice
 

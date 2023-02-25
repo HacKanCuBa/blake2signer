@@ -27,3 +27,8 @@ No, not yet. I'm [looking for it](security.md#external-security-review).
 ## Can I sign an email or stuff like that like with PGP?
 
 No, you can't. This package and others like this one deals with symmetric keys and a signing mechanism known as [HMAC](https://en.wikipedia.org/wiki/HMAC). What you are looking for is a signer that deals with asymmetric keys such as [GnuPG](https://www.gnupg.org) or [minisign](https://jedisct1.github.io/minisign).
+
+## Where can I discuss about implementation details, usage, etc.?
+
+You are welcome at our [Matrix room](https://matrix.to/#/#blake2signer:mozilla.org) for any kind of discussion. Come by, and say hello, or request for help.  
+For issues, please use the [Gitlab issue tracker](https://gitlab.com/hackancuba/blake2signer/-/issues).

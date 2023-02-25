@@ -7,6 +7,9 @@ The goal of this project is to provide a simple and straightforward way to secur
 !!! question "Looking for another documentation version?"
     Check out [stable](https://blake2signer.hackan.net/en/stable/) (current tagged version), [latest](https://blake2signer.hackan.net/en/latest/) (current development version) or [each tagged version](https://readthedocs.org/projects/blake2signer).
 
+!!! question "Have questions?"
+    For help, support, and discussions, come to our [Matrix room](https://matrix.to/#/#blake2signer:mozilla.org).
+
 ## Why would I need to use it?
 
 ??? example "To sign data that needs to be sent through an untrusted channel"
@@ -88,6 +91,10 @@ Versions currently tested (check the [pipelines](https://gitlab.com/hackancuba/b
 These docs are generously hosted by [ReadTheDocs](https://readthedocs.org). Check the [project page](https://readthedocs.org/projects/blake2signer) to know more and see different versions of these docs.
 
 There are two major documentation versions, besides [each tagged version](https://readthedocs.org/projects/blake2signer): [stable](https://blake2signer.hackan.net/en/stable/) (current tagged version), and [latest](https://blake2signer.hackan.net/en/latest/) (current development version).
+
+## Getting help
+
+For help, support, and discussions, come to our [Matrix room](https://matrix.to/#/#blake2signer:mozilla.org). For issues, please use the [Gitlab issue tracker](https://gitlab.com/hackancuba/blake2signer/-/issues).
 
 ## Notice
 
