@@ -75,6 +75,8 @@ plugins:
       default_handler: python
       handlers:
         python:
+          preload:
+            - blake3
           options:
             docstring_style: 'google'
             show_root_heading: true
@@ -93,6 +95,7 @@ markdown_extensions:
   - pymdownx.snippets
   - pymdownx.tabbed:
       alternate_style: true
+  - md_in_html
 
 extra:
   social:

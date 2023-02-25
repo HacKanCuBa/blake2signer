@@ -14,7 +14,7 @@ Now the [`ExpiredSignatureError` exception](errors.md#blake2signer.errors.Expire
 
 Both the public and private API of Blake2TimestampSigner for `unsign` and `unsign_parts` now accepts `max_age=None` to omit checking the signature timestamp (but note that there is no default! it has to be explicit). This happens after checking the signature, which must be valid.
 
-Checkout the [examples](examples.md#choosing-when-to-check-the-timestamp).
+Checkout [the example](examples.md#choosing-when-to-check-the-timestamp) for more information.
 
 ## To v2.3
 
@@ -45,7 +45,7 @@ Regarding the private API, several internal methods of the signers changed, and 
 
 The default compression level was hardcoded to 6 no matter which compressor was being used. This has changed so that the corresponding default compression level for the compressor is used.
 
-If you were using the Zlib compressor (default), then there's no change for you. However, if you were using the Gzip compressor, the default level will now be 9 instead of 6. To continue using 6 as compression level, change the line calling the corresponding method (dump, dumps or dumps_parts) and use the parameter `compression_level=6`:
+If you were using the Zlib compressor (default), then there's no change for you. However, if you were using the Gzip compressor, the default level will now be 9 instead of 6. To continue using 6 as compression level, change the line calling the corresponding method (`dump`, `dumps`, or `dumps_parts`) and use the parameter `compression_level=6`:
 
 ```python
 from blake2signer import Blake2SerializerSigner
@@ -87,7 +87,7 @@ See the [examples](examples.md#using-a-custom-compressor) for more information.
 
 Generally speaking, *v2 broke the public API a bit*, so most projects using v1 *could probably* work as-is with v2. However, the private API changed **a lot**.
 
-!!! abstract "Old signatures will fail"
+!!! warning "Old signatures will fail"
     Data signed with previous versions fails with `InvalidSignatureError`.
 
 ### Public API changes
