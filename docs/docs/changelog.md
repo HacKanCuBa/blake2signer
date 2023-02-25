@@ -1,5 +1,24 @@
 # Changelog
 
+## 2.5.2 - 2023-02-25
+
+**Added**
+
+- Add missing keywords in pyproject.toml.
+
+**Removed**
+
+- Remove invoke patch for Python 3.11+: it's been fixed now, so it's no longer needed.
+
+**Changed**
+
+- Improve some docs.
+- Update dev, and docs dependencies.
+
+**Fixed**
+
+- Fix issue with mkdocstrings and blake3.
+
 ## 2.5.1 - 2022-12-04
 
 **Added**

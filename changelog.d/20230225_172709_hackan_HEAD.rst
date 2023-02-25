@@ -1,4 +1,0 @@
-Changed
--------
-
-- Improve some docs.

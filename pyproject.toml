@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "blake2signer"
-version = "2.5.1"
+version = "2.5.2"
 description = "A library to use BLAKE in keyed hashing mode to sign and verify signed data"
 authors = ["HacKan <hackan@gmail.com>"]
 license = "MPL-2.0"

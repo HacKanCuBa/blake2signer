@@ -1,4 +1,0 @@
-Removed
--------
-
-- Remove invoke patch for Python 3.11+, it's been fixed now, so it's no longer needed.
