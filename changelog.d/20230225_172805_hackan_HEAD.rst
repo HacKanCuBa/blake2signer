@@ -1,0 +1,4 @@
+Changed
+-------
+
+- Update dev, and docs dependencies.
