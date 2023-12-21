@@ -30,6 +30,7 @@ classifiers = [
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "Topic :: Security :: Cryptography",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Typing :: Typed",
@@ -69,9 +70,10 @@ darglint = "^1.8.1"
 perflint = "^0"
 pylint = "^2.12.2"
 yapf = "^0"
+toml = "^0"  # yapf now requires this
 add-trailing-comma = "^2.0.1"
 mypy = "^1"
-types-setuptools = "^65"
+types-setuptools = "^69"
 dlint = "^0"
 bandit = "^1.6.2"
 safety = "^2"
