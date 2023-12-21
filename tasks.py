@@ -304,7 +304,7 @@ def docs_requirements(ctx, update=False):
     with docs_context(ctx):
         if update:
             print('Updating docs dependencies...')
-            ctx.run('poetry install --no-ansi --remove-untracked')
+            ctx.run('poetry install --no-ansi --remove-untracked --no-root')
             ctx.run('poetry update --no-ansi')
 
         print('Exporting docs requirements to readthedocs.requirements.txt...')
