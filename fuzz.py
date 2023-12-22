@@ -128,7 +128,9 @@ def check_signing(
 
     unsigned = unsign(signed)
     if unsigned != data:
-        raise ValueError(f'data mismatch: original:0x{data.hex()} != unsigned:0x{unsigned.hex()}')
+        raise ValueError(
+            f'data mismatch: original:0x{data.hex()} != unsigned:0x{unsigned.hex()}',  # noqa: E231
+        )
 
 
 def import_pythonfuzz() -> Any:

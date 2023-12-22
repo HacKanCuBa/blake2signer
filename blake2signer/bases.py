@@ -233,9 +233,8 @@ class Base(Mixin, ABC):
         try:
             choice = HasherChoice(hasher)
         except ValueError as exc:
-            raise InvalidOptionError(
-                f'invalid hasher choice, must be one of: {", ".join(h for h in HasherChoice)}',
-            ) from exc
+            choices = ', '.join(choice for choice in HasherChoice)
+            raise InvalidOptionError(f'invalid hasher choice, must be one of: {choices}') from exc
 
         return choice
 

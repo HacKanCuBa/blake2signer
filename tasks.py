@@ -148,7 +148,7 @@ def clean(ctx):
         '.pytest_cache',
         'site',
     )
-    ctx.run(f'rm -vrf {" ".join(remove)}', echo=True)
+    ctx.run(f'rm -vrf {" ".join(remove)}', echo=True)  # noqa: Q000
     ctx.run(r'find . -type d -name "__pycache__" -exec rm -rf "{}" \+', echo=True)  # noqa: P103
     ctx.run('find . -type f -name "*.pyc" -delete', echo=True)
 
@@ -381,7 +381,7 @@ def generate_trusted_comment_parts(
 
 def generate_trusted_comment_from_parts(parts: typing.Sequence[typing.Tuple[str, str]]) -> str:
     """Generate a trusted comment from its parts."""
-    return '\t'.join(f'{key}:{value}' for key, value in parts)
+    return '\t'.join(f'{key}:{value}' for key, value in parts)  # noqa: E231  # false positive
 
 
 def generate_trusted_comment_for_file(
