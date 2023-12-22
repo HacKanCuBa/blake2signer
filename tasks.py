@@ -59,12 +59,15 @@ def darglint(ctx):
 @task
 def bandit(ctx):
     """Run bandit with proper exclusions."""
-    ctx.run('bandit -i -r -x blake2signer/tests blake2signer/', echo=True)
-    ctx.run('bandit -i -r -s B101 blake2signer/tests/', echo=True)
-    ctx.run('bandit -i -r -s B101 tests/', echo=True)
-    ctx.run('bandit -i -r tasks.py', echo=True)
-    ctx.run('bandit -i -r fuzz.py', echo=True)
-    ctx.run('bandit -i -r -s B101 test_fuzz.py', echo=True)
+    ctx.run(
+        'bandit --confidence --recursive --exclude blake2signer/tests blake2signer/',
+        echo=True,
+    )
+    ctx.run('bandit --confidence --recursive --skip B101 blake2signer/tests/', echo=True)
+    ctx.run('bandit --confidence --recursive --skip B101 tests/', echo=True)
+    ctx.run('bandit --confidence --recursive tasks.py', echo=True)
+    ctx.run('bandit --confidence --recursive fuzz.py', echo=True)
+    ctx.run('bandit --confidence --recursive --skip B101 test_fuzz.py', echo=True)
 
 
 @task
@@ -81,9 +84,9 @@ def yapf(ctx, diff=False):
     """Run yapf to format the code."""
     cmd = ['yapf', '--recursive', '--verbose', '--parallel']
     if diff:
-        cmd.append('-d')
+        cmd.append('--diff')
     else:
-        cmd.append('-i')
+        cmd.append('--in-place')
 
     cmd.append('blake2signer/')
     cmd.append('tests/')
