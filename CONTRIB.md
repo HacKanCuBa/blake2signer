@@ -123,7 +123,9 @@ Once everything is ready for release, follow these steps:
 1. Run all checks, including fuzzing: `inv check`
 1. Commit, push branch and create MR to `main`. A CI job will publish the package to Test PyPy as a prerelease. If something went wrong, fix, commit and push again; the CI job will change the release number and publish it again.
 1. Merge into `main` and create MR to `develop`.
-1. Merge into `develop`, create and push signed tag: `git tag -s <M.m.p>`. A CI job will publish the package to PyPi.
+1. Merge into `develop`, create and push an annotated tag: `git tag -a <M.m.p>`. A CI job will publish the package to PyPi.
+1. Sign the tag with minisign: `inv sign-tag <M.m.p>`
+1. Push notes: `git push origin refs/notes/commits`
 1. Create release in Gitlab and [properly sign packages](https://gist.github.com/HacKanCuBa/6fabded3565853adebf3dd140e72d33e).
 
 ### Signing
