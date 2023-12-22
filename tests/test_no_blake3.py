@@ -1,15 +1,15 @@
 """Test that everything works without `blake3` installed."""
 
+import importlib.util
 from abc import ABC
 from unittest import mock
 
-import pkg_resources
 import pytest
 
 with mock.patch.object(
-        pkg_resources,
-        'get_distribution',
-        side_effect=pkg_resources.DistributionNotFound,
+        importlib.util,
+        'find_spec',
+        return_value=None,
 ):
     from blake2signer import errors
     from blake2signer.tests.bases import BaseTests

@@ -30,6 +30,7 @@ Example:
     python fuzz.py blake2signer .fuzzed_blake2signer --runs 10000
 """
 
+import importlib.util
 import signal
 import sys
 from contextvars import ContextVar
@@ -43,8 +44,6 @@ from typing import Dict
 from typing import Optional
 from typing import Type
 from typing import TypeVar
-
-import pkg_resources
 
 from blake2signer import Blake2SerializerSigner
 from blake2signer import Blake2Signer
@@ -135,9 +134,7 @@ def check_signing(
 
 def import_pythonfuzz() -> Any:
     """Import PythonFuzz if possible, otherwise return a stub that will fail when used."""
-    try:
-        pkg_resources.get_distribution('pythonfuzz')
-    except pkg_resources.DistributionNotFound:
+    if importlib.util.find_spec('pythonfuzz') is None:
 
         class PythonFuzz:  # pylint: disable=R0903
             """Stub for PythonFuzz."""

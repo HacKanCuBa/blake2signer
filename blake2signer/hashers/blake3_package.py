@@ -3,15 +3,12 @@
 When, and if, this package gets to the Python core, we can remove this.
 """
 
+import importlib.util
 import typing
-
-import pkg_resources
 
 from blake2signer.errors import MissingDependencyError
 
-try:
-    pkg_resources.get_distribution('blake3')
-except pkg_resources.DistributionNotFound:
+if importlib.util.find_spec('blake3') is None:
 
     def blake3(*_: typing.Any, **__: typing.Any) -> typing.Any:
         """BLAKE3 function stub."""

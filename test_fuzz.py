@@ -9,7 +9,6 @@ from typing import Dict
 from typing import Generator
 from unittest import mock
 
-import pkg_resources
 import pytest
 
 import fuzz  # noqa: I100, I202
@@ -145,7 +144,7 @@ def test_import_pythonfuzz_with_package(
     def func(_: bytes) -> None:
         """Test func."""
 
-    with mock.patch.object(fuzz.pkg_resources, 'get_distribution') as mock_get_distribution:
+    with mock.patch.object(fuzz.importlib.util, 'find_spec') as mock_get_distribution:
         pythonfuzz = fuzz.import_pythonfuzz()
 
     mock_get_distribution.assert_called_once_with('pythonfuzz')
@@ -157,9 +156,9 @@ def test_import_pythonfuzz_with_package(
 def test_import_pythonfuzz_without_package() -> None:
     """Test that import_pythonfuzz won't fail if the package doesn't exist until it's used."""
     with mock.patch.object(
-            fuzz.pkg_resources,
-            'get_distribution',
-            side_effect=pkg_resources.DistributionNotFound,
+            fuzz.importlib.util,
+            'find_spec',
+            return_value=None,
     ):
         pythonfuzz = fuzz.import_pythonfuzz()  # No exception raised
 
