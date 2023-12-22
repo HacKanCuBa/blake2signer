@@ -3,7 +3,7 @@
 ## To v2.5
 
 !!! success "Old signatures will work"
-    Data signed with previous versions (>=2.0, <=2.4) will still be valid.
+    Data signed with previous versions (>=2.0, <=2.5) will still be valid.
 
 Now the [`ExpiredSignatureError` exception](errors.md#blake2signer.errors.ExpiredSignatureError) contains valid unsigned data, which can be safely used. Check out [the example](examples.md#the-expired-signature-exception) to know more.
 
