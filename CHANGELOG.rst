@@ -1,7 +1,7 @@
 2.5.3 - 2023-12-21
 ==================
 
-Note: This is the last version supporting Python 3.7!
+*Note: This is the last version supporting Python 3.7!*
 
 Changed
 -------

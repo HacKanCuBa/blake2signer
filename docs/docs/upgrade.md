@@ -7,6 +7,9 @@
 
 Now the [`ExpiredSignatureError` exception](errors.md#blake2signer.errors.ExpiredSignatureError) contains valid unsigned data, which can be safely used. Check out [the example](examples.md#the-expired-signature-exception) to know more.
 
+!!! tip "Python 3.7 is EOL"
+    As Python 3.7 has reached its end-of-life, this is the last version supporting it.
+
 ## To v2.4
 
 !!! success "Old signatures will work"
