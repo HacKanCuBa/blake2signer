@@ -6,7 +6,7 @@
 [![License](https://img.shields.io/pypi/l/blake2signer?color=light%20green&style=plastic)](https://gitlab.com/hackancuba/blake2signer/-/blob/main/LICENSE)
 [![Follow Me on Twitter](https://img.shields.io/twitter/follow/hackancuba?color=light%20green&style=plastic)](https://twitter.com/hackancuba)
 
-# ![Logo](https://assets.gitlab-static.net/uploads/-/system/project/avatar/21560006/icon_d_dark.png?width=40) Blake2Signer
+# ![Logo](https://gitlab.com/uploads/-/system/project/avatar/21560006/icon_d_dark.png?width=40) Blake2Signer
 
 The goal of this project is to provide a simple and straightforward way to securely sign data using [BLAKE in keyed hashing mode](https://docs.python.org/3/library/hashlib.html#keyed-hashing), using a secret key. This can be used, in example, when you need to send some data that could be tampered by the user, like a payment authorization, or a login token. This data travels in plaintext, and can be read, but it can't be modified in any way once signed!.
 
@@ -37,6 +37,7 @@ There are much better packages for other or more general use cases so if you fee
 ### Secondary goals
 
 * If possible, maintain current active Python versions (3.7+).
+* If possible, support Python implementations other than CPython.
 
 ## Installing
 
@@ -56,7 +57,7 @@ Note: if you want to use BLAKE3, you need to install the [`blake3`](https://pypi
 
 ### Requirements
 
-Only Python is required, this module doesn't have dependencies besides those used for development, and the optional `blake3`.
+Only Python is required; this module doesn't have dependencies besides those used for development, and the optional `blake3`.
 
 Versions currently tested (check the [pipelines](https://gitlab.com/hackancuba/blake2signer/-/pipelines)):
 
@@ -65,13 +66,16 @@ Versions currently tested (check the [pipelines](https://gitlab.com/hackancuba/b
 * CPython 3.9
 * CPython 3.10
 * CPython 3.11
-* CPython 3.12rc
+* CPython 3.12
+* CPython 3.13-pre
 * [PyPy](https://www.pypy.org) 3.7
     * If you are contributing to this project under PyPy, [read the contrib notes first](CONTRIB.md#working-under-pypy).
 * [PyPy](https://www.pypy.org) 3.8
     * If you are contributing to this project under PyPy, [read the contrib notes first](CONTRIB.md#working-under-pypy).
 * [PyPy](https://www.pypy.org) 3.9
     * If you are contributing to this project under PyPy, [read the contrib notes first](CONTRIB.md#working-under-pypy).
+* [PyPy](https://www.pypy.org) 3.10
+  * If you are contributing to this project under PyPy, [read the contrib notes first](CONTRIB.md#working-under-pypy).
 * [Stackless](https://github.com/stackless-dev/stackless/wiki) 3.7
     * If you are contributing to this project under Stackless, [read the contrib notes first](CONTRIB.md#working-under-stackless).
 * [Stackless](https://github.com/stackless-dev/stackless/wiki) 3.8

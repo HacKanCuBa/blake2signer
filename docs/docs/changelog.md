@@ -1,5 +1,18 @@
 # Changelog
 
+## 2.5.3 - 2023-12-21
+
+Note: This is the last version supporting Python 3.7!
+
+**Changed**
+
+- Update dev, and docs dependencies.
+- Update test runner in the CI for Python 3.12, 3.13-pre and PyPy 3.10.
+- Update new version release guide in docs to use minisign.
+- Replace deprecated pkg_resources with importlib.
+- Replace deprecated datetime.utcnow in Invoke tasks.
+- Other minor linting changes due to linter updates.
+
 ## 2.5.2 - 2023-02-25
 
 **Added**
