@@ -360,7 +360,7 @@ def generate_trusted_comment_parts(
 ) -> typing.Tuple[typing.Tuple[str, str], ...]:
     """Generate a trusted comment for a minisign signature."""
     if not timestamp:
-        timestamp = int(datetime.utcnow().replace(tzinfo=timezone.utc).timestamp())
+        timestamp = int(datetime.now(timezone.utc).timestamp())
 
     if not pubkey:
         with open('minisign.pub', 'rt', encoding='utf-8') as pubkeyfile:
