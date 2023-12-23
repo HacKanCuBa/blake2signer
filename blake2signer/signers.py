@@ -34,17 +34,17 @@ class Blake2Signer(Blake2SignerBase):
         >>>     secret_key,
         >>>     personalisation=b'the-data-signer',  # Make it unique per instance
         >>> )
-        >>> # Sign, and i.e. store the data in a cookie
+        >>> # Sign, and i.e., store the data in a cookie
         >>> signed: bytes = signer.sign(data)
         >>> cookie = {'data': signed}
-        >>> # To verify and recover data simply use unsign: you will either get the
-        >>> # data, or a `SignerError` subclass exception (it is recommended to use
+        >>> # To verify and recover data, use unsign: you will either get the data,
+        >>> # or a `SignerError` subclass exception (it is recommended to use
         >>> # `SignedDataError` given it is more specific and prevents masking other
         >>> # unrelated errors).
         >>> try:
         >>>     unsigned = signer.unsign(cookie.get('data', ''))
         >>> except errors.SignedDataError:
-        >>>     # Can't trust given data so set a default, break current process, etc.
+        >>>     # Can't trust given data so set a default, break the current process, etc.
         >>>     unsigned = b''
 
     """
@@ -64,14 +64,14 @@ class Blake2Signer(Blake2SignerBase):
         the payload stays the same).
 
         If given data is not bytes, a conversion will be applied assuming it's
-        UTF-8 encoded. You should prefer to properly encode strings and passing
+        UTF-8 encoded. You should prefer to properly encode strings and pass
         bytes to this function.
 
         Args:
             data: Data to sign.
 
         Returns:
-            A signed stream composed of salt, signature and data.
+            A signed stream composed of salt (if any), signature and data.
 
         Raises:
             ConversionError: Data can't be converted to bytes.
@@ -98,14 +98,14 @@ class Blake2Signer(Blake2SignerBase):
         the payload stays the same).
 
         If given data is not bytes, a conversion will be applied assuming it's
-        UTF-8 encoded. You should prefer to properly encode strings and passing
+        UTF-8 encoded. You should prefer to properly encode strings and pass
         bytes to this function.
 
         Args:
             data: Data to sign.
 
         Returns:
-            A container with data and its salted signature.
+            A container with data and its (salted) signature.
 
         Raises:
             ConversionError: Data can't be converted to bytes.
@@ -118,7 +118,7 @@ class Blake2Signer(Blake2SignerBase):
         """Verify a stream signed by `sign` and recover original data.
 
         If given data is not bytes, a conversion will be applied assuming it's
-        UTF-8 encoded. You should prefer to properly encode strings and passing
+        UTF-8 encoded. You should prefer to properly encode strings and pass
         bytes to this function.
 
         Args:
@@ -144,8 +144,8 @@ class Blake2Signer(Blake2SignerBase):
         a stream.
 
         If given container is not bytes, a conversion will be applied assuming it's
-        UTF-8 encoded. You should prefer to properly encode strings and passing
-        a bytes container to this function.
+        UTF-8 encoded. You should prefer to properly encode strings and pass a bytes
+        container to this function.
 
         Args:
             signature: Signed data container to unsign.
@@ -158,9 +158,9 @@ class Blake2Signer(Blake2SignerBase):
             SignatureError: Signed data structure is not valid.
             InvalidSignatureError: Signed data signature is invalid.
         """
-        signature = self._force_bytes_parts(signature)
+        sig = self._force_bytes_parts(signature)
         # It's easier to just join the parts together and unsign the stream.
-        signed_data = self._compose(signature.data, signature=signature.signature)
+        signed_data = self._compose(sig.data, signature=sig.signature)
 
         return self.unsign(signed_data)
 
@@ -175,7 +175,7 @@ class Blake2TimestampSigner(Blake2TimestampSignerBase):
         >>>     secret_key,
         >>>     personalisation=b'the-data-time-signer',  # Make it unique per instance
         >>> )
-        >>> # Sign, and i.e. store the data in a cookie
+        >>> # Sign, and i.e., store the data in a cookie
         >>> signed: bytes = signer.sign(data)
         >>> cookie = {'data': signed}
         >>> # To verify and recover data simply use unsign: you will either get the
@@ -183,11 +183,11 @@ class Blake2TimestampSigner(Blake2TimestampSignerBase):
         >>> # `SignedDataError` given it is more specific and prevents masking other
         >>> # unrelated errors). You need to specify the signature age in seconds
         >>> # (or a timedelta instance). If more than said seconds since the signature
-        >>> # was made have passed then an `ExpiredSignatureError` is raised.
+        >>> # was made have passed, then an `ExpiredSignatureError` is raised.
         >>> try:
         >>>     unsigned = signer.unsign(cookie.get('data', ''), max_age=10)
         >>> except errors.SignedDataError:
-        >>>     # Can't trust given data so set a default, break current process, etc.
+        >>>     # Can't trust given data so set a default, break the current process, etc.
         >>>     unsigned = b''
 
     """
@@ -207,14 +207,14 @@ class Blake2TimestampSigner(Blake2TimestampSignerBase):
         the payload stays the same).
 
         If given data is not bytes, a conversion will be applied assuming it's
-        UTF-8 encoded. You should prefer to properly encode strings and passing
+        UTF-8 encoded. You should prefer to properly encode strings and pass
         bytes to this function.
 
         Args:
             data: Data to sign.
 
         Returns:
-            A signed stream composed of salt, signature, timestamp and data.
+            A signed stream composed of salt (if any), signature, timestamp and data.
 
         Raises:
             ConversionError: Data can't be converted to bytes.
@@ -241,14 +241,14 @@ class Blake2TimestampSigner(Blake2TimestampSignerBase):
         the payload stays the same).
 
         If given data is not bytes, a conversion will be applied assuming it's
-        UTF-8 encoded. You should prefer to properly encode strings and passing
+        UTF-8 encoded. You should prefer to properly encode strings and pass
         bytes to this function.
 
         Args:
             data: Data to sign.
 
         Returns:
-            A container with data and its timestamped salted signature.
+            A container with data and its timestamped (salted) signature.
 
         Raises:
             ConversionError: Data can't be converted to bytes.
@@ -266,18 +266,17 @@ class Blake2TimestampSigner(Blake2TimestampSignerBase):
         """Verify a stream signed and timestamped by `sign` and recover data.
 
         If given data is not bytes, a conversion will be applied assuming it's
-        UTF-8 encoded. You should prefer to properly encode strings and passing
+        UTF-8 encoded. You should prefer to properly encode strings and pass
         bytes to this function.
 
-        If `max_age` is not provided, then the timestamp is not checked (the
-        signature is always checked).
+        If `max_age` is null, then the timestamp is not checked (the signature
+        is always checked).
 
         Args:
             signed_data: Signed data to unsign.
 
         Keyword Args:
-            max_age (optional): Ensure the signature is not older than this time
-                in seconds.
+            max_age: Ensure the signature is not older than this time in seconds.
 
         Returns:
             Original data.
@@ -286,7 +285,8 @@ class Blake2TimestampSigner(Blake2TimestampSignerBase):
             ConversionError: Signed data can't be converted to bytes.
             SignatureError: Signed data structure is not valid.
             InvalidSignatureError: Signed data signature is invalid.
-            ExpiredSignatureError: Signed data signature has expired.
+            ExpiredSignatureError: Signed data signature has expired, but is otherwise
+                valid.
             DecodeError: Timestamp can't be decoded.
         """
         return self._unsign_with_timestamp(
@@ -306,18 +306,17 @@ class Blake2TimestampSigner(Blake2TimestampSignerBase):
         a stream.
 
         If given container is not bytes, a conversion will be applied assuming it's
-        UTF-8 encoded. You should prefer to properly encode strings and passing
-        a bytes container to this function.
+        UTF-8 encoded. You should prefer to properly encode strings and pass a bytes
+        container to this function.
 
-        If `max_age` is not provided, then the timestamp is not checked (the
-        signature is always checked).
+        If `max_age` is null, then the timestamp is not checked (the signature
+        is always checked).
 
         Args:
             signature: Signed data container to unsign.
 
         Keyword Args:
-            max_age (optional): Ensure the signature is not older than this time
-                in seconds.
+            max_age: Ensure the signature is not older than this time in seconds.
 
         Returns:
             Original data.
@@ -326,7 +325,8 @@ class Blake2TimestampSigner(Blake2TimestampSignerBase):
             ConversionError: Signed data can't be converted to bytes.
             SignatureError: Signed data structure is not valid.
             InvalidSignatureError: Signed data signature is invalid.
-            ExpiredSignatureError: Signed data signature has expired.
+            ExpiredSignatureError: Signed data signature has expired, but is otherwise
+                valid.
             DecodeError: Timestamp can't be decoded.
         """
         sig = self._force_bytes_parts(signature)
@@ -354,21 +354,21 @@ class Blake2SerializerSigner(
         >>>     max_age=timedelta(days=1),
         >>>     personalisation=b'the-cookie-signer',  # Make it unique per instance
         >>> )
-        >>> # Sign, and i.e. store the data in a cookie
+        >>> # Sign, and i.e., store the data in a cookie
         >>> signed: str = signer.dumps(data)  # Compression is enabled by default
         >>> cookie = {'data': signed}
-        >>> # To verify and recover data simply use loads: you will either get the
-        >>> # data, or a `SignerError` subclass exception (it is recommended to use
+        >>> # To verify and recover data, use loads: you will either get the data,
+        >>> # or a `SignerError` subclass exception (it is recommended to use
         >>> # `SignedDataError` given it is more specific and prevents masking other
         >>> # unrelated errors).
         >>> try:
         >>>     unsigned = signer.loads(cookie.get('data', ''))
         >>> except errors.SignedDataError:
-        >>>     # Can't trust given data so set a default, break current process, etc.
+        >>>     # Can't trust given data so set a default, break the current process, etc.
         >>>     unsigned = {'message': '', 'extra': []}
 
     Note:
-        If compressing data turns out to be detrimental then data won't be compressed.
+        If compressing data turns out to be detrimental, then data won't be compressed.
         If you know that from beforehand and don't need compression, you can disable it:
         `signed: str = signer.dumps(data, compress=False)`.
         Likewise, you can force compression using:
@@ -397,14 +397,14 @@ class Blake2SerializerSigner(
         It uses BLAKE in keyed hashing mode, and it can handle data serialization,
         compression and encoding.
 
-        Setting `max_age` will produce a timestamped signed stream.
+        Setting `max_age` will add a timestamp to the signature.
 
         Args:
-            secret: Secret value which will be derived using BLAKE to produce the
-                signing key. The minimum secret size is enforced to 16 bytes and there
-                is no maximum. You can optionally provide a sequence of secrets, oldest
-                to newest, that are used during signature check to allow for secret
-                rotation. The last, newest, secret is used for signing.
+            secret: Secret value, which will be derived using BLAKE to produce the
+                signing key. The minimum secret size is enforced to 16 bytes, and there
+                is no maximum. You can optionally provide a sequence of secrets, from
+                oldest to newest, that are used during signature check to allow for
+                secret rotation. The last, newest, secret is used for signing.
 
         Keyword Args:
             max_age (optional): Use a timestamp signer instead of a regular one
@@ -414,21 +414,22 @@ class Blake2SerializerSigner(
                 derived using BLAKE to ensure it fits the hasher limits, so it
                 has no practical size limit. It defaults to the class name.
             digest_size (optional): Size of output signature (digest) in bytes
-                (defaults to 16 bytes). The minimum size is enforced to 16 bytes.
+                (default to 16 bytes). The minimum size is enforced to 16 bytes.
             hasher (optional): Hash function to use: blake2b (default), blake2s
                 or blake3.
             deterministic (optional): Define if signatures are deterministic or
-                non-deterministic (default). Non-deterministic sigs are preferred,
+                non-deterministic (default). Non-deterministic sigs are preferred
                 and achieved through the use of a random salt. For deterministic
-                sigs, no salt is used: this means that for the same payload, the
-                same sig is obtained (the advantage is that the sig is shorter).
+                sigs, no salt is used: this means that the result is idempotent, so
+                for the same payload, the same sig is obtained (the advantage is
+                that the sig is shorter, and producing it is faster).
                 Note that this assumes that the serializer and compressor are
                 always deterministic.
             separator (optional): Character to separate the signature and the
                 payload. It must not belong to the encoder alphabet and be ASCII
                 (defaults to ".").
-            encoder (optional): Encoder class to use (defaults to a Base64 URL
-                safe encoder).
+            encoder (optional): Encoder class to use (defaults to a Base64 URL-safe
+                encoder).
             serializer (optional): Serializer class to use (defaults to a JSON
                 serializer).
             compressor (optional): Compressor class to use (defaults to a Zlib
@@ -437,7 +438,7 @@ class Blake2SerializerSigner(
                 It must not belong to the encoder alphabet and be ASCII (defaults
                 to ".").
             compression_ratio (optional): Desired minimal compression ratio, between
-                0 and below 100 (defaults to 5). It is used to calculate when
+                0 and below 100 (default to 5). It is used to calculate when
                 to consider a payload sufficiently compressed to detect detrimental
                 compression. By default, if compression achieves less than 5% of
                 size reduction, it is considered detrimental.
@@ -480,7 +481,7 @@ class Blake2SerializerSigner(
             compression_level (int, optional): Set the desired compression level
                 when using compression, where 1 is the fastest and least compressed
                 and 9 the slowest and most compressed.
-            force_compression (bool): Force compression even if it would be detrimental
+            force_compression (bool): Force compression even if it is detrimental
                 for performance or size. This parameter overrides `compress`.
             serializer_kwargs (dict, optional): Provide keyword arguments for the
                 serializer.
@@ -491,8 +492,7 @@ class Blake2SerializerSigner(
         compress: bool = kwargs['compress']
         compression_level: typing.Optional[int] = kwargs.get('compression_level')
         force_compression: bool = kwargs['force_compression']
-        serializer_kwargs: typing.Dict[str, typing.Any]
-        serializer_kwargs = kwargs.get('serializer_kwargs') or {}
+        serializer_kwargs: typing.Dict[str, typing.Any] = kwargs.get('serializer_kwargs') or {}
 
         serialized = self._serialize(data, **serializer_kwargs)
 
@@ -556,11 +556,12 @@ class Blake2SerializerSigner(
         use `loads`.
 
         Data will be serialized, optionally compressed, and encoded before being
-        signed. This means that it must be of any type serializable by the chosen
-        serializer, i.e. for a JSON serializer: str, int, float, list, tuple, bool,
+        signed. This means that it must be of any type-serializable by the chosen
+        serializer, i.e., for a JSON serializer: str, int, float, list, tuple, bool,
         None or dict, or a composition of those (tuples are unserialized as lists).
 
-        If `max_age` was specified then the stream will be timestamped.
+        If `max_age` was specified on class instantiation, then the signature will
+        be timestamped.
 
         For deterministic signatures, no salt is used. For non-deterministic ones,
         the salt is a cryptographically secure pseudorandom string generated for
@@ -575,22 +576,21 @@ class Blake2SerializerSigner(
 
         Keyword Args:
             compress (optional): Compress data (default) after serializing it and
-                decompress it before unserializing. For low entropy payloads such
+                decompress it before unserializing. For low-entropy payloads such
                 as human-readable text, it's beneficial from around ~30bytes, and
-                detrimental if smaller. For high entropy payloads like pseudorandom
+                detrimental if smaller. For high-entropy payloads like a pseudorandom
                 text, it's beneficial from around ~300bytes and detrimental if lower
-                than ~100bytes. You can safely enable it since a size check is done
+                than ~100bytes. You can safely enable it since a size check is done,
                 so if compression turns detrimental then it won't be used. If you
-                know from beforehand that data can't be compressed and don't want
-                to waste resources trying, set it to False.
+                know from beforehand, that data can't be compressed, and don't want
+                to waste resources trying to compress it, set it to False.
             compression_level (optional): Set the desired compression level when
                 using compression, where 1 is the fastest and least compressed
                 and 9 the slowest and most compressed. The default value depends
                 on the compressor being used. Note that the performance impact is
                 for both compression and decompression.
-            force_compression (optional): Force compression even if it would be
-                detrimental for performance or size. This parameter overrides
-                `compress`.
+            force_compression (optional): Force compression even if it is detrimental
+                for performance or size. This parameter overrides `compress`.
             serializer_kwargs (optional): Provide keyword arguments for the serializer.
 
         Returns:
@@ -634,11 +634,12 @@ class Blake2SerializerSigner(
         use `loads_parts`.
 
         Data will be serialized, optionally compressed, and encoded before being
-        signed. This means that it must be of any type serializable by the chosen
-        serializer, i.e. for a JSON serializer: str, int, float, list, tuple, bool,
+        signed. This means that it must be of any type-serializable by the chosen
+        serializer, i.e., for a JSON serializer: str, int, float, list, tuple, bool,
         None or dict, or a composition of those (tuples are unserialized as lists).
 
-        If `max_age` was specified then the stream will be timestamped.
+        If `max_age` was specified on class instantiation, then the signature will
+        be timestamped.
 
         For deterministic signatures, no salt is used. For non-deterministic ones,
         the salt is a cryptographically secure pseudorandom string generated for
@@ -653,22 +654,21 @@ class Blake2SerializerSigner(
 
         Keyword Args:
             compress (optional): Compress data (default) after serializing it and
-                decompress it before unserializing. For low entropy payloads such
+                decompress it before unserializing. For low-entropy payloads such
                 as human-readable text, it's beneficial from around ~30bytes, and
-                detrimental if smaller. For high entropy payloads like pseudorandom
+                detrimental if smaller. For high-entropy payloads like a pseudorandom
                 text, it's beneficial from around ~300bytes and detrimental if lower
-                than ~100bytes. You can safely enable it since a size check is done
+                than ~100bytes. You can safely enable it since a size check is done,
                 so if compression turns detrimental then it won't be used. If you
-                know from beforehand that data can't be compressed and don't want
-                to waste resources trying, set it to False.
+                know from beforehand, that data can't be compressed, and don't want
+                to waste resources trying to compress it, set it to False.
             compression_level (optional): Set the desired compression level when
                 using compression, where 1 is the fastest and least compressed
                 and 9 the slowest and most compressed. The default value depends
                 on the compressor being used. Note that the performance impact is
                 for both compression and decompression.
-            force_compression (optional): Force compression even if it would be
-                detrimental for performance or size. This parameter overrides
-                `compress`.
+            force_compression (optional): Force compression even if it is detrimental
+                for performance or size. This parameter overrides `compress`.
             serializer_kwargs (optional): Provide keyword arguments for the serializer.
 
         Returns:
@@ -717,11 +717,12 @@ class Blake2SerializerSigner(
         use `loads`.
 
         Data will be serialized, optionally compressed, and encoded before being
-        signed. This means that it must be of any type serializable by the chosen
-        serializer, i.e. for a JSON serializer: str, int, float, list, tuple, bool,
+        signed. This means that it must be of any type-serializable by the chosen
+        serializer, i.e., for a JSON serializer: str, int, float, list, tuple, bool,
         None or dict, or a composition of those (tuples are unserialized as lists).
 
-        If `max_age` was specified then the stream will be timestamped.
+        If `max_age` was specified on class instantiation, then the signature will
+        be timestamped.
 
         For deterministic signatures, no salt is used. For non-deterministic ones,
         the salt is a cryptographically secure pseudorandom string generated for
@@ -737,22 +738,21 @@ class Blake2SerializerSigner(
 
         Keyword Args:
             compress (optional): Compress data (default) after serializing it and
-                decompress it before unserializing. For low entropy payloads such
+                decompress it before unserializing. For low-entropy payloads such
                 as human-readable text, it's beneficial from around ~30bytes, and
-                detrimental if smaller. For high entropy payloads like pseudorandom
+                detrimental if smaller. For high-entropy payloads like a pseudorandom
                 text, it's beneficial from around ~300bytes and detrimental if lower
-                than ~100bytes. You can safely enable it since a size check is done
+                than ~100bytes. You can safely enable it since a size check is done,
                 so if compression turns detrimental then it won't be used. If you
-                know from beforehand that data can't be compressed and don't want
-                to waste resources trying, set it to False.
+                know from beforehand, that data can't be compressed, and don't want
+                to waste resources trying to compress it, set it to False.
             compression_level (optional): Set the desired compression level when
                 using compression, where 1 is the fastest and least compressed
                 and 9 the slowest and most compressed. The default value depends
                 on the compressor being used. Note that the performance impact is
                 for both compression and decompression.
-            force_compression (optional): Force compression even if it would be
-                detrimental for performance or size. This parameter overrides
-                `compress`.
+            force_compression (optional): Force compression even if it is detrimental
+                for performance or size. This parameter overrides `compress`.
             serializer_kwargs (optional): Provide keyword arguments for the serializer.
 
         Returns:
@@ -783,8 +783,8 @@ class Blake2SerializerSigner(
     def loads(self, signed_data: typing.Union[str, bytes]) -> typing.Any:
         """Recover original data from a signed serialized string from `dumps`.
 
-        If `max_age` was specified then it will be ensured that the signature is
-        not older than that time in seconds.
+        If `max_age` was specified on class instantiation, then it will be ensured
+        that the signature is not older than that time in seconds.
 
         If the data was compressed, it will be decompressed before unserializing it.
 
@@ -801,7 +801,8 @@ class Blake2SerializerSigner(
             ConversionError: Signed data can't be converted to bytes.
             SignatureError: Signed data structure is not valid.
             InvalidSignatureError: Signed data signature is invalid.
-            ExpiredSignatureError: Signed data signature has expired.
+            ExpiredSignatureError: Signed data signature has expired, but is otherwise
+                valid.
             DecodeError: Signed data can't be decoded.
             DecompressionError: Signed data can't be decompressed.
             UnserializationError: Signed data can't be unserialized.
@@ -819,8 +820,8 @@ class Blake2SerializerSigner(
         This method is identical to `loads`, but it reads a container instead of
         a stream.
 
-        If `max_age` was specified then it will be ensured that the signature is
-        not older than that time in seconds.
+        If `max_age` was specified on class instantiation, then it will be ensured
+        that the signature is not older than that time in seconds.
 
         If the data was compressed, it will be decompressed before unserializing it.
 
@@ -837,7 +838,8 @@ class Blake2SerializerSigner(
             ConversionError: Signed data can't be converted to bytes.
             SignatureError: Signed data structure is not valid.
             InvalidSignatureError: Signed data signature is invalid.
-            ExpiredSignatureError: Signed data signature has expired.
+            ExpiredSignatureError: Signed data signature has expired, but is otherwise
+                valid.
             DecodeError: Signed data can't be decoded.
             DecompressionError: Signed data can't be decompressed.
             UnserializationError: Signed data can't be unserialized.
@@ -854,8 +856,8 @@ class Blake2SerializerSigner(
         This method is identical to `loads`, but it reads a file, which
         must be a `.read()`-supporting file-like object.
 
-        If `max_age` was specified then it will be ensured that the signature is
-        not older than that time in seconds.
+        If `max_age` was specified on class instantiation, then it will be ensured
+        that the signature is not older than that time in seconds.
 
         If the data was compressed, it will be decompressed before unserializing it.
 
@@ -872,7 +874,8 @@ class Blake2SerializerSigner(
             ConversionError: Signed data can't be converted to bytes.
             SignatureError: Signed data structure is not valid.
             InvalidSignatureError: Signed data signature is invalid.
-            ExpiredSignatureError: Signed data signature has expired.
+            ExpiredSignatureError: Signed data signature has expired, but is otherwise
+                valid.
             DecodeError: Signed data can't be decoded.
             DecompressionError: Signed data can't be decompressed.
             UnserializationError: Signed data can't be unserialized.
@@ -881,7 +884,7 @@ class Blake2SerializerSigner(
         return self.loads(self._read(file))
 
     def data_from_exc(self, exc: errors.ExpiredSignatureError) -> typing.Any:
-        """Recover original data from an ExpiredSignatureError exception.
+        """Recover original data from an `ExpiredSignatureError` exception.
 
         If the data was compressed, it will be decompressed before unserializing it.
 

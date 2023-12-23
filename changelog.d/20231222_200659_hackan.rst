@@ -1,0 +1,4 @@
+.. Changed
+.. -------
+..
+.. - Improve docs and docstrings grammar and wording.

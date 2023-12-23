@@ -21,9 +21,9 @@ In short, **never trust** user input, **always verify**. This module helps you d
 
 ## Why would I want to use it?
 
-Because it is a relatively *small* (around 900 logical lines of code, core around 400), *simple* (the public API has only a couple of methods) yet very *customizable* and *fast* data signer. My idea is to keep it as uncomplicated as possible without much room to become a *footgun*. All *defaults are very sane* (secure) and everything *just works* out of the box.
+Because it is a relatively *small* (around 900 logical lines of code, core around 400), *simple* (the public API has only a couple of methods) yet very *customizable* and *fast* data signer. My idea is to keep it as uncomplicated as possible without much room to become a *footgun*. All *defaults are very correct* (secure), and everything *just works* out of the box.
 
-There are much better packages for other or more general use cases so if you feel this doesn't satisfy your needs please [leave a feature request](https://gitlab.com/hackancuba/blake2signer/-/issues) or consider using [itsdangerous](https://itsdangerous.palletsprojects.com), [Django's signer](https://docs.djangoproject.com/en/dev/topics/signing), [pypaseto](https://github.com/rlittlefield/pypaseto), [pyjwt](https://github.com/jpadilla/pyjwt) or others like those.
+There are much better packages for other or more general use cases, so if you feel this doesn't satisfy your needs, please [leave a feature request](https://gitlab.com/hackancuba/blake2signer/-/issues) or consider using [itsdangerous](https://itsdangerous.palletsprojects.com), [Django's signer](https://docs.djangoproject.com/en/dev/topics/signing), [pypaseto](https://github.com/rlittlefield/pypaseto), [pyjwt](https://github.com/jpadilla/pyjwt) or others like those.
 
 ## Goals
 

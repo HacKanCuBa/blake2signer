@@ -2,7 +2,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 #
-# by HacKan (https://hackan.net), 2020-2022.
+# by HacKan (https://hackan.net), 2020-2024.
 # This software is provided as-is. You are free to use, share, modify
 # and share modifications under the terms of that license, even with
 # proprietary code. Attribution is not required to share but is
@@ -18,9 +18,10 @@ lacking features and/or create an issue in the repo to request for it.
 
 Canonical repository: https://gitlab.com/hackancuba/blake2signer
 
-If you think on something else, have questions, concerns or great ideas please
-feel free to contact me. If you use this code in your app I would greatly appreciate
-a "thumbs up" and to share your use case and implementation :)
+If you think of something else, have questions, concerns or great ideas, please
+feel free to contact me.
+If you use this code in your app, I would greatly appreciate a "thumbs up"
+and to share your use case and implementation :)
 
 See examples and more info in the README.
 """

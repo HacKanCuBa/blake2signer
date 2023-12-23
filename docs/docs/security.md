@@ -18,10 +18,10 @@ With the goal of keeping this project secure, several measures are taken:
 
 ### Code fuzzing
 
-I wrote a fuzzing helper using [pythonfuzz](https://gitlab.com/gitlab-org/security-products/analyzers/fuzzers/pythonfuzz), check the [fuzz module](https://gitlab.com/hackancuba/blake2signer/-/blob/develop/fuzz.py). I fuzzed each signer for over 48hs without finding any issue, and now added a short fuzzing session in the CI for every release to ensure that simple bugs are caught from beforehand.
+I wrote a fuzzing helper using [pythonfuzz](https://gitlab.com/gitlab-org/security-products/analyzers/fuzzers/pythonfuzz), check the [fuzz module](https://gitlab.com/hackancuba/blake2signer/-/blob/develop/fuzz.py). I fuzzed each signer for over 48 hours without finding any issue, and now added a short fuzzing session in the CI for every release to ensure that simple bugs are caught from beforehand.
 
 !!! question "Continuous fuzzing wanted"
-    Fuzzing truly benefits a project when is run continuously, but I can't currently pay for a VPS for this, so I'm looking for ideas on this matter.
+    Fuzzing truly benefits a project when it is run continuously, but I can't currently pay for a VPS for this, so I'm looking for ideas on this matter.
 
 ## External security review
 

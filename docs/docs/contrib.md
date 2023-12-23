@@ -51,7 +51,7 @@ After that, install dependencies with `poetry install --remove-untracked`.
 
 ### Dependencies
 
-All dependencies are managed by [poetry](https://python-poetry.org/). Project related dependencies are handled at the project's root, whereas docs related dependencies are treated separately in the `docs` subdir.
+[Poetry](https://python-poetry.org/) manages all dependencies. Project-related dependencies are handled at the project's root, whereas doc-related dependencies are treated separately in the `docs` subdir.
 
 Splitting dependencies like this is a bit annoying, but it was necessary due to an incompatibility between `mkdocs` and `flake8` (due to [`importlib-metadata`](https://github.com/PyCQA/flake8/pull/1438)). And it turns out to be not that bad, given that now we can create a proper requirements file for [Read The Docs](https://readthedocs.org/projects/blake2signer/).
 
@@ -77,7 +77,8 @@ Finally, ensure docs are working properly: `inv docs`, and navigate through some
 
 #### BLAKE3
 
-When working with BLAKE3, please import the `blake3` function from the `hashers` submodule: `from blake2signer.hashers import blake3` instead of importing it directly from its package. This is due to the fact that the package is optional, and it may not be installed.  
+When working with BLAKE3, please import the `blake3` function from the `hashers` submodule: `from blake2signer.hashers import blake3` instead of importing it directly from its package.  
+This is because the package is optional, and it may not be installed.  
 That module handles it properly, and will raise an exception when the function is called without the package installed.
 
 #### What's the fuzz
@@ -100,7 +101,7 @@ Finally, the following commands must succeed locally:
 * `inv safety`: run a security analysis over dependencies using `safety`.
 
 !!! tip
-    You can alternatively run `inv commit` (or `inv ci`) to run all the above, and commit afterwards.
+    You can alternatively run `inv commit` (or `inv ci`) to run all the above, and commit no afterward.
 
 If the linter complains about *code too complex*, run `inv cc -c` (or the long expression `inv cyclomatic-complexity --complex`) for more information.
 
@@ -112,7 +113,7 @@ Other than that I once tried to run the [performance tests](https://blake2signer
 
 ### Working under Stackless
 
-You can install and run this package in Stackless without issues but if you are using Stackless to contribute to this project, you probably noticed that running `inv tests` fails with a segmentation fault: I have no idea what causes it, but it is related to `coverage` and `pytest`. The solution is to run `pytest --no-cov` directly, and letting the pipeline show the coverage for you.
+You can install and run this package in Stackless without issues, but if you are using Stackless to contribute to this project, you probably noticed that running `inv tests` fails with a segmentation fault: I have no idea what causes it, but it is related to `coverage` and `pytest`. The solution is to run `pytest --no-cov` directly, and letting the pipeline show the coverage for you.
 
 ## Releasing new versions
 

@@ -4,12 +4,12 @@ This section discusses internals of this lib and performance tweaks that can hel
 
 ## Class instantiation
 
-During class instantiation, both the `secret` and `personalisation` values are derived, and every parameter is checked to be in certain bounds; therefore there is a performance impact similar to sign a relatively small payload. It is twice as significant when instantiating [*Blake2SerializerSigner*](signers.md#blake2signer.signers.Blake2SerializerSigner) than the other signers. So, this creates an interesting optimization possibility: to cache the class instantiation.
+During class instantiation, both the `secret` and `personalisation` values are derived, and every parameter is checked to be in certain bounds; therefore, there is a performance impact similar to sign a relatively small payload. It is twice as significant when instantiating [*Blake2SerializerSigner*](signers.md#blake2signer.signers.Blake2SerializerSigner) than the other signers. So, this creates an interesting optimization possibility: to cache the class instantiation.
 
 !!! warning
     If the instantiation only occurs once, then using a cache won't make a difference since the first hit is always needed to produce it. Test your implementation to make sure it is making a positive difference.
 
-There is [an example](examples.md#real-use-case) of this where the standard library `functools.cached_property` is used to cache the class instantiation. Another option is to use [`functools.lru_cache`](https://docs.python.org/3.8/library/functools.html?highlight=lru_cache#functools.lru_cache), just make sure that you [don't use it in a method](https://www.youtube.com/watch?v=sVjtp6tGo0g). I tested caching the instantiation vs not doing it, and it takes ~98% less time! That's a huge performance bonus, particularly when this is done at least once per request for a web app, considering the cache lives across requests.
+There is [an example](examples.md#real-use-case) of this where the standard library `functools.cached_property` is used to cache the class instantiation. Another option is to use [`functools.lru_cache`](https://docs.python.org/3.8/library/functools.html?highlight=lru_cache#functools.lru_cache), but make sure that you [don't use it in a method](https://www.youtube.com/watch?v=sVjtp6tGo0g). I tested caching the instantiation vs not doing it, and it takes ~98% less time! That's a huge performance bonus, particularly when this is done at least once per request for a web app, considering the cache lives across requests.
 
 !!! note
     The standard deviation presented on each evaluation should be at least two orders of magnitude lower than the mean for appropriate results.
@@ -157,7 +157,7 @@ There is [an example](examples.md#real-use-case) of this where the standard libr
 
 ## Preferring bytes over string
 
-Internally, all signers need to work with bytes because the hashers have this requirement. For convenience both bytes and string are accepted as input, but a conversion happens behind the curtains. This conversion has an impact in performance, and it can be somewhat significant in the long run: when profiling a sign or unsign cycle, one can see that most of the time is spent calculating the hash (this is unavoidable), but a good portion of the rest of the time is spent encoding strings!
+Internally, all signers need to work with bytes because the hashers have this requirement. For convenience, both bytes and string are accepted as input, but a conversion happens behind the curtains. This conversion has an impact on performance, and it can be somewhat significant in the long run: when profiling a sign or unsign cycle, one can see that most of the time is spent calculating the hash (this is unavoidable), but a good portion of the rest of the time is spent encoding strings!
 
 ??? example "Profiling the signer"
     === "Source"
@@ -231,11 +231,11 @@ Internally, all signers need to work with bytes because the hashers have this re
                 1    0.004    0.004    0.132    0.132 <string>:1(<module>)
         ```
 
-Therefore, you should prefer using bytes rather than strings. However, if you can't avoid it, it's fine: don't go crazy thinking how to do it! The benefit is marginal at best for large payloads, and almost negligible for small ones. So this is just to make the point that, in the long run, if you can use bytes then that should be preferred, otherwise it's fine.
+Therefore, you should prefer using bytes rather than strings. However, if you can't avoid it, it's fine: don't go crazy thinking how to do it! The benefit is marginal at best for large payloads, and almost negligible for small ones. So this is just to make the point that, in the long run if you can use bytes then that should be preferred; otherwise it's fine.
 
 ## Choosing the right signer
 
-This class offers three signers, and one of them is additionally a serializer meaning it can serialize any python object before signing it. You should be aware that this has a huge impact in performance and that serializing objects can be expensive.
+This class offers three signers, and one of them is additionally a serializer, meaning it can serialize any python object before signing it. You should be aware that this has a huge impact on performance and that serializing objects can be expensive.
 
 !!! note
     The standard deviation presented on each evaluation should be at least two orders of magnitude lower than the mean for appropriate results.
@@ -269,7 +269,7 @@ This class offers three signers, and one of them is additionally a serializer me
         28.9 µs ± 2.07 µs per loop (mean ± std. dev. of 10 runs, 10,000 loops each)
         ```
 
-In the example above, serializing the simple string cost us twice as much as not doing it, which is pretty significant. However, if you don't know from beforehand the kind of objects you will be signing, then going for the serializer signer would be the safe bet.
+In the example above, serializing the simple string costs us twice as much as not doing it, which is pretty significant. However, if you don't know from beforehand the kind of objects you will be signing, then going for the serializer signer would be the safe bet.
 
 ## Compressing has its perks
 
@@ -277,7 +277,7 @@ The serializer signer class can compress the payload to make it smaller and more
 
 Given this, it can be beneficial if you know from beforehand whether it will be worth compressing the payload or not: you can control this using the parameters `compress`, `compression_level` and `compression_ratio` with `Blake2SerializerSigner`. Check [the examples](examples.md#compressing-data) for more information.
 
-Generally, regular data with human-readable text is highly compressible which is why this characteristic is enabled by default, but [YMMV](https://www.urbandictionary.com/define.php?term=ymmv).
+Generally, regular data with human-readable text is highly compressible, which is why this characteristic is enabled by default, but [YMMV](https://www.urbandictionary.com/define.php?term=ymmv).
 
 !!! note
     The standard deviation presented on each evaluation should be at least two orders of magnitude lower than the mean for appropriate results.

@@ -239,7 +239,7 @@ The interfaces are similar and can be used as drop-in replacements.
 
 ### Serializing interface
 
-*PyJWT* implements [RFC 7519](https://tools.ietf.org/html/rfc7519) for JSON Web Token which is quite complex, not needed in most cases and can easily turn into a *footgun*; this package is uncomplicated and can be used instead on most situations. On the other hand, for a similar utility but without [the many design deficits that plague JWT](https://paragonie.com/blog/2017/03/jwt-json-web-tokens-is-bad-standard-that-everyone-should-avoid), see [PASETO](https://paseto.io/).
+*PyJWT* implements [RFC 7519](https://tools.ietf.org/html/rfc7519) for JSON Web Token which is quite complex, not needed in most cases and can easily turn into a *footgun*; this package is uncomplicated and can be used instead in most situations. On the other hand, for a similar utility but without [the many design deficits that plague JWT](https://paragonie.com/blog/2017/03/jwt-json-web-tokens-is-bad-standard-that-everyone-should-avoid), see [PASETO](https://paseto.io/).
 
 === "PyJWT"
 
@@ -275,7 +275,7 @@ The interfaces are similar and can be used as drop-in replacements.
 Following is the performance comparison of this lib against [It's Dangerous](https://itsdangerous.palletsprojects.com/en/1.1.x), [Django](https://www.djangoproject.com) and [PyJWT](https://pyjwt.readthedocs.io). Generally speaking, it is as fast or a bit faster than the other libs, so you should choose one or the other based on usability and fitting-your-needs rather than performance.
 
 !!! info
-    Take into account that the only significant performance comparison exists when blake2b or blake2s is used as hashing algorithm, otherwise the algorithm performance may outweigh the implementation. Other algorithms are noted here to be taken into consideration against the BLAKE2 algorithm and not against this library in particular.  
+    Take into account that the only significant performance comparison exists when blake2b or blake2s is used as hashing algorithm; otherwise the algorithm performance may outweigh the implementation. Other algorithms are noted here to be taken into consideration against the BLAKE2 algorithm and not against this library in particular.  
     A reference function that uses blake2b directly is used to compare against it: this lib can't be faster than that.
 
 Regarding **itsdangerous** (2.0.1), I found this lib to be *marginally faster* when compared to it using blake2b, *somewhat faster* regarding sha256, 384 and 512 and *slower* regarding sha1.

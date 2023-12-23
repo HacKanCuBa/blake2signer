@@ -4,7 +4,7 @@
 
 ## Details
 
-Until v2.5.0, all [tags](https://gitlab.com/hackancuba/blake2signer/-/tags) and [release packages](https://gitlab.com/hackancuba/blake2signer/-/releases) (repo bundles, python packages, etc.) are signed with *both* [GPG](https://www.gnupg.org) and [minsign](https://jedisct1.github.io/minisign/). Afterwards, **only minisign** is used, so [gpg is finally deprecated](https://gist.github.com/HacKanCuBa/afe0073fe35fddf01642220acd4cde17).
+Until v2.5.0, all [tags](https://gitlab.com/hackancuba/blake2signer/-/tags) and [release packages](https://gitlab.com/hackancuba/blake2signer/-/releases) (repo bundles, python packages, etc.) are signed with *both* [GPG](https://www.gnupg.org) and [minsign](https://jedisct1.github.io/minisign/). Afterward, **only minisign** is used, so [gpg is finally deprecated](https://gist.github.com/HacKanCuBa/afe0073fe35fddf01642220acd4cde17).
 
 However, using minisign is not immediately easy: the lack of integrations makes it a bit tedious, but it is worth it.
 

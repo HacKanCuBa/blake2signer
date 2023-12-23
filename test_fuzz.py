@@ -1,7 +1,7 @@
 """Test fuzzing script.
 
-We are only testing helper, and main functions, not the actual fuzzing ones, because it doesn't
-make much sense to do so.
+We are only testing helper, and main functions, not the actual fuzzing ones, because it
+makes little sense to do so.
 """
 import sys
 from typing import Any

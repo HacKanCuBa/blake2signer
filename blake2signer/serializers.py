@@ -23,6 +23,7 @@ class JSONSerializer(SerializerInterface):
             Serialized data
         """
         kwargs.setdefault('separators', (',', ':'))  # Use JSON compact encoding
+
         return json.dumps(data, **kwargs).encode()
 
     def unserialize(self, data: bytes, **kwargs: typing.Any) -> typing.Any:
@@ -41,10 +42,10 @@ class JSONSerializer(SerializerInterface):
 
 
 class NullSerializer(SerializerInterface):
-    """Null serializer that doesn't serializes anything."""
+    """Null serializer that doesn't serialize anything."""
 
     def serialize(self, data: typing.Any, **kwargs: typing.Any) -> bytes:
-        """Null serialize data (it just converts it to bytes).
+        """Null serializes data (it just converts it to bytes).
 
         Args:
             data: Data to serialize.

@@ -14,7 +14,7 @@ If you are already using *X* package, then there may be little to no benefit to 
 
 ## Can I use this package in production?
 
-Yes, it has a stable API and is ready for production. It will greatly benefit of having more time in the wild and/or an external security review. Additionally, it will always follow [semver](https://semver.org/), so rest assured that minors and patches *should not* break your application, ever. Take a peak at the [upgrade guide](upgrade.md) detailing everything related to version changes.
+Yes, it has a stable API and is ready for production. It will greatly benefit from having more time in the wild and/or an external security review. Additionally, it will always follow [semver](https://semver.org/), so rest assured that minors and patches *should not* break your application, ever. Take a peak at the [upgrade guide](upgrade.md) detailing everything related to version changes.
 
 ## Will this package support other versions of BLAKE?
 
@@ -26,7 +26,7 @@ No, not yet. I'm [looking for it](security.md#external-security-review).
 
 ## Can I sign an email or stuff like that like with PGP?
 
-No, you can't. This package and others like this one deals with symmetric keys and a signing mechanism known as [HMAC](https://en.wikipedia.org/wiki/HMAC). What you are looking for is a signer that deals with asymmetric keys such as [GnuPG](https://www.gnupg.org) or [minisign](https://jedisct1.github.io/minisign).
+No, you can't. These package and others like this one deal with symmetric keys and a signing mechanism known as [HMAC](https://en.wikipedia.org/wiki/HMAC). What you are looking for is a signer that deals with asymmetric keys such as [GnuPG](https://www.gnupg.org) or [minisign](https://jedisct1.github.io/minisign).
 
 ## Where can I discuss about implementation details, usage, etc.?
 

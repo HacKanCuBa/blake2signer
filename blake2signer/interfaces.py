@@ -10,7 +10,7 @@ from .errors import CompressionError
 class SerializerInterface(ABC):
     """Serializer interface.
 
-    Implement your own serializer inheriting from this class.
+    Implement any serializer inheriting from this class.
     """
 
     @abstractmethod
@@ -45,17 +45,21 @@ class SerializerInterface(ABC):
 class CompressorInterface(ABC):
     """Compressor interface.
 
-    Implement your own compressor inheriting from this class.
+    Implement any compressor inheriting from this class.
     """
 
     @property
     @abstractmethod
     def default_compression_level(self) -> int:
-        """Get the default compression level."""
+        """Get the default compression level.
+
+        This value is not scaled, it should be the actual default compression level
+        for the compressor.
+        """
 
     # noinspection PyMethodMayBeStatic
     def scale_compression_level(self, level: int) -> int:  # pylint: disable=R0201
-        """Scale the compression level to from 1 to 9 to a value for the compressor.
+        """Scale the compression level from 1 to 9 to a valid value for the compressor.
 
         Override this method if the compressor requires scaling the level.
 
@@ -68,14 +72,14 @@ class CompressorInterface(ABC):
         return level
 
     def get_compression_level(self, level: typing.Optional[int]) -> int:
-        """Return compression level for the compressor.
+        """Return the compression level for the compressor.
 
-        It correctly converts the scale (if necessary), and the default value
-        for None.
+        It correctly scales the level if necessary, and returns the corresponding
+         default value if no level is indicated.
 
         Args:
             level: Desired compression level from 1 (least compressed) to 9 (most
-                compressed) or None for the default.
+                compressed), or None for the default.
 
         Returns:
             Correct compression level for the compressor.
@@ -99,7 +103,7 @@ class CompressorInterface(ABC):
             data: Data to compress.
 
         Keyword Args:
-            level: Desired compression level.
+            level: Desired compression level adjusted for the compressor.
 
         Returns:
             Raw compressed data.
@@ -120,10 +124,10 @@ class CompressorInterface(ABC):
 class EncoderInterface(ABC):
     """Encoder interface.
 
-    Implement your own encoder inheriting from this class.
+    Implement any encoder inheriting from this class.
 
     Note:
-        Verify that the encoder alphabet is ASCII (a check is enforced nevertheless).
+        Make sure that the encoder alphabet is ASCII (a check is enforced nevertheless).
     """
 
     @property

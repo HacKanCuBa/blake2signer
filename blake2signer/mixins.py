@@ -83,7 +83,7 @@ class SerializerMixin(Mixin, ABC):
             data: data to serialize.
 
         Keyword Args:
-          **kwargs: Additional keyword only arguments for the serializer.
+            **kwargs: Additional keyword only arguments for the serializer.
 
         Returns:
             Serialized data.
@@ -141,7 +141,7 @@ class CompressorMixin(Mixin, ABC):
                 It must not belong to the encoder alphabet and be ASCII (defaults
                 to ".").
             compression_ratio (optional): Desired minimal compression ratio, between
-                0 and below 100 (defaults to 5). It is used to calculate when
+                0 and below 100 (default to 5). It is used to calculate when
                 to consider a payload sufficiently compressed to detect detrimental
                 compression. By default, if compression achieves less than 5% of
                 size reduction, it is considered detrimental.
@@ -244,7 +244,7 @@ class CompressorMixin(Mixin, ABC):
         """Compress given data if convenient or forced, otherwise do nothing.
 
         A check is done to verify if compressed data is significantly smaller than
-        given data and if not then it returns given data as-is, unless compression
+        given data, and if not, then it returns given data as-is, unless compression
         is forced.
 
         Args:
@@ -252,7 +252,7 @@ class CompressorMixin(Mixin, ABC):
 
         Keyword Args:
             level (optional): Compression level wanted from 1 (least compressed)
-                to 9 (most compressed) or None for the default.
+                to 9 (most compressed), or None for the default.
             force (optional): Force compression without checking if convenient.
 
         Returns:
@@ -312,8 +312,8 @@ class EncoderMixin(Mixin, ABC):
             *args: Additional positional arguments.
 
         Keyword Args:
-            encoder (optional): Encoder class to use (defaults to a Base64 URL
-                safe encoder).
+            encoder (optional): Encoder class to use (defaults to a Base64 URL-safe
+                encoder).
             **kwargs: Additional keyword only arguments.
         """
         self._encoder = self._validate_encoder(encoder)

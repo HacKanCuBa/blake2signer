@@ -10,7 +10,7 @@ from .utils import hexencode
 
 
 class B64URLEncoder(EncoderInterface):
-    """Base64 URL safe encoder."""
+    """Base64 URL-safe encoder."""
 
     @property
     def alphabet(self) -> bytes:
@@ -18,7 +18,7 @@ class B64URLEncoder(EncoderInterface):
         return b'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-'
 
     def encode(self, data: bytes) -> bytes:
-        """Encode given data to base64 URL safe without padding.
+        """Encode given data to base64 URL-safe without padding.
 
         Args:
             data: Data to encode.
@@ -29,7 +29,7 @@ class B64URLEncoder(EncoderInterface):
         return b64encode(data)
 
     def decode(self, data: bytes) -> bytes:
-        """Decode given encoded data from base64 URL safe without padding.
+        """Decode given encoded data from base64 URL-safe without padding.
 
         Args:
             data: Data to decode.

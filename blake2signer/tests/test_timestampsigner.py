@@ -307,7 +307,7 @@ class TimestampSignerTestsBase(BaseTests, ABC):
     ) -> None:
         """Test signing with timestamp after 2106 which causes an integer overflow.
 
-        With 4 unsigned bytes we can represent up to 2106-02-07 3:28:15.
+        With four unsigned bytes, we can represent up to 2106-02-07 3:28:15.
         """
         mock_time.return_value = int.from_bytes(b'\xff' * 4, 'big', signed=False) + 1
         signer = self.signer(hasher=hasher)

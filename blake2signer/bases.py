@@ -69,7 +69,7 @@ class Base(Mixin, ABC):
     MIN_DIGEST_SIZE: int = 16
     """Minimum digest size allowed (during instantiation)."""
 
-    DEFAULT_DIGEST_SIZE: int = 16  # 16 bytes is good security/size tradeoff
+    DEFAULT_DIGEST_SIZE: int = 16  # 16 bytes are a good security/size tradeoff
     """Default digest size to use when no digest size is indicated."""
 
     def __init__(
@@ -85,8 +85,8 @@ class Base(Mixin, ABC):
         """Sign and verify signed data using BLAKE in keyed hashing mode.
 
         Args:
-            secret: Secret value which will be derived using BLAKE to produce the
-                signing key. The minimum secret size is enforced to 16 bytes and there
+            secret: Secret value, which will be derived using BLAKE to produce the
+                signing key. The minimum secret size is enforced to 16 bytes, and there
                 is no maximum. You can optionally provide a sequence of secrets, oldest
                 to newest, that are used during signature check to allow for secret
                 rotation. The last, newest, secret is used for signing.
@@ -97,14 +97,15 @@ class Base(Mixin, ABC):
                 derived using BLAKE to ensure it fits the hasher limits, so it
                 has no practical size limit. It defaults to the class name.
             digest_size (optional): Size of output signature (digest) in bytes
-                (defaults to 16 bytes). The minimum size is enforced to 16 bytes.
+                (default to 16 bytes). The minimum size is enforced to 16 bytes.
             hasher (optional): Hash function to use: blake2b (default), blake2s
                 or blake3.
             deterministic (optional): Define if signatures are deterministic or
-                non-deterministic (default). Non-deterministic sigs are preferred,
+                non-deterministic (default). Non-deterministic sigs are preferred
                 and achieved through the use of a random salt. For deterministic
-                sigs, no salt is used: this means that for the same payload, the
-                same sig is obtained (the advantage is that the sig is shorter).
+                sigs, no salt is used: this means that the result is idempotent, so
+                for the same payload, the same sig is obtained (the advantage is
+                that the sig is shorter, and producing it is faster).
             separator (optional): Character to separate the signature and the
                 payload. It must not belong to the encoder alphabet and be ASCII
                 (defaults to ".").
@@ -249,7 +250,7 @@ class Base(Mixin, ABC):
 
         Raises:
             ConversionError: The value is not bytes and can't be converted to bytes.
-            InvalidOptionError:  The value is out of bounds.
+            InvalidOptionError: The value is out of bounds.
         """
         if not separator:
             raise InvalidOptionError('the separator character must have a value')
@@ -300,8 +301,8 @@ class Blake2SignerBase(EncoderMixin, Base, ABC):
         """Sign and verify signed data using BLAKE in keyed hashing mode.
 
         Args:
-            secret: Secret value which will be derived using BLAKE to produce the
-                signing key. The minimum secret size is enforced to 16 bytes and there
+            secret: Secret value, which will be derived using BLAKE to produce the
+                signing key. The minimum secret size is enforced to 16 bytes, and there
                 is no maximum. You can optionally provide a sequence of secrets, oldest
                 to newest, that are used during signature check to allow for secret
                 rotation. The last, newest, secret is used for signing.
@@ -312,19 +313,20 @@ class Blake2SignerBase(EncoderMixin, Base, ABC):
                 derived using BLAKE to ensure it fits the hasher limits, so it
                 has no practical size limit. It defaults to the class name.
             digest_size (optional): Size of output signature (digest) in bytes
-                (defaults to 16 bytes). The minimum size is enforced to 16 bytes.
+                (default to 16 bytes). The minimum size is enforced to 16 bytes.
             hasher (optional): Hash function to use: blake2b (default), blake2s
                 or blake3.
             deterministic (optional): Define if signatures are deterministic or
-                non-deterministic (default). Non-deterministic sigs are preferred,
+                non-deterministic (default). Non-deterministic sigs are preferred
                 and achieved through the use of a random salt. For deterministic
-                sigs, no salt is used: this means that for the same payload, the
-                same sig is obtained (the advantage is that the sig is shorter).
+                sigs, no salt is used: this means that the result is idempotent, so
+                for the same payload, the same sig is obtained (the advantage is
+                that the sig is shorter, and producing it is faster).
             separator (optional): Character to separate the signature and the
                 payload. It must not belong to the encoder alphabet and be ASCII
                 (defaults to ".").
             encoder (optional): Encoder class to use for the signature, nothing
-                else is encoded (defaults to a Base64 URL safe encoder).
+                else is encoded (defaults to a Base64 URL-safe encoder).
 
         Raises:
             ConversionError: A bytes parameter is not bytes and can't be converted
@@ -571,15 +573,14 @@ class Blake2TimestampSignerBase(Blake2SignerBase, ABC):
     ) -> bytes:
         """Verify signed data parts with timestamp and recover original data.
 
-        If `max_age` is not provided, then the timestamp is not checked (the
-        signature is always checked).
+        If `max_age` is null, then the timestamp is not checked (the signature
+        is always checked).
 
         Args:
             parts: Signed data parts to unsign.
 
         Keyword Args:
-            max_age (optional): Ensure the signature is not older than this time
-                in seconds.
+            max_age: Ensure the signature is not older than this time in seconds.
 
         Returns:
             Original data.
@@ -587,7 +588,8 @@ class Blake2TimestampSignerBase(Blake2SignerBase, ABC):
         Raises:
             SignatureError: Signed data structure is not valid.
             InvalidSignatureError: Signed data signature is invalid.
-            ExpiredSignatureError: Signed data signature has expired.
+            ExpiredSignatureError: Signed data signature has expired, but is otherwise
+                valid.
             DecodeError: Timestamp can't be decoded.
         """
         timestamped_data = self._unsign(parts)
@@ -637,11 +639,11 @@ class Blake2DualSignerBase(Blake2TimestampSignerBase, ABC):
 
         It uses BLAKE in keyed hashing mode.
 
-        Setting `max_age` will produce a timestamped signed stream.
+        Setting `max_age` will add a timestamp to the signature.
 
         Args:
-            secret: Secret value which will be derived using BLAKE to produce the
-                signing key. The minimum secret size is enforced to 16 bytes and there
+            secret: Secret value, which will be derived using BLAKE to produce the
+                signing key. The minimum secret size is enforced to 16 bytes, and there
                 is no maximum. You can optionally provide a sequence of secrets, oldest
                 to newest, that are used during signature check to allow for secret
                 rotation. The last, newest, secret is used for signing.
@@ -654,19 +656,20 @@ class Blake2DualSignerBase(Blake2TimestampSignerBase, ABC):
                 derived using BLAKE to ensure it fits the hasher limits, so it
                 has no practical size limit. It defaults to the class name.
             digest_size (optional): Size of output signature (digest) in bytes
-                (defaults to 16 bytes). The minimum size is enforced to 16 bytes.
+                (default to 16 bytes). The minimum size is enforced to 16 bytes.
             hasher (optional): Hash function to use: blake2b (default), blake2s
                 or blake3.
             deterministic (optional): Define if signatures are deterministic or
-                non-deterministic (default). Non-deterministic sigs are preferred,
+                non-deterministic (default). Non-deterministic sigs are preferred
                 and achieved through the use of a random salt. For deterministic
-                sigs, no salt is used: this means that for the same payload, the
-                same sig is obtained (the advantage is that the sig is shorter).
+                sigs, no salt is used: this means that the result is idempotent, so
+                for the same payload, the same sig is obtained (the advantage is
+                that the sig is shorter, and producing it is faster).
             separator (optional): Character to separate the signature and the
                 payload. It must not belong to the encoder alphabet and be ASCII
                 (defaults to ".").
-            encoder (optional): Encoder class to use (defaults to a Base64 URL
-                safe encoder).
+            encoder (optional): Encoder class to use (defaults to a Base64 URL-safe
+                encoder).
 
         Raises:
             ConversionError: A bytes parameter is not bytes and can't be converted
@@ -717,7 +720,8 @@ class Blake2DualSignerBase(Blake2TimestampSignerBase, ABC):
         Raises:
             SignatureError: Signed data structure is not valid.
             InvalidSignatureError: Signed data signature is invalid.
-            ExpiredSignatureError: Signed data signature has expired.
+            ExpiredSignatureError: Signed data signature has expired, but is otherwise
+                valid.
             DecodeError: Timestamp can't be decoded.
         """
         if self._max_age is None:
@@ -789,7 +793,7 @@ class Blake2SerializerSignerBase(Blake2DualSignerBase, ABC):
             data: data to write to the file.
 
         Notes:
-            The file can be either in text or binary mode, therefore given data
+            The file can be either in text or binary mode, therefore, given data
             is properly converted before writing.
 
         Raises:

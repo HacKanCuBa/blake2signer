@@ -19,11 +19,11 @@ This module provides three signer classes:
 
 All [signers](signers.md) share the following instantiation parameters:
 
-* `secret`: Secret value which will be derived using BLAKE to produce the signing key. The minimum secret size is enforced to 16 bytes and there is no maximum. Since v2.3.0, it supports receiving a sequence of secrets instead of a single one, to support secret rotation, considering them ordered from oldest to newest, so that signatures are made with the newest secret but verifications are done using all of them.
+* `secret`: Secret value, which will be derived using BLAKE to produce the signing key. The minimum secret size is enforced to 16 bytes and there is no maximum. From v2.3.0, it can be a sequence of secrets instead of a single one, to support secret rotation, considering them ordered from oldest to newest, so that signatures are made with the newest secret but verifications are done using all of them.
 * `personalisation`: Personalisation string (which will be derived using BLAKE) to force the hash function to produce different digests for the same input (no size limit).
-* `digest_size`: Size of output signature (digest) in bytes (since v2.0.0 it defaults to 16, which is the minimum size allowed).
-* `hasher`: Hash function to use, `blake2b` (default), `blake2s`, or since v2.2.0, `blake3`; the first one is optimized for 64b platforms; the second, for 8-32b platforms (read more about them in their [official site](https://blake2.net/)) and the third, for any platform (read more in the [official site](https://github.com/BLAKE3-team/BLAKE3-specs)).
-* `deterministic`: (New in v1.2.0) Define if signatures are deterministic or non-deterministic (default). Non-deterministic sigs are preferred, and achieved through the use of a random salt (it can't be changed or set). For deterministic sigs, no salt is used: this means that for the same payload, the same sig is obtained (the advantage is that the sig is shorter).
+* `digest_size`: Size of output signature (digest) in bytes (from v2.0.0 it defaults to 16, which is the minimum size allowed).
+* `hasher`: Hash function to use, `blake2b` (default), `blake2s`, or from v2.2.0, `blake3`; the first one is optimized for 64b platforms; the second, for 8-32b platforms (read more about them in their [official site](https://blake2.net/)) and the third, for any platform (read more in the [official site](https://github.com/BLAKE3-team/BLAKE3-specs)).
+* `deterministic`: (New in v1.2.0) Define if signatures are deterministic or non-deterministic (default). Non-deterministic sigs are preferred, and achieved through the use of a random salt (it can't be changed or set). For deterministic sigs, no salt is used: this means that the result is idempotent, so for the same payload, the same sig is obtained (the advantage is that the sig is shorter, and producing it is faster).
 * `separator`: (New in v2.0.0) Character to separate the signature, the timestamp and the payload. It must not belong to the encoder alphabet and be ASCII (defaults to `.`).
 * `encoder`: (New in v2.0.0) Encoder class to use (defaults to a Base64 URL safe encoder). Note that `Blake2Signer` and `Blake2TimestampSigner` only encodes the signature, whereas `Blake2SerializerSigner` encodes everything.
 
@@ -33,11 +33,11 @@ Additionally, [*Blake2SerializerSigner*](signers.md#blake2signer.signers.Blake2S
 * `serializer`: Serializer class to use (defaults to a JSON serializer).
 * `compressor`: Compressor class to use (defaults to a Zlib compressor).
 * `compression_flag`: (New in v2.0.0) Character to mark the payload as compressed. It must not belong to the encoder alphabet and be ASCII (defaults to `.`).
-* `compression_ratio`: (New in v2.0.0) Desired minimal compression ratio, between 0 and below 100 (defaults to 5). It is used to calculate when to consider a payload sufficiently compressed to detect detrimental compression. By default, if compression achieves less than 5% of size reduction, it is considered detrimental.
+* `compression_ratio`: (New in v2.0.0) The desired minimal compression ratio, between 0 and below 100 (defaults to 5). It is used to calculate when to consider a payload sufficiently compressed to detect detrimental compression. By default, if compression achieves less than 5% of size reduction, it is considered detrimental.
 
 ## About salt and personalisation
 
-On all signers a secure pseudorandom salt of the maximum allowed size for the hasher is generated for each signature internally and can't be manually set (salted signatures helps to prevent breakage of a low-entropy key), meaning that every produced signature is non-deterministic so even if the payload doesn't change each signature will be different and unique. This, however, has a [performance cost](performance.md#randomness-is-expensive): non-deterministic signatures are a bit more expensive than deterministic ones.
+On all signers, a secure pseudorandom salt of the maximum allowed size for the hasher is generated for each signature internally and can't be manually set (salted signatures help to prevent breakage of a low-entropy key), meaning that every produced signature is non-deterministic, so even if the payload doesn't change, each signature will be different and unique. This, however, has a [performance cost](performance.md#randomness-is-expensive): non-deterministic signatures are a bit more expensive than deterministic ones.
 
 ??? example "Checking non-deterministic signatures"
     === "Source"
@@ -71,7 +71,7 @@ On all signers a secure pseudorandom salt of the maximum allowed size for the ha
         Are signatures different? True
         ```
 
-Since v1.2.0, it is possible to generate deterministic signatures (meaning, without salt) using the `deterministic` option when instantiating any signer. For [`Blake2SerializerSigner`](signers.md#blake2signer.signers.Blake2SerializerSigner) this assumes that the serializer and compressor are always deterministic: if that is not true, then the signature won't be deterministic (encoders always are, and provided serializers and compressors are too), which isn't a problem on itself but just to clarify that the parameter doesn't do any magic.
+From v1.2.0, it is possible to generate deterministic signatures (meaning, without salt) using the `deterministic` option when instantiating any signer. For [`Blake2SerializerSigner`](signers.md#blake2signer.signers.Blake2SerializerSigner) this assumes that the serializer and compressor are always deterministic: if that is not true, then the signature won't be deterministic (encoders always are, and provided serializers and compressors are too), which isn't a problem on itself but just to clarify that the parameter doesn't do any magic.
 
 Other packages usually refer to salt as something to mix with the secret to prevent signer misuse, but here we have the `personalisation` parameter for that.
 
@@ -190,7 +190,7 @@ It is of utmost importance that the secret value not only remains secret but als
 Usually the secret will be obtained from your app's settings or similar, which in turn will get it from the environment or some keyring or secret storage. Whichever the case, ensure that it has at least 256 bits of pseudorandom data, and **not** some manually splashed letters!.
 
 !!! tip
-    You can share the same secret with all the signers in use, there's no need to use a different secret for each. Just make sure to [set `personalisation` accordingly](#about-salt-and-personalisation).
+    You can share the same secret with all the signers in use, there's no need to use a different secret for each. Make sure to [set `personalisation` accordingly](#about-salt-and-personalisation).
 
 You can generate the secret value in any of the following ways:
 
@@ -215,15 +215,15 @@ The encoding doesn't matter, the secret value is used as-is, and derived to obta
 !!! info "New in v2.3.0"
     The `secret` parameter can be bytes, string or any sequence of them (list, tuple, etc.).
 
-Since v2.3.0, `secret` can also be a sequence of secrets instead of a single one to support _secret rotation_, considering them ordered from oldest to newest, so that signatures are made with the newest secret but verifications are done using all of them.  Every secret must comply with the restrictions enforced as a single secret does.
+From v2.3.0, `secret` can also be a sequence of secrets instead of a single one to support _secret rotation_, considering them ordered from oldest to newest, so that signatures are made with the newest secret but verifications are done using all of them.  Every secret must comply with the restrictions enforced as a single secret does.
 
-An external system can maintain the list of secrets, periodically removing old ones. This provides an additional protection against secret leakage or potential bruteforce, and is always a recommended practice. This is, of course, out of the scope for this project, but it does fully support this mechanism.
+An external system can maintain the list of secrets, periodically removing old ones. This provides additional protection against secret leakage or potential bruteforce, and is always a recommended practice. This system is out of the scope for this project, but the mechanism is fully supported.
 
 When a new secret is added to the list, all new signatures will be done with it, whereas signature verifications will consider every possible secret from the list. After a certain amount of time, the system can assume that every active user has received a new signature, thus being able to remove an old secret from the list without disturbing users nor interfering with other parts of the system.
 
-Do note that this has certain performance impact if many secrets are in said list, and a verification process is presented with a very old secret (say, the oldest one): the signer will go secret by secret, from newest to oldest, to verify this signature thus costing as much as making N signatures, where N is the number of secrets.
+Do note that this has a certain performance impact if many secrets are in said list, and a verification process is presented with a very old secret (say, the oldest one): the signer will go secret by secret, from newest to oldest, to verify this signature thus costing as much as making N signatures, where N is the number of secrets.
 
-You should consider this to define the amount of times you rotate the secret and how long should they last. In example, rotating the secret daily and maintaining a monthly list can have a deep negative performance impact, whereas rotating weekly or monthly and keeping four or less would not have a very noticeable impact, and the security benefits of this practice would prevail over the potential performance issue.
+You should consider this situation to define the number of times you rotate the secret, and how long should they last. In example, rotating the secret daily and maintaining a monthly list can have a deep negative performance impact; rotating weekly or monthly and keeping four or less would not have a very noticeable impact, and the security benefits of this practice would prevail over the potential performance issue.
 
 !!! tip
     The secret rotation mechanism is compatible with [ItsDangerous](https://itsdangerous.palletsprojects.com/en/2.0.x/concepts/#key-rotation)' one.
@@ -274,9 +274,9 @@ To change the limit, set the class attribute [`MIN_SECRET_SIZE`](bases.md#blake2
 !!! warning
     All instances of the signer are affected by the class attribute change.
 
-## Encoders, Serializers and Compressors
+## Encoders, Serializers, and Compressors
 
-Signers support changing the encoder class (since v2.0.0) and [*Blake2SerializerSigner*](signers.md#blake2signer.signers.Blake2SerializerSigner) also support changing the serializer and compressor. This package provides several encoders, serializers and compressors in their respective submodules:
+Signers support changing the encoder class (from v2.0.0) and [*Blake2SerializerSigner*](signers.md#blake2signer.signers.Blake2SerializerSigner) also support changing the serializer and compressor. This package provides several encoders, serializers and compressors in their respective submodules:
 
 * Encoders
     * Base64 URL safe encoder: uses only lowercase and uppercase English alphabet letters, numbers, underscore (`_`) and hyphen (`-`).
@@ -299,11 +299,11 @@ Check examples on how to use existing [encoders](examples.md#changing-the-encode
 
 ### Compression level
 
-[*Blake2SerializerSigner*](signers.md#blake2signer.signers.Blake2SerializerSigner) can optionally [compress data](examples.md#compressing-data) after serializing it to make the resulting signature shorter. Since v2.1.0, the default compression level depends on the compressor and is no longer hardcoded to 6. For example, Zlib defaults to 6 but Gzip, to 9.
+[*Blake2SerializerSigner*](signers.md#blake2signer.signers.Blake2SerializerSigner) can optionally [compress data](examples.md#compressing-data) after serializing it to make the resulting signature shorter. From v2.1.0, the default compression level depends on the compressor and is no longer hardcoded to 6. For example, Zlib defaults to 6 but Gzip, to 9.
 
 No matter which compressor is used, it will always be a value between 1 and 9, where 1 is the fastest and least compressed and 9 the slowest and most compressed. Should a compressor in particular use a different scale, then a conversion is internally done, so the end user doesn't have to deal with those details, and the interface remains homogeneous.
 
-A high compression level usually implies a big hit to performance, taking more CPU time and/or memory to compress and decompress, but achieving smaller outputs. So if you have a particular constraint then you can set the level according to your constraint and test to see if the result is as expected.
+A high compression level usually implies a big hit to performance, taking more CPU time and/or memory to compress and decompress, but achieving smaller outputs. So if you have a particular constraint, then you can set the level according to your constraint and test to see if the result is as expected.
 
 !!! note "No worries"
     Usually, there's no need to set the compression level to a particular value, and therefore there's no need to worry about it, and it can be left by default. However, if you need to, you can.
@@ -312,7 +312,7 @@ A high compression level usually implies a big hit to performance, taking more C
 
 In this package, every exception is subclassed from [`SignerError`](errors.md#blake2signer.errors.SignerError) (except for a [`RuntimeError` that will happen in ~2106-02-07](https://gitlab.com/hackancuba/blake2signer/-/blob/fcc2588939895c428d7b3420fbddaab62d864b88/blake2signer/bases.py#L462-465), if this library is unmaintained by then). You can read more about [errors and exceptions](errors.md) in its page.
 
-There is one particular exception that is different from the rest: [`ExpiredSignatureError`](errors.md#blake2signer.errors.ExpiredSignatureError). This exception, raised when a signature has expired, but is valid, can hold the timestamp indicating when the signature was done as an aware datetime object in UTC (since v2.0.0), and the _valid_ unsigned data payload (since v2.5.0).  Since the signature is valid and correct, it is OK to access its unsigned data value. Just be aware that its time-to-live has expired, according to your own settings.
+There is one particular exception that is different from the rest: [`ExpiredSignatureError`](errors.md#blake2signer.errors.ExpiredSignatureError). This exception, raised when a signature has expired, but is valid, can hold the timestamp indicating when the signature was done, as an aware datetime object in UTC (from v2.0.0), and the _valid_ unsigned data payload (from v2.5.0).  Since the signature is valid and correct, it is OK to access its unsigned data value. Just be aware that its time-to-live has expired, according to your own settings.
 
 It is important to note that if said exception is raised by a serializer signer, then the data contained in it is not the original unsigned data but a serialized/compressed/encoded one. Therefore, in such cases, one must use the method [`data_from_exc`](signers.md#blake2signer.signers.Blake2SerializerSigner.data_from_exc).
 
@@ -357,6 +357,6 @@ It is important to note that if said exception is raised by a serializer signer,
         Does it match original data? True
         ```
 
-This can be used to act upon such event, like informing of something to a user. Again, do note that the signature is expired!.
+This can be used to act upon such an event, like informing of something to a user. Again, do note that the signature is expired!.
 
 Check the [limiting signature lifetime](examples.md#limiting-signature-lifetime) and [the ExpiredSignatureError exception](examples.md#the-expired-signature-exception) examples.

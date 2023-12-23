@@ -76,9 +76,9 @@ class MissingDependencyError(SignerError):
 class DataError(SignerError):
     """Data error.
 
-    Generic data error meaning that given data could not be processed correctly.
+    Generic data error means that given data could not be processed correctly.
 
-    All exceptions regarding data handling depends on this one, so you can safely
+    All exceptions regarding data handling depend on this one, so you can safely
     catch it to deal with data errors (both signed and to be signed).
     """
 
@@ -88,7 +88,7 @@ class SignedDataError(DataError):
 
     Generic data error that occurred for signed data that is being processed.
 
-    All exceptions regarding signed data handling depends on this one, so you can
+    All exceptions regarding signed data handling depend on this one, so you can
     safely catch it to deal with signed data errors (produced during `unsign`,
     `unsign_parts`, `loads`, `loads_parts`, or `load`).
     """
@@ -99,7 +99,7 @@ class UnsignedDataError(DataError):
 
     Generic data error that occurred for data to be signed that is being processed.
 
-    All exceptions regarding non-signed data handling depends on this one, so you
+    All exceptions regarding non-signed data handling depend on this one, so you
     can safely catch it to deal with non-signed data errors (produced during
     `sign`, `sign_parts`, `dumps`, `dumps_parts` or `dump`).
     """
@@ -123,7 +123,7 @@ class InvalidSignatureError(SignatureError):
 class ExpiredSignatureError(InvalidSignatureError):
     """Expired signature error.
 
-    Means that the signature has expired.
+    Means that the signature has expired, but is otherwise valid.
     """
 
     # ToDo: D417 is a false positive, see https://github.com/PyCQA/pydocstyle/issues/514
@@ -197,6 +197,6 @@ class ConversionError(SignedDataError, UnsignedDataError):
 class FileError(SignedDataError, UnsignedDataError):
     """File error.
 
-    Means that an operation pertaining a file failed. This can happen during
-    `dump` or `load`.
+    Means that an operation pertaining to a file failed.
+    This can happen during `dump` or `load`.
     """

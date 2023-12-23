@@ -3,7 +3,7 @@
 !!! note
     If you need to use `blake3` for something, import it from this module instead of doing so directly!  
     `from blake2signer.hashers import blake3`  
-    This is due to the fact that the package is optional, and it may not be installed: this module handles it properly, and will raise an exception when the function is called without the package installed, but not before.
+    This is because the package is optional, and it may not be installed: this module handles it properly, and will raise an exception when the function is called without the package installed, but not before.
 
 
 ::: blake2signer.hashers

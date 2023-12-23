@@ -1,14 +1,14 @@
 # Errors
 
-All exceptions raised by this lib are subclassed from `SignerError`. Exceptions in this lib are somewhat verbose so debugging or understanding what failed becomes easier, as it can be appreciated in the tree below.
+All exceptions raised by this lib are subclassed from `SignerError`. Exceptions in this lib are somewhat verbose, so debugging or understanding what failed becomes easier, as it can be appreciated in the tree below.
 
 !!! bug "Not a subclass of `SignerError`?"
     If a raised exception is not a subclass of `SignerError`, then something very unexpected happened: please [fill a bug report](https://gitlab.com/hackancuba/blake2signer/-/issues/new).  
     Except for a [`RuntimeError` that will happen in ~2106-02-07](https://gitlab.com/hackancuba/blake2signer/-/blob/fcc2588939895c428d7b3420fbddaab62d864b88/blake2signer/bases.py#L462-465), if this library is unmaintained by then.
 
-For example, all errors related to signature validation inherit from `SignatureError`, which in turn inherits from `SignedDataError`. This means that you can safely catch the latter when dealing with signed data that needs to be verified without worrying on masking other errors such as those produced on class instantiation.
+For example, all errors related to signature validation inherit from `SignatureError`, which in turn inherits from `SignedDataError`. This means that you can safely catch the latter when dealing with signed data that needs to be verified without worrying about masking other errors such as those produced on class instantiation.
 
-You can catch exceptions at the level you prefer, or i.e. broad catch them, and then log them according to the exception.
+You can catch exceptions at the level you prefer, or i.e., broad catch them, and then log them according to the exception.
 
 ```python
 """Catching errors."""

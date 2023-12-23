@@ -26,7 +26,7 @@ def force_bytes(value: typing.Any) -> bytes:
 
 
 def b64encode(data: bytes) -> bytes:
-    """Encode data as Base 64 URL safe, stripping padding.
+    """Encode data as Base 64 URL-safe, stripping padding.
 
     Args:
         data: Data to encode.
@@ -38,7 +38,7 @@ def b64encode(data: bytes) -> bytes:
 
 
 def b64decode(data: bytes) -> bytes:
-    """Decode data encoded as Base 64 URL safe without padding.
+    """Decode data encoded as Base 64 URL-safe without padding.
 
     Args:
         data: Data to decode.
@@ -110,7 +110,7 @@ def timestamp_to_aware_datetime(timestamp: typing.Union[int, float]) -> datetime
 
 
 def file_mode_is_text(file: typing.IO) -> bool:
-    """Check if given file is opened in text mode, or otherwise in binary mode.
+    """Check if a given file is opened in text mode, or otherwise in binary mode.
 
     Args:
         file: File to check its mode.
@@ -118,7 +118,7 @@ def file_mode_is_text(file: typing.IO) -> bool:
     Returns:
         True if file is opened in text mode, False otherwise.
     """
-    # Is there a better way to determine this? I thought on reading one byte/char,
+    # Is there a better way to determine this? I thought of reading one byte/char,
     # then checking the type, but the file might be writable only, so it wouldn't
     # work.
     return isinstance(file, io.TextIOBase)

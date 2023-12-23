@@ -48,7 +48,7 @@ print(unsigned)  # {'user_id': 1, 'is_admin': True, 'username': 'hackan'}
     Alternatively, check each method's docs and catch specific exceptions.
 
 !!! tip "Using personalisation"
-    It is always a good idea to set the [`personalisation` parameter](details.md#about-salt-and-personalisation): it helps to defeat the abuse of using a signed stream for different signers that share the same key by changing the digest computation result. For example if you use a signer for cookies set something like `b'cookies-signer'` or if you use it for some user-related data signing it could be `b'user data signer'`, or when used for signing a special value it could be `b'the-special-value-signer`, etc.
+    It is always a good idea to set the [`personalisation` parameter](details.md#about-salt-and-personalisation): it helps to defeat the abuse of using a signed stream for different signers that share the same key by changing the digest computation result. For example, if you use a signer for cookies set something like `b'cookies-signer'` or if you use it for some user-related data signing it could be `b'user data signer'`, or when used for signing a special value it could be `b'the-special-value-signer`, etc.
 
 !!! tip "A good secret"
     Ensure that the [secret](details.md#about-the-secret) has at least 256 bits of cryptographically secure pseudorandom data, and **not** some manually splashed letters!
@@ -187,7 +187,7 @@ You can quickly get any python object serialized and signed using [`Blake2Serial
 
 ### Using non-serializer signers
 
-You may not want all that [`Blake2SerializerSigner`](signers.md#blake2signer.signers.Blake2SerializerSigner) does and instead require the serialization to be plain in the signature, perhaps to [split the signature](#splitting-signatures) and be able to read the payload from JS. In this situation you may want to use [`Blake2Signer`](signers.md#blake2signer.signers.Blake2Signer), or [`Blake2TimestampSigner`](signers.md#blake2signer.signers.Blake2TimestampSigner) if you also require to limit the lifetime of the signature.
+You may not want all that [`Blake2SerializerSigner`](signers.md#blake2signer.signers.Blake2SerializerSigner) does and instead require the serialization to be plain in the signature, perhaps to [split the signature](#splitting-signatures) and be able to read the payload from JS. In this situation you may want to use [`Blake2Signer`](signers.md#blake2signer.signers.Blake2Signer), or [`Blake2TimestampSigner`](signers.md#blake2signer.signers.Blake2TimestampSigner) if you also require limiting the lifetime of the signature.
 
 === "Source"
     ```python
@@ -429,7 +429,7 @@ You can use a custom JSON encoder to serialize values that are not supported by 
 
 ### Using a custom serializer
 
-You can use a custom serializer such as [msgpack](https://pypi.org/project/msgpack/) which is very efficient, much better than JSON (half resulting size and more than twice as fast), so it is an excellent choice for a serializer. For keeping JSON as serializer a better choice than the standard library is [orjson](https://github.com/ijl/orjson) which is faster.
+You can use a custom serializer such as [msgpack](https://pypi.org/project/msgpack/) which is very efficient, much better than JSON (half-resulting size and more than twice as fast), so it is an excellent choice for a serializer. For keeping JSON as serializer a better choice than the standard library is [orjson](https://github.com/ijl/orjson) which is faster.
 
 All you need to do is implement [`SerializerInterface`](interfaces.md#blake2signer.interfaces.SerializerInterface), and define how is your serializer serializing and unserializing. That's it.
 
@@ -574,7 +574,7 @@ There are several options regarding the compression capabilities of [`Blake2Seri
 
 !!! info "New in v2.0.0"
 
-You can set the compression ratio to your needs, and define when is data considered to be sufficiently compressed. This plays very well when [using a custom compressor](#using-a-custom-compressor), and lets you tweak the auto-compression mechanism. It can be any value between 0 and 99. The default value is 5, meaning that data is considered sufficiently compressed when its size is reduced more than 5%.
+You can set the compression ratio to your needs, and define when data is considered to be sufficiently compressed. This plays very well when [using a custom compressor](#using-a-custom-compressor), and lets you tweak the auto-compression mechanism. It can be any value between 0 and below 100. The default value is 5, meaning that data is considered sufficiently compressed when its size is reduced more than 5%.
 
 === "Source"
     
@@ -1049,7 +1049,7 @@ You can limit the lifetime of the signature with both [`Blake2SerializerSigner`]
         print('Error:', repr(exc), 'expired on', (exc.timestamp + ttl).isoformat())
         # ExpiredSignatureError('signature has expired, age ... > 3600.0 seconds') expired on 2021-05-19T22:50:27+00:00
 
-        # Since v2.5.0, valid unsigned data as bytes is available in the exception.
+        # From v2.5.0, valid unsigned data as bytes is available in the exception.
         # However, it is serialized/compressed/encoded when raised from a serializer
         # signer, so to recover it:
         print('Does it match original data?', data == signer.data_from_exc(exc))  # True
@@ -1071,7 +1071,7 @@ You can limit the lifetime of the signature with both [`Blake2SerializerSigner`]
         print('Error:', repr(exc), 'expired on', (exc.timestamp + ttl).isoformat())
         # ExpiredSignatureError('signature has expired, age ... > 3600.0 seconds') expired on 2021-05-19T22:50:27+00:00
 
-        # Since v2.5.0, valid unsigned data as bytes is available in the exception
+        # From v2.5.0, valid unsigned data as bytes is available in the exception
         print('Does it match original data?', serialized_data == exc.data.decode())  # True
     else:
         print('Does it match original data?',   serialized_data == unsigned.decode())  # True
@@ -1087,17 +1087,17 @@ You can limit the lifetime of the signature with both [`Blake2SerializerSigner`]
     ```
 
 !!! tip
-    Sice v2.0.0, the [`ExpiredSignatureError`](errors.md#blake2signer.errors.ExpiredSignatureError) exception contains the signature timestamp as an aware datetime object (in UTC) in case you need that information to display something meaningful to the user, and since v2.5.0, it also contains the _valid_ unsigned data, which you can safely access (yet considering that it hasn't passed the timestamp check!). If the exception is raised by a serializer signer, you need to unserialize/uncompress/undecode it using the method [`data_from_exc`](signers.md#blake2signer.signers.Blake2SerializerSigner.data_from_exc). Read on for [details](details.md#exceptions).
+    Sice v2.0.0, the [`ExpiredSignatureError`](errors.md#blake2signer.errors.ExpiredSignatureError) exception contains the signature timestamp as an aware datetime object (in UTC) in case you need that information to display something meaningful to the user, and from v2.5.0, it also contains the _valid_ unsigned data, which you can safely access (yet considering that it hasn't passed the timestamp check!). If the exception is raised by a serializer signer, you need to unserialize/uncompress/undecode it using the method [`data_from_exc`](signers.md#blake2signer.signers.Blake2SerializerSigner.data_from_exc). Read on for [details](details.md#exceptions).
 
 ### Choosing when to check the timestamp
 
 !!! info "New in v2.4.0"
 
-Sometimes it can be useful to make certain data expire, but there are situations that requires us to get that data as if it would never expire.
+Sometimes it can be useful to make certain data expire, but there are situations that require us to get that data as if it would never expire.
 
 !!! success inline end "Signatures are always checked"
 
-Since v2.4.0, [`Blake2TimestampSigner`](signers.md#blake2signer.signers.Blake2TimestampSigner) can omit the timestamp check when needed, acting like both a timestamped and a regular signer.  
+From v2.4.0, [`Blake2TimestampSigner`](signers.md#blake2signer.signers.Blake2TimestampSigner) can omit the timestamp check when needed, acting like both a timestamped and a regular signer.  
 This can be done in both [`unsign`](signers.md#blake2signer.signers.Blake2TimestampSigner.unsign) and [`unsign_parts`](signers.md#blake2signer.signers.Blake2TimestampSigner.unsign_parts) methods.
 
 === "Source"
@@ -1128,9 +1128,9 @@ This can be done in both [`unsign`](signers.md#blake2signer.signers.Blake2Timest
 
 !!! info "New in v2.0.0"
 
-Whenever the signature expires, an [`ExpiredSignatureError`](errors.md#blake2signer.errors.ExpiredSignatureError) is raised. Since v2.0.0, this exception contains additional, useful, information: the signature timestamp as an aware datetime object (in UTC), and since v2.5.0, the _valid_ unsigned data payload (given the signature is valid and correct, it is OK to access its unsigned data value, just be aware that its time-to-live has expired, according to your own settings).
+Whenever the signature expires, an [`ExpiredSignatureError`](errors.md#blake2signer.errors.ExpiredSignatureError) is raised. From v2.0.0, this exception contains additional, useful, information: the signature timestamp as an aware datetime object (in UTC), and from v2.5.0, the _valid_ unsigned data payload (given the signature is valid and correct, it is OK to access its unsigned data value, just be aware that its time-to-live has expired, according to your own settings).
 
-Check out the [details' page](details.md#exceptions) and the [errors reference](errors.md) for more info.
+Check out the [details' page](details.md#exceptions) and the [error reference](errors.md) for more info.
 
 === "Blake2SerializerSigner"
 
@@ -1165,7 +1165,7 @@ Check out the [details' page](details.md#exceptions) and the [errors reference](
         try:
             unsigned = signer.loads(signed)
         except errors.ExpiredSignatureError as exc:
-            # Since v2.5.0, valid unsigned data is available in the exception. However,
+            # From v2.5.0, valid unsigned data is available in the exception. However,
             # it is serialized/compressed/encoded when raised from a serializer signer,
             # so to recover it use `data_from_exc`.
             data = signer.data_from_exc(exc)
@@ -1215,7 +1215,7 @@ Check out the [details' page](details.md#exceptions) and the [errors reference](
         try:
             unsigned = signer.unsign(signed, max_age=ttl)
         except errors.ExpiredSignatureError as exc:
-            # Since v2.5.0, valid unsigned data is available in the exception.
+            # From v2.5.0, valid unsigned data is available in the exception.
             username = exc.data.decode()  # it's `bytes`!
             expired_since = exc.timestamp + ttl
             # You may want to convert the computed time to the user's timezone
@@ -1239,7 +1239,7 @@ Check out the [details' page](details.md#exceptions) and the [errors reference](
 
 ## Using personalisation
 
-The [personalisation parameter](details.md#about-salt-and-personalisation) is very important and prevents [mixing the signers](details.md#mixing-signers). It is referred in other packages as salt, and helps to defeat the abuse of using a signed stream for different signers that share the same key by changing the digest computation result.
+The [personalisation parameter](details.md#about-salt-and-personalisation) is crucial and prevents [mixing the signers](details.md#mixing-signers). It is referred in other packages as salt, and helps to defeat the abuse of using a signed stream for different signers that share the same key by changing the digest computation result.
 
 !!! info "This can be done in every signer"
 
@@ -1285,13 +1285,13 @@ The [personalisation parameter](details.md#about-salt-and-personalisation) is ve
     ```
 
 !!! tip "Always use personalisation"
-    You can set the personalisation parameter in every signer, and it is a good idea to always do it: simply set it to some unique value, it doesn't have to be random, nor secret.
+    You can set the personalisation parameter in every signer, and it is a good idea to always do it: set it to some unique value, it doesn't have to be random, nor secret.
 
 ## Splitting signatures
 
 !!! info "New in v2.0.0"
 
-There are some situations were you need to transmit data and signature through different transports, such as different cookies (i.e. to store the signature in a HTTPOnly cookie and the data in a JS readable one) or different fields (i.e. to present data to the user but hide the signature because it is not pretty to read). For those situations a mechanism is provided out-of-the-box: [`sign_parts`](signers.md#blake2signer.signers.Blake2Signer.sign_parts)/[`unsign_parts`](signers.md#blake2signer.signers.Blake2Signer.unsign_parts) and [`dumps_parts`](signers.md#blake2signer.signers.Blake2SerializerSigner.dumps_parts)/[`loads_parts`](signers.md#blake2signer.signers.Blake2SerializerSigner.loads_parts).
+There are some situations were you need to transmit data and signature through different transports, such as different cookies (i.e. to store the signature in an HTTPOnly cookie and the data in a JS readable one) or different fields (i.e. to present data to the user but hide the signature because it is not pretty to read). For those situations a mechanism is provided out-of-the-box: [`sign_parts`](signers.md#blake2signer.signers.Blake2Signer.sign_parts)/[`unsign_parts`](signers.md#blake2signer.signers.Blake2Signer.unsign_parts) and [`dumps_parts`](signers.md#blake2signer.signers.Blake2SerializerSigner.dumps_parts)/[`loads_parts`](signers.md#blake2signer.signers.Blake2SerializerSigner.loads_parts).
 
 !!! info "This can be done in every signer"
 
@@ -1333,7 +1333,7 @@ There are some situations were you need to transmit data and signature through d
     ```
 
 !!! note
-    Signature containers [`Blake2Signature`](bases.md#blake2signer.bases.Blake2Signature) and [`Blake2SignatureDump`](bases.md#blake2signer.bases.Blake2SignatureDump) are equivalent, but the first one contains only bytes whereas the second one, only strings.
+    Signature containers [`Blake2Signature`](bases.md#blake2signer.bases.Blake2Signature) and [`Blake2SignatureDump`](bases.md#blake2signer.bases.Blake2SignatureDump) are equivalent, but the first one contains only bytes whereas the second one, only string.
 
 ## Generating deterministic signatures
 
@@ -1523,7 +1523,7 @@ You can use BLAKE3 if you have the [`blake3`](https://pypi.org/project/blake3/) 
 
 There are three [encoders provided by this package](details.md#encoders-serializers-and-compressors): a [Base64 URL safe encoder](encoders.md#blake2signer.encoders.B64URLEncoder) (default), a [Base 32 encoder](encoders.md#blake2signer.encoders.B32Encoder) and a [Base 16/Hex encoder](encoders.md#blake2signer.encoders.HexEncoder).
 
-!!! info "This can be done in every signer since v2.0.0"
+!!! info "This can be done in every signer from v2.0.0"
 
 === "Source"
 
@@ -1619,7 +1619,7 @@ There are three [encoders provided by this package](details.md#encoders-serializ
 
 ## Using a custom encoder
 
-If you need to use an encoder that is not implemented by this package, such as A85 or UUencode, you can do so: all you need to do is implement the [`EncoderInterface`](interfaces.md#blake2signer.interfaces.EncoderInterface), and define how is your encoder encoding and decoding, as well as indicating its alphabet. That's it.
+If you need to use an encoder not implemented by this package, such as A85 or UUencode, you can do so: all you need to do is implement the [`EncoderInterface`](interfaces.md#blake2signer.interfaces.EncoderInterface), and define how is your encoder encoding and decoding, as well as indicating its alphabet. That's it.
 
 !!! note
     The separator and compression flag characters must not belong to the encoder alphabet. This is to correctly split the signature and payload before decoding (it would be dangerous to do it the other way around), and to unequivocally identify a compressed payload, respectively.
@@ -1760,7 +1760,7 @@ One advantage of BLAKE2+ is that it is very flexible, and tweakable, and one of 
 
 ### Changing the digest size limit
 
-There can be some situations where signature length is crucial, and thus some security margin needs to be sacrificed. It is possible to override the minimum enforced value, although you need to consider its implications. You can increase the minimum, too! Bear in mind that the maximums depends on the hasher, so you shouldn't set it higher than 32.  
+There can be some situations where signature length is crucial, and thus some security margin needs to be sacrificed. It is possible to override the minimum enforced value, although you need to consider its implications. You can increase the minimum, too! Bear in mind that the maximums depend on the hasher, so you shouldn't set it higher than 32.  
 To change the limit, set the class attribute `MIN_DIGEST_SIZE` to the desired value in bytes.
 
 !!! danger
