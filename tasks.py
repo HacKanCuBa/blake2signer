@@ -147,6 +147,12 @@ def clean(ctx):
         '.mypy_cache',
         '.pytest_cache',
         'site',
+        'docs/site',
+        'report.xml',
+        'report0.xml',
+        'report1.xml',
+        'report2.xml',
+        'coverage.xml',
     )
     ctx.run(f'rm -vrf {" ".join(remove)}', echo=True)  # noqa: Q000
     ctx.run(r'find . -type d -name "__pycache__" -exec rm -rf "{}" \+', echo=True)  # noqa: P103
