@@ -614,3 +614,18 @@ def fuzz(ctx, short=True):
 @task(reformat, lint, tests, safety, fuzz)
 def check(_):
     """Run all checks."""
+
+
+@task(
+    aliases=['tag'],
+    help={
+        'tag': 'git tag to create',
+        'sign': 'sign the tag with minisign',
+    },
+)
+def create_tag(ctx: Context, tag: str, sign: bool = False) -> None:
+    """Create an annotated git tag, optionally signing it with minisign."""
+    ctx.run(f'git tag -a {tag}', pty=True)
+
+    if sign:
+        sign_tag(ctx, tag)

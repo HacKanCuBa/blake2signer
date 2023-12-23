@@ -130,11 +130,11 @@ Once everything is ready for release, follow these steps:
 1. If necessary, write the upgrade guide in the docs.
 1. Run all checks, including fuzzing: `inv check`
 1. Commit, push branch and create MR to `main`. A CI job will publish the package to Test PyPy as a prerelease. If something went wrong, fix, commit and push again; the CI job will change the release number and publish it again.
-1. Merge into `main` and create MR to `develop`.
-1. Merge into `develop`, create and push an annotated tag: `git tag -a <M.m.p>`. A CI job will publish the package to PyPi.
-1. Sign the tag with minisign: `inv sign-tag <M.m.p>`
-1. Push notes: `git push origin refs/notes/commits`
-1. Create release in Gitlab and [properly sign packages](https://gist.github.com/HacKanCuBa/6fabded3565853adebf3dd140e72d33e).
+1. Merge into `main`, and create MR to `develop`.
+1. Merge into `develop`.
+1. Create an annotated tag, signed with minisign: `inv tag -s <M.m.p>` (alternatively, `git tag -a <M.m.p>` and then `inv sign-tag <M.m.p>`).
+1. Push tags and notes: `git push --tags && git push origin refs/notes/commits`. A CI job will publish the package to PyPi.
+1. Create a [release in Gitlab](https://gitlab.com/hackancuba/blake2signer/-/releases) and [properly sign packages](https://gist.github.com/HacKanCuBa/6fabded3565853adebf3dd140e72d33e).
 
 ### Signing
 
