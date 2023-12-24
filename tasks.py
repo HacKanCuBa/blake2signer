@@ -222,7 +222,10 @@ def safety(ctx: Context) -> None:
     fd, requirements_path = mkstemp(prefix='b2s')
     os.close(fd)
     try:
-        ctx.run(f'poetry export -f requirements.txt -o "{requirements_path}" --dev')
+        ctx.run(
+            f'poetry export -f requirements.txt -o "{requirements_path}" '
+            + '--with dev --with lint --with tests',
+        )
         ctx.run(f'safety check --full-report -r "{requirements_path}"')
     finally:
         os.remove(requirements_path)
@@ -319,7 +322,7 @@ def docs_requirements(ctx: Context, update: bool = False) -> None:
     with docs_context(ctx):
         if update:
             print('Updating docs dependencies...')
-            ctx.run('poetry install --no-ansi --remove-untracked --no-root')
+            ctx.run('poetry install --no-ansi --sync --no-root')
             ctx.run('poetry update --no-ansi')
 
         print('Exporting docs requirements to readthedocs.requirements.txt...')

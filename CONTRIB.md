@@ -42,7 +42,7 @@ Examples of unacceptable behavior include:
 
 Start your local dev environment by activating the virtualenv. I recommend using [pyenv](https://github.com/pyenv/pyenv), but whatever suits your needs is fine. Don't worry about Python versions, use any of the supported ones. The pipeline will test the rest of them.
 
-After that, install dependencies with `poetry install --remove-untracked`.
+After that, install dependencies with `poetry install --sync`.
 
 ### Dependencies
 
@@ -100,7 +100,7 @@ If the linter complains about *code too complex*, run `inv cc -c` (or the long e
 
 ### Working under PyPy
 
-You can install and run this package in PyPy without issues but if you are using PyPy to contribute to this project, you probably noticed that running `poetry install` fails: that's due to a `mypy` dependency, `typed_ast`, which [will probably never work under PyPy](https://github.com/python/typed_ast/issues/111). What you can do is `poetry remove --dev mypy` and let the pipeline run `mypy` for you.
+You can install and run this package in PyPy without issues but if you are using PyPy to contribute to this project, you probably noticed that running `poetry install` fails: that's due to a `mypy` dependency, `typed_ast`, which [will probably never work under PyPy](https://github.com/python/typed_ast/issues/111). What you can do is `poetry remove --group dev mypy` and let the pipeline run `mypy` for you.
 
 Other than that I once tried to run the [performance tests](https://blake2signer.hackan.net/en/stable/comparison/#performance-comparison), and my machine froze during the serializer tests because it exhausted the memory. I tried again using fewer iterations, and it worked.
 

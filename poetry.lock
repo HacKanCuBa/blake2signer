@@ -1948,4 +1948,4 @@ blake3 = ["blake3"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8.1, <4.0"
-content-hash = "bb0c1782005c1dae120212d1d680907ec98ec8ae4577ff4702d6540549a0a85f"
+content-hash = "7a18df907b7eda31f62b07fd3d0e5baeb6623d6cc9afbc0b8b1e94865d2f6f99"

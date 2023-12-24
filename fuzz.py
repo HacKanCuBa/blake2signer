@@ -11,7 +11,7 @@ Note:
             --extra-index-url https://gitlab.com/api/v4/projects/19904939/packages/pypi/simple \
             pythonfuzz
     Or:
-        poetry source add --secondary \
+        poetry source add --priority explicit \
             pythonfuzz \
             https://gitlab.com/api/v4/projects/19904939/packages/pypi/simple
         poetry add --group dev --source pythonfuzz pythonfuzz
