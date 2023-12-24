@@ -744,11 +744,29 @@ class Blake2SerializerSignerBase(Blake2DualSignerBase, ABC):
             data: Data to serialize.
 
         Keyword Args:
-            **kwargs: Additional keyword only arguments for the method.
+            **kwargs: Additional keyword-only arguments for the method.
 
         Returns:
             Serialized data.
         """
+
+    def _dumps_sign(self, data: typing.Any, **kwargs: typing.Any) -> bytes:
+        """Dump data serializing it, then sign it.
+
+        This method composes the serialized data and the signature in a single stream.
+
+        Args:
+            data: Data to serialize and sign.
+
+        Keyword Args:
+            kwargs: Additional keyword-only arguments for `_dumps`.
+
+        Returns:
+            Serialized and signed data.
+        """
+        dump = self._dumps(data, **kwargs)
+
+        return self._compose(dump, signature=self._proper_sign(dump))
 
     @abstractmethod
     def _loads(self, dumped_data: bytes, **kwargs: typing.Any) -> typing.Any:
@@ -785,7 +803,7 @@ class Blake2SerializerSignerBase(Blake2DualSignerBase, ABC):
         except OSError as exc:
             raise FileError('file can not be read') from exc
 
-    def _write(self, file: typing.IO[typing.AnyStr], data: str) -> None:
+    def _write(self, file: typing.IO[typing.AnyStr], data: bytes) -> None:
         """Write data to file.
 
         Args:
@@ -798,10 +816,10 @@ class Blake2SerializerSignerBase(Blake2DualSignerBase, ABC):
 
         Raises:
             FileError: File can't be written.
-            ConversionError: Data can't be converted to bytes (can happen when
-                file is in binary mode).
+            ConversionError: Data can't be converted to string (can happen when
+                file is in text mode).
         """
-        data_ = data if file_mode_is_text(file) else self._force_bytes(data)
+        data_ = self._force_string(data) if file_mode_is_text(file) else data
 
         try:
             # ToDo: mypy thinks `data_` is a sequence, we need TypeGuard (3.10) or something else

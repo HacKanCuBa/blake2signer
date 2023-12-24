@@ -1245,16 +1245,16 @@ class SerializerSignerTestsBase(BaseTests, ABC):
             HasherChoice.blake3,
         ),
     )
-    def test_dump_file_binary_conversion_error(self, hasher: HasherChoice) -> None:
-        """Test error occurring during _write when file is in binary mode."""
-        file = io.BytesIO()
+    def test_dump_file_text_conversion_error(self, hasher: HasherChoice) -> None:
+        """Test error occurring during `_write` when the file is in text mode."""
+        file = io.StringIO()
         signer = self.signer(hasher=hasher)
 
         with pytest.raises(
                 errors.ConversionError,
-                match='can not be converted to bytes',
+                match='can not be converted to string',
         ):
-            signer._write(file, '\uD83D')  # pylint: disable=W0212
+            signer._write(file, b'\xc3\x28')  # pylint: disable=W0212
 
 
 class TestsBlake2SerializerSignerTimestamp(

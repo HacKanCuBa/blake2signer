@@ -25,6 +25,24 @@ def force_bytes(value: typing.Any) -> bytes:
     return bytes(value)
 
 
+def force_string(value: typing.Any) -> str:
+    """Force a given value into string.
+
+    Args:
+        value: Value to convert to string.
+
+    Returns:
+        Converted value into string.
+    """
+    if isinstance(value, str):
+        return value
+
+    if isinstance(value, bytes):
+        return value.decode('utf-8', errors='strict')
+
+    return f'{value}'
+
+
 def b64encode(data: bytes) -> bytes:
     """Encode data as Base 64 URL-safe, stripping padding.
 

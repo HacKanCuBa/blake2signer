@@ -168,7 +168,7 @@ Internally, all signers need to work with bytes because the hashers have this re
         from blake2signer import Blake2Signer
 
         secret = b'secret' * 3
-        data = b'data' * 10_000_000  # Has to be very large to see the numbers
+        data = b'data' * 10_000_000  # Has to be very large to easily see the numbers
         data_s = data.decode()
 
         signer = Blake2Signer(secret)
@@ -231,7 +231,12 @@ Internally, all signers need to work with bytes because the hashers have this re
                 1    0.004    0.004    0.132    0.132 <string>:1(<module>)
         ```
 
-Therefore, you should prefer using bytes rather than strings. However, if you can't avoid it, it's fine: don't go crazy thinking how to do it! The benefit is marginal at best for large payloads, and almost negligible for small ones. So this is just to make the point that, in the long run if you can use bytes then that should be preferred; otherwise it's fine.
+Therefore, you should prefer using bytes rather than strings. However, if you can't avoid it, it's fine: don't lose your mind thinking how to do it! The benefit is marginal at best for large payloads, and almost negligible for small ones. So this is to make the point that, in the long run, if you can use bytes, then that should be preferred; otherwise, it's fine.
+
+### The same goes for files!
+
+When using file-related methods, like [*Blake2SerializerSigner*](signers.md#blake2signer.signers.Blake2SerializerSigner)'s [`load`](#blake2signer.signers.Blake2SerializerSigner.load) and [`dump`](#blake2signer.signers.Blake2SerializerSigner.dump), this consideration is also pertinent.  
+For both, it is convenient for the file to be opened in **binary** mode, rather than in text mode. This is to prevent a string to bytes conversion in first case, and to prevent a bytes to string conversion in the second case.
 
 ## Choosing the right signer
 

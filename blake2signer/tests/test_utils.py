@@ -1,8 +1,11 @@
 """Utils module tests."""
 
 import io
+import typing
 from datetime import datetime
 from datetime import timedelta
+
+import pytest
 
 from .. import utils
 
@@ -110,3 +113,35 @@ def test_ordinal() -> None:
     assert '100th' == utils.ordinal(100)
     assert '101st' == utils.ordinal(101)
     assert '1003rd' == utils.ordinal(1003)
+
+
+@pytest.mark.parametrize(
+    ('value', 'expected'),
+    (
+        (b'abc', b'abc'),
+        ('abc', b'abc'),
+        (1, b'\x00'),
+    ),
+)
+def test_force_bytes(value: typing.Any, expected: str) -> None:
+    """Test that force_bytes works correctly."""
+    forced = utils.force_bytes(value)
+
+    assert isinstance(forced, bytes)
+    assert expected == forced
+
+
+@pytest.mark.parametrize(
+    ('value', 'expected'),
+    (
+        (b'abc', 'abc'),
+        ('abc', 'abc'),
+        (1, '1'),
+    ),
+)
+def test_force_string(value: typing.Any, expected: str) -> None:
+    """Test that force_string works as correctly."""
+    forced = utils.force_string(value)
+
+    assert isinstance(forced, str)
+    assert expected == forced

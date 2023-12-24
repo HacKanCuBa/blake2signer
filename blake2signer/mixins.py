@@ -21,6 +21,7 @@ from .interfaces import EncoderInterface
 from .interfaces import SerializerInterface
 from .serializers import JSONSerializer
 from .utils import force_bytes
+from .utils import force_string
 
 
 class Mixin(ABC):  # pylint: disable=R0903  # noqa: B024  # false positives
@@ -43,6 +44,24 @@ class Mixin(ABC):  # pylint: disable=R0903  # noqa: B024  # false positives
             return force_bytes(value)
         except Exception as exc:
             raise ConversionError('value can not be converted to bytes') from exc
+
+    @staticmethod
+    def _force_string(value: typing.Any) -> str:
+        """Force given value into string.
+
+        Args:
+            value: Value to convert to string.
+
+        Returns:
+            Converted value into string.
+
+        Raises:
+            ConversionError: Can't force value into string.
+        """
+        try:
+            return force_string(value)
+        except Exception as exc:
+            raise ConversionError('value can not be converted to string') from exc
 
 
 class SerializerMixin(Mixin, ABC):

@@ -604,16 +604,14 @@ class Blake2SerializerSigner(
             CompressionError: Data can't be compressed or compression level is invalid.
             EncodeError: Data can't be encoded.
         """
-        dump = self._dumps(
+        # since everything is ASCII, decoding is safe
+        return self._dumps_sign(
             data,
             compress=compress,
             compression_level=compression_level,
             force_compression=force_compression,
             serializer_kwargs=serializer_kwargs,
-        )
-
-        # since everything is ASCII, decoding is safe
-        return self._compose(dump, signature=self._proper_sign(dump)).decode()
+        ).decode()
 
     def dumps_parts(
         self,
@@ -767,7 +765,7 @@ class Blake2SerializerSigner(
             EncodeError: Data can't be encoded.
             FileError: File can't be written.
         """
-        signed = self.dumps(
+        signed = self._dumps_sign(
             data,
             compress=compress,
             compression_level=compression_level,
@@ -778,7 +776,7 @@ class Blake2SerializerSigner(
         # Signed value is ASCII so ConversionError can't happen.
         self._write(file, signed)
 
-        return signed
+        return signed.decode()
 
     def loads(self, signed_data: typing.Union[str, bytes]) -> typing.Any:
         """Recover original data from a signed serialized string from `dumps`.
