@@ -1,32 +1,29 @@
 """Common tasks for Invoke."""
-
-import codecs
 import os
 import typing
 from contextlib import contextmanager
 from datetime import datetime
 from datetime import timezone
 from functools import partial
+from itertools import chain
 from pathlib import Path
 from tempfile import mkstemp
 from unittest.mock import patch
 
 from invoke import Context
 from invoke import Exit
-from invoke import Result
 from invoke import task
-from junitparser import JUnitXml
+from junitparser import JUnitXml  # type: ignore
 
 from blake2signer import Blake2SerializerSigner
 from blake2signer import Blake2Signer
 from blake2signer import Blake2TimestampSigner
 # noinspection PyProtectedMember
 from blake2signer import __version__
-from blake2signer.utils import b64decode
 
 
 @task
-def flake8(ctx):
+def flake8(ctx: Context) -> None:
     """Run flake8 with proper exclusions."""
     ctx.run('flake8 --exclude tests blake2signer/', echo=True)
     ctx.run('flake8 --ignore=S101,R701,C901 blake2signer/tests/', echo=True)
@@ -37,7 +34,7 @@ def flake8(ctx):
 
 
 @task
-def pydocstyle(ctx):
+def pydocstyle(ctx: Context) -> None:
     """Run pydocstyle with proper exclusions."""
     ctx.run('pydocstyle --explain blake2signer/', echo=True)
     ctx.run('pydocstyle --explain tests/', echo=True)
@@ -47,7 +44,7 @@ def pydocstyle(ctx):
 
 
 @task
-def darglint(ctx):
+def darglint(ctx: Context) -> None:
     """Run darglint."""
     ctx.run('darglint -v2 blake2signer/', echo=True)
     ctx.run('darglint -v2 tests/', echo=True)
@@ -57,7 +54,7 @@ def darglint(ctx):
 
 
 @task
-def bandit(ctx):
+def bandit(ctx: Context) -> None:
     """Run bandit with proper exclusions."""
     ctx.run(
         'bandit --confidence --recursive --exclude blake2signer/tests blake2signer/',
@@ -71,16 +68,17 @@ def bandit(ctx):
 
 
 @task
-def mypy(ctx):
+def mypy(ctx: Context) -> None:
     """Lint code with mypy."""
     ctx.run('mypy blake2signer/', echo=True, pty=True)
     ctx.run('mypy tests/', echo=True, pty=True)
     ctx.run('mypy fuzz.py', echo=True, pty=True)
     ctx.run('mypy test_fuzz.py', echo=True, pty=True)
+    ctx.run('mypy tasks.py', echo=True, pty=True)
 
 
 @task
-def yapf(ctx, diff=False):
+def yapf(ctx: Context, diff: bool = False) -> None:
     """Run yapf to format the code."""
     cmd = ['yapf', '--recursive', '--verbose', '--parallel']
     if diff:
@@ -98,7 +96,7 @@ def yapf(ctx, diff=False):
 
 
 @task
-def trailing_commas(ctx):
+def trailing_commas(ctx: Context) -> None:
     """Add missing trailing commas, or remove them if necessary."""
     opts = r'-type f -name "*.py" -exec add-trailing-comma "{}" \+'  # noqa: P103
     ctx.run('find blake2signer/ ' + opts, echo=True, pty=True, warn=True)
@@ -110,12 +108,12 @@ def trailing_commas(ctx):
 
 # noinspection PyUnusedLocal
 @task(yapf, trailing_commas)
-def reformat(ctx):  # pylint: disable=W0613
+def reformat(ctx: Context) -> None:  # pylint: disable=W0613
     """Reformat code (runs YAPF and add-trailing-comma)."""
 
 
 @task
-def pylint(ctx):
+def pylint(ctx: Context) -> None:
     """Run pylint."""
     ctx.run('pylint blake2signer/ --ignore tests', echo=True, pty=True, warn=True)
     ctx.run('pylint blake2signer/tests/ --exit-zero', echo=True, pty=True, warn=True)
@@ -127,7 +125,7 @@ def pylint(ctx):
 
 # noinspection PyUnusedLocal
 @task(flake8, pylint, pydocstyle, darglint, mypy, bandit)
-def lint(ctx):  # pylint: disable=W0613
+def lint(ctx: Context) -> None:  # pylint: disable=W0613
     """Lint code, and run static analysis.
 
     Runs flake8, pylint, pydocstyle, darglint, mypy, and bandit.
@@ -135,7 +133,7 @@ def lint(ctx):  # pylint: disable=W0613
 
 
 @task
-def clean(ctx):
+def clean(ctx: Context) -> None:
     """Remove all temporary and compiled files."""
     remove = (
         'build',
@@ -168,7 +166,13 @@ def clean(ctx):
         'report': 'produce a JUnit XML report file as "report.xml" (requires coverage)',
     },
 )
-def tests(ctx, watch=False, seed=0, coverage=True, report=False):  # noqa: C901,R701
+def tests(  # noqa: C901,R701
+    ctx: Context,
+    watch: bool = False,
+    seed: int = 0,
+    coverage: bool = True,
+    report: bool = False,
+) -> None:
     """Run tests."""
     junit_report = report and coverage
 
@@ -212,7 +216,7 @@ def tests(ctx, watch=False, seed=0, coverage=True, report=False):  # noqa: C901,
 
 
 @task
-def safety(ctx):
+def safety(ctx: Context) -> None:
     """Run Safety dependency vuln checker."""
     print('Safety check project requirements...')
     fd, requirements_path = mkstemp(prefix='b2s')
@@ -234,7 +238,7 @@ def safety(ctx):
         'complex': 'filter results to show only potentially complex functions (B+)',
     },
 )
-def cyclomatic_complexity(ctx, complex_=False):
+def cyclomatic_complexity(ctx: Context, complex_: bool = False) -> None:
     """Analise code Cyclomatic Complexity using radon."""
     # Run Cyclomatic Complexity
     cmd = 'radon cc -s -a'
@@ -244,7 +248,7 @@ def cyclomatic_complexity(ctx, complex_=False):
 
 
 @task(reformat, lint, tests, safety, aliases=['ci'])
-def commit(ctx, amend=False):
+def commit(ctx: Context, amend: bool = False) -> None:
     """Run all pre-commit commands and then commit staged changes."""
     cmd = ['git', 'commit']
     if amend:
@@ -285,7 +289,7 @@ def docs_context(ctx: Context) -> typing.Iterator[None]:
         'verbose': 'enable verbose output',
     },
 )
-def docs(ctx, build=False, verbose=False):
+def docs(ctx: Context, build: bool = False, verbose: bool = False) -> None:
     """Serve the docs using mkdocs, alternatively building them."""
     args = ['mkdocs']
 
@@ -305,10 +309,10 @@ def docs(ctx, build=False, verbose=False):
     help={'update': 'update dependencies first'},
     aliases=['docs-reqs'],
 )
-def docs_requirements(ctx, update=False):
-    """Create docs requirements using poetry (overwriting existing one, if any).
+def docs_requirements(ctx: Context, update: bool = False) -> None:
+    """Create doc requirements using poetry (overwriting existing one, if any).
 
-    Additionally, if `update` is True then update dependencies first.
+    Additionally, if `update` is True, then update dependencies first.
     """
     with docs_context(ctx):
         if update:
@@ -322,7 +326,7 @@ def docs_requirements(ctx, update=False):
 
 # noinspection PyUnusedLocal
 @task
-def check_compat(ctx):  # pylint: disable=W0613
+def check_compat(ctx: Context) -> None:  # pylint: disable=W0613
     """Print current version signatures to check compatibility with previous versions."""
 
     def sign(
@@ -346,7 +350,8 @@ def check_compat(ctx):  # pylint: disable=W0613
     print('current version:', __version__)
     print('Signer | Hasher | Signed value')
     for partial_signer in partial_signers:
-        name = str(partial_signer.func).split('.')[2].rstrip("'>")
+        func = partial_signer.func  # type: ignore
+        name = str(func).split('.')[2].rstrip("'>")
         for hasher in ('blake2b', 'blake2s', 'blake3'):
             with patch('blake2signer.bases.time', return_value=531810000):
                 print(
@@ -354,33 +359,37 @@ def check_compat(ctx):  # pylint: disable=W0613
                     '|',
                     hasher,
                     '|',
-                    sign(partial_signer(hasher=hasher), data),
+                    sign(partial_signer(hasher=hasher), data),  # type: ignore
                 )
 
 
-def generate_trusted_comment_parts(
+def generate_trusted_comment_parts(  # noqa: R701
+    ctx: Context,
     *,
     timestamp: int,
     pubkey: str,
     email: str,
-) -> typing.Tuple[typing.Tuple[str, str], ...]:
-    """Generate a trusted comment for a minisign signature."""
+) -> typing.List[typing.Tuple[str, str]]:
+    """Generate a trusted comment parts for a minisign signature."""
     if not timestamp:
         timestamp = int(datetime.now(timezone.utc).timestamp())
 
     if not pubkey:
         with open('minisign.pub', 'rt', encoding='utf-8') as pubkeyfile:
-            pubkey = pubkeyfile.readlines()[1].strip()
+            next(pubkeyfile)
+            pubkey = next(pubkeyfile).strip()
 
     if not email:
-        # Encoded email to prevent spammers
-        email = b64decode(codecs.decode('nTSwn2ShDTqgLJyfYzAioD', 'rot_13').encode()).decode()
+        result = ctx.run('git config user.email', hide=True)
+        email = result.stdout.strip() if result else ''
+        if not email:
+            raise ValueError('Please provide an email address')
 
-    trusted_comment_parts = (
+    trusted_comment_parts = [  # pylint: disable=W8301
         ('timestamp', str(timestamp)),
         ('pubkey', pubkey),
         ('email', email),
-    )
+    ]
 
     return trusted_comment_parts
 
@@ -391,19 +400,19 @@ def generate_trusted_comment_from_parts(parts: typing.Sequence[typing.Tuple[str,
 
 
 def generate_trusted_comment_for_file(
-    file: Path,
+    ctx: Context,
     *,
+    file: Path,
     timestamp: int,
     pubkey: str,
     email: str,
 ) -> str:
     """Generate a trusted comment for a file minisign signature."""
-    trusted_comment_parts = list(
-        generate_trusted_comment_parts(
-            timestamp=timestamp,
-            pubkey=pubkey,
-            email=email,
-        ),
+    trusted_comment_parts = generate_trusted_comment_parts(
+        ctx,
+        timestamp=timestamp,
+        pubkey=pubkey,
+        email=email,
     )
 
     trusted_comment_parts.insert(1, ('file', file.name))
@@ -412,27 +421,29 @@ def generate_trusted_comment_for_file(
 
 
 def generate_trusted_comment_for_tag(
-    ctx,
-    tag: str,
+    ctx: Context,
     *,
+    tag: str,
     timestamp: int,
     pubkey: str,
     email: str,
 ) -> str:
     """Generate a trusted comment for a tag minisign signature."""
-    trusted_comment_parts = list(
-        generate_trusted_comment_parts(
-            timestamp=timestamp,
-            pubkey=pubkey,
-            email=email,
-        ),
+    trusted_comment_parts = generate_trusted_comment_parts(
+        ctx,
+        timestamp=timestamp,
+        pubkey=pubkey,
+        email=email,
     )
 
-    tag_hash_raw: Result = ctx.run(
+    tag_hash_raw = ctx.run(
         f'git tag --list --format "%(objectname)" "{tag}"',
         hide='out',
     )
-    tag_hash = tag_hash_raw.stdout.strip()
+    tag_hash = tag_hash_raw.stdout.strip() if tag_hash_raw else ''
+    if not tag_hash:
+        raise ValueError(f'Could not find hash for tag "{tag}"')
+
     trusted_comment_parts.insert(1, ('object', tag_hash))
 
     return generate_trusted_comment_from_parts(trusted_comment_parts)
@@ -451,16 +462,16 @@ def generate_trusted_comment_for_tag(
     },
 )
 def sign_tag(  # pylint: disable=R0913
-        ctx,
-        tag,
-        trusted_comment='',
-        untrusted_comment='',
-        seckey='',
-        timestamp=0,
-        pubkey='',
-        email='',
-        force=False,
-):
+    ctx: Context,
+    tag: str,
+    trusted_comment: str = '',
+    untrusted_comment: str = '',
+    seckey: str = '',
+    timestamp: int = 0,
+    pubkey: str = '',
+    email: str = '',
+    force: bool = False,
+) -> None:
     """Sign given tag with minisign.
 
     If trusted_comment is not specified, a default one is created composed of key:value
@@ -479,14 +490,14 @@ def sign_tag(  # pylint: disable=R0913
     if not trusted_comment:
         trusted_comment = generate_trusted_comment_for_tag(
             ctx,
-            tag,
+            tag=tag,
             timestamp=timestamp,
             pubkey=pubkey,
             email=email,
         )
 
     if not untrusted_comment:
-        untrusted_comment = 'signature from HacKan'
+        untrusted_comment = f'signature for Blake2Signer v{tag}'
 
     args = [
         './git-minisign/sh/git-minisign-sign.sh',
@@ -514,16 +525,16 @@ def sign_tag(  # pylint: disable=R0913
     },
 )
 def sign_file(  # pylint: disable=R0913
-    ctx,
-    file,
-    trusted_comment='',
-    untrusted_comment='',
-    seckey='',
-    timestamp=0,
-    pubkey='',
-    email='',
-):
-    """Sign given file with minisign.
+    ctx: Context,
+    file: str,
+    trusted_comment: str = '',
+    untrusted_comment: str = '',
+    seckey: str = '',
+    timestamp: int = 0,
+    pubkey: str = '',
+    email: str = '',
+) -> None:
+    """Sign the given file with minisign.
 
     If trusted_comment is not specified, a default one is created composed of key:value
     separated by tabs, using the following information: timestamp (defaults to current
@@ -535,16 +546,19 @@ def sign_file(  # pylint: disable=R0913
     Note that this command requires minisign installed. For more information, refer to:
     https://jedisct1.github.io/minisign/
     """
+    filepath = Path(file)
+
     if not trusted_comment:
         trusted_comment = generate_trusted_comment_for_file(
-            Path(file),
+            ctx,
+            file=filepath,
             timestamp=timestamp,
             pubkey=pubkey,
             email=email,
         )
 
     if not untrusted_comment:
-        untrusted_comment = 'signature from HacKan'
+        untrusted_comment = f'signature for file {filepath.name}'
 
     args = [
         'minisign',
@@ -562,13 +576,13 @@ def sign_file(  # pylint: disable=R0913
 
 
 @task
-def verify_tag(ctx, tag):
+def verify_tag(ctx: Context, tag: str) -> None:
     """Verify a tag signed by minisign."""
     ctx.run(f'./git-minisign/sh/git-minisign-verify.sh -T "{tag}"', echo=True)
 
 
 @task
-def verify_file(ctx, file):
+def verify_file(ctx: Context, file: str) -> None:
     """Verify a file signed by minisign."""
     pubkeyfile = Path(__file__).parent / 'minisign.pub'
     ctx.run(f'minisign -Vm "{file}" -p "{pubkeyfile}"', echo=True)
@@ -579,7 +593,7 @@ def verify_file(ctx, file):
         'short': 'run a short fuzzing session',
     },
 )
-def fuzz(ctx, short=True):
+def fuzz(ctx: Context, short: bool = True) -> None:
     """Run an infinite fuzzer over all signers, unless a short session is specified.
 
     This command will store session files per signer in the ".fuzzed" directory.
@@ -591,10 +605,12 @@ def fuzz(ctx, short=True):
 
     args = ('python', 'fuzz.py')
     signers = ('blake2signer', 'blake2timestampsigner', 'blake2serializersigner')
-    additional_args = ()
 
+    additional_args: typing.Tuple[str, ...]
     if short:
-        additional_args += ('--runs', '500000')  # Around 5' on a modern CPU
+        additional_args = ('--runs', '500000')  # Around 5' on a modern CPU
+    else:
+        additional_args = ()
 
     print(
         'Starting',
@@ -604,7 +620,7 @@ def fuzz(ctx, short=True):
     print()
     for signer in signers:
         ctx.run(
-            ' '.join(args + (signer, f'{fuzzed_dir}/{signer}/') + additional_args),
+            ' '.join(chain(args, (signer, f'{fuzzed_dir}/{signer}/'), additional_args)),
             warn=True,  # So user can cancel one run, and proceed w/ the next one.
         )
 
@@ -612,7 +628,7 @@ def fuzz(ctx, short=True):
 
 
 @task(reformat, lint, tests, safety, fuzz)
-def check(_):
+def check(_: Context) -> None:
     """Run all checks."""
 
 
