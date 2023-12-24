@@ -402,9 +402,9 @@ security scanning:
 
 fuzz:
   stage: security_analysis
-  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.7.1-3.11"
+  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.7.1-3.12"
   needs:
-    - poetry cache py3.11
+    - poetry cache py3.12
   before_script:
     - poetry add --group dev --source pythonfuzz pythonfuzz
   script:
