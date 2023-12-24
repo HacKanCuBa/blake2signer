@@ -699,7 +699,7 @@ class Blake2SerializerSigner(
     def dump(
         self,
         data: typing.Any,
-        file: typing.IO,
+        file: typing.IO[typing.AnyStr],
         *,
         compress: bool = True,
         compression_level: typing.Optional[int] = None,
@@ -850,7 +850,7 @@ class Blake2SerializerSigner(
 
         return self.loads(signed_data)
 
-    def load(self, file: typing.IO) -> typing.Any:
+    def load(self, file: typing.IO[typing.AnyStr]) -> typing.Any:
         """Recover original data from a signed serialized file from `dump`.
 
         This method is identical to `loads`, but it reads a file, which

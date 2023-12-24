@@ -583,7 +583,7 @@ class SerializerSignerTestsBase(BaseTests, ABC):
     )
     def test_dump_load_file(
         self,
-        file_class: typing.Type[typing.IO],
+        file_class: typing.Type[typing.IO[typing.AnyStr]],
         hasher: HasherChoice,
     ) -> None:
         """Test dumping and loading to/from a file."""
@@ -622,7 +622,7 @@ class SerializerSignerTestsBase(BaseTests, ABC):
     )
     def test_dump_load_file_with_null_serializer(
         self,
-        file_class: typing.Type[typing.IO],
+        file_class: typing.Type[typing.IO[typing.AnyStr]],
         hasher: HasherChoice,
     ) -> None:
         """Test dumping and loading to/from a file."""
@@ -662,7 +662,7 @@ class SerializerSignerTestsBase(BaseTests, ABC):
     )
     def test_dump_load_file_containing_data(
         self,
-        file_class: typing.Type[typing.IO],
+        file_class: typing.Type[typing.IO[typing.AnyStr]],
         initial_data: typing.Union[str, bytes],
         hasher: HasherChoice,
     ) -> None:
@@ -712,19 +712,25 @@ class SerializerSignerTestsBase(BaseTests, ABC):
         signed1 = self.sign(
             signer,
             data,
-            serializer_kwargs={'separators': ('.', ';')},
+            serializer_kwargs={
+                'separators': ('.', ';'),
+            },
         )
         signed1_1 = self.sign(
             signer,
             data,
-            serializer_kwargs={'separators': ('.', ';')},
+            serializer_kwargs={
+                'separators': ('.', ';'),
+            },
         )
         assert signed1 == signed1_1  # It is effectively deterministic
 
         signed2 = self.sign(
             signer,
             data,
-            serializer_kwargs={'separators': ('.', ',')},
+            serializer_kwargs={
+                'separators': ('.', ','),
+            },
         )
         assert signed1 != signed2  # Change due only to the serializer options
 
@@ -759,12 +765,16 @@ class SerializerSignerTestsBase(BaseTests, ABC):
         signer.dump(
             data,
             file1,
-            serializer_kwargs={'separators': ('.', ';')},
+            serializer_kwargs={
+                'separators': ('.', ';'),
+            },
         )
         signer.dump(
             data,
             file1_1,
-            serializer_kwargs={'separators': ('.', ';')},
+            serializer_kwargs={
+                'separators': ('.', ';'),
+            },
         )
         file1.seek(0)
         file1_1.seek(0)
@@ -773,7 +783,9 @@ class SerializerSignerTestsBase(BaseTests, ABC):
         signer.dump(
             data,
             file2,
-            serializer_kwargs={'separators': ('.', ',')},
+            serializer_kwargs={
+                'separators': ('.', ','),
+            },
         )
         file1.seek(0)
         file2.seek(0)
@@ -807,19 +819,25 @@ class SerializerSignerTestsBase(BaseTests, ABC):
         signed1 = self.sign_parts(
             signer,
             data,
-            serializer_kwargs={'separators': ('.', ';')},
+            serializer_kwargs={
+                'separators': ('.', ';'),
+            },
         )
         signed1_1 = self.sign_parts(
             signer,
             data,
-            serializer_kwargs={'separators': ('.', ';')},
+            serializer_kwargs={
+                'separators': ('.', ';'),
+            },
         )
         assert signed1 == signed1_1  # It is effectively deterministic
 
         signed2 = self.sign_parts(
             signer,
             data,
-            serializer_kwargs={'separators': ('.', ',')},
+            serializer_kwargs={
+                'separators': ('.', ','),
+            },
         )
         assert signed1 != signed2  # Change due only to the serializer options
 

@@ -74,7 +74,9 @@ def test_get_signer_wrong_secret() -> None:
         )
 
     mock_signers_ctx.get.assert_called_once_with()
-    mock_signers_ctx.set.assert_called_once_with({f'MagicMock_{hasher.value}': signer})
+    mock_signers_ctx.set.assert_called_once_with({
+        f'MagicMock_{hasher.value}': signer,
+    })
 
     klass.reset_mock()
     with mock.patch.object(fuzz, 'signers_ctx') as mock_signers_ctx:
@@ -185,7 +187,13 @@ def test_main_happy_path(capsys: pytest.CaptureFixture) -> None:
     """Test that main properly calls the fuzzer."""
     fuzz_test = mock.MagicMock()
     with mock.patch.object(fuzz.sys, 'argv', new=['fuzz', 'test']):
-        with mock.patch.object(fuzz, 'globals', return_value={'fuzz_test': fuzz_test}):
+        with mock.patch.object(
+                fuzz,
+                'globals',
+                return_value={
+                    'fuzz_test': fuzz_test,
+                },
+        ):
             fuzz.main()
 
     fuzz_test.assert_called_once_with()

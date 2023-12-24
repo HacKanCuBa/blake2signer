@@ -58,7 +58,7 @@ class CompressorInterface(ABC):
         """
 
     # noinspection PyMethodMayBeStatic
-    def scale_compression_level(self, level: int) -> int:  # pylint: disable=R0201
+    def scale_compression_level(self, level: int) -> int:
         """Scale the compression level from 1 to 9 to a valid value for the compressor.
 
         Override this method if the compressor requires scaling the level.

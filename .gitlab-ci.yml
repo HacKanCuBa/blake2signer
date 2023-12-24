@@ -28,15 +28,6 @@ variables:
     - main
     - tags
 
-poetry cache py3.7:
-  extends: .poetry cache
-  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.2.2-3.7"
-  cache:
-    key:
-      prefix: "py37"
-      files:
-        - poetry.lock
-
 poetry cache py3.8:
   extends: .poetry cache
   image: "registry.gitlab.com/nevrona/public/poetry-docker:1.2.2-3.8"
@@ -106,11 +97,10 @@ poetry cache py3.13-pre:
       files:
         - poetry.lock
 
-poetry cache pypy3.7:
+.poetry cache pypy:
   extends: .poetry cache
-  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.2.2-3.7pypy"
   script:
-    # ToDo: there's no blake3 wheel yet for PyPy3.7, remove this when there's one (if ever).
+    # ToDo: there's no blake3 wheel yet for PyPy, remove this when there's one (if ever).
     # Check if we need to install everything or just check for changes in the package lock
     # Note that creating the virtualenv with poetry makes the installation of blake3 fail
     # for some reason, so I used some tricks to use venv instead.
@@ -135,13 +125,13 @@ poetry cache pypy3.7:
     - time poetry install --no-ansi
   cache:
     key:
-      prefix: "pypy37"
+      prefix: "pypy"
       files:
         - poetry.lock
   allow_failure: true
 
 poetry cache pypy3.8:
-  extends: poetry cache pypy3.7
+  extends: .poetry cache pypy
   image: "registry.gitlab.com/nevrona/public/poetry-docker:1.2.2-3.8pypy"
   cache:
     key:
@@ -150,7 +140,7 @@ poetry cache pypy3.8:
         - poetry.lock
 
 poetry cache pypy3.9:
-  extends: poetry cache pypy3.7
+  extends: .poetry cache pypy
   image: "registry.gitlab.com/nevrona/public/poetry-docker:1.2.2-3.9pypy"
   cache:
     key:
@@ -159,23 +149,13 @@ poetry cache pypy3.9:
         - poetry.lock
 
 poetry cache pypy3.10:
-  extends: poetry cache pypy3.7
+  extends: .poetry cache pypy
   image: "registry.gitlab.com/nevrona/public/poetry-docker:1.7.1-3.10pypy"
   cache:
     key:
       prefix: "pypy310"
       files:
         - poetry.lock
-
-poetry cache stackless3.7:
-  extends: .poetry cache
-  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.2.2-3.7stackless"
-  cache:
-    key:
-      prefix: "stackless37"
-      files:
-        - poetry.lock
-  allow_failure: true
 
 poetry cache stackless3.8:
   extends: .poetry cache
@@ -248,19 +228,6 @@ packages security:
   except:
     - main
     - tags
-
-tests py3.7:
-  extends: .tests
-  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.2.2-3.7"
-  needs:
-    - poetry cache py3.7
-    - python lint
-    - packages security
-  cache:
-    key:
-      prefix: "py37"
-      files:
-        - poetry.lock
 
 tests py3.8:
   extends: .tests
@@ -341,19 +308,6 @@ tests py3.13-pre:
         - poetry.lock
   allow_failure: true
 
-tests pypy3.7:
-  extends: .tests
-  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.2.2-3.7pypy"
-  needs:
-    - poetry cache pypy3.7
-    - python lint
-    - packages security
-  cache:
-    key:
-      prefix: "pypy37"
-      files:
-        - poetry.lock
-  allow_failure: true
 
 tests pypy3.8:
   extends: .tests
@@ -393,22 +347,6 @@ tests pypy3.10:
   cache:
     key:
       prefix: "pypy310"
-      files:
-        - poetry.lock
-  allow_failure: true
-
-tests stackless3.7:
-  extends: .tests
-  image: "registry.gitlab.com/nevrona/public/poetry-docker:1.2.2-3.7stackless"
-  needs:
-    - poetry cache stackless3.7
-    - python lint
-    - packages security
-  script:
-    - time poetry run inv tests --no-coverage  # with coverage is segfaulting for some reason
-  cache:
-    key:
-      prefix: "stackless37"
       files:
         - poetry.lock
   allow_failure: true

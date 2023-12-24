@@ -306,7 +306,9 @@ def docs(ctx: Context, build: bool = False, verbose: bool = False) -> None:
 
 
 @task(
-    help={'update': 'update dependencies first'},
+    help={
+        'update': 'update dependencies first',
+    },
     aliases=['docs-reqs'],
 )
 def docs_requirements(ctx: Context, update: bool = False) -> None:
@@ -375,7 +377,7 @@ def generate_trusted_comment_parts(  # noqa: R701
         timestamp = int(datetime.now(timezone.utc).timestamp())
 
     if not pubkey:
-        with open('minisign.pub', 'rt', encoding='utf-8') as pubkeyfile:
+        with open('minisign.pub', encoding='utf-8') as pubkeyfile:
             next(pubkeyfile)
             pubkey = next(pubkeyfile).strip()
 
@@ -385,7 +387,7 @@ def generate_trusted_comment_parts(  # noqa: R701
         if not email:
             raise ValueError('Please provide an email address')
 
-    trusted_comment_parts = [  # pylint: disable=W8301
+    trusted_comment_parts = [
         ('timestamp', str(timestamp)),
         ('pubkey', pubkey),
         ('email', email),

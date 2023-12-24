@@ -13,12 +13,10 @@ from ..hashers import BLAKE3Hasher
 from ..hashers import HasherChoice
 from ..hashers import blake3
 
-# pylint: disable=W8205
-
-THasher = typing.TypeVar('THasher', BLAKE2Hasher, BLAKE3Hasher)
+HasherT = typing.TypeVar('HasherT', BLAKE2Hasher, BLAKE3Hasher)
 
 
-class BaseTests(typing.Generic[THasher], ABC):
+class BaseTests(typing.Generic[HasherT], ABC):
     """Base class for the hashers' tests."""
     secrets = (b'averysecretsecret', b'0123456789012345')
     person = b'acab'
@@ -26,7 +24,7 @@ class BaseTests(typing.Generic[THasher], ABC):
 
     @property
     @abstractmethod
-    def hasher_class(self) -> typing.Type[THasher]:
+    def hasher_class(self) -> typing.Type[HasherT]:
         """Get the hasher class to test."""
 
     @property
@@ -41,7 +39,7 @@ class BaseTests(typing.Generic[THasher], ABC):
         secrets: typing.Optional[typing.Tuple[bytes]] = None,
         digest_size: typing.Optional[int] = None,
         person: typing.Optional[bytes] = None,
-    ) -> THasher:
+    ) -> HasherT:
         """Get the hasher instance to test."""
         return self.hasher_class(
             hasher or self.hasher_choice,

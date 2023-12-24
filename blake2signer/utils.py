@@ -109,7 +109,7 @@ def timestamp_to_aware_datetime(timestamp: typing.Union[int, float]) -> datetime
     return datetime.fromtimestamp(timestamp, tz=timezone.utc)
 
 
-def file_mode_is_text(file: typing.IO) -> bool:
+def file_mode_is_text(file: typing.IO[typing.AnyStr]) -> bool:
     """Check if a given file is opened in text mode, or otherwise in binary mode.
 
     Args:
@@ -118,9 +118,6 @@ def file_mode_is_text(file: typing.IO) -> bool:
     Returns:
         True if file is opened in text mode, False otherwise.
     """
-    # Is there a better way to determine this? I thought of reading one byte/char,
-    # then checking the type, but the file might be writable only, so it wouldn't
-    # work.
     return isinstance(file, io.TextIOBase)
 
 

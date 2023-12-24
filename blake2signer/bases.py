@@ -768,7 +768,7 @@ class Blake2SerializerSignerBase(Blake2DualSignerBase, ABC):
         """
 
     @staticmethod
-    def _read(file: typing.IO) -> typing.AnyStr:
+    def _read(file: typing.IO[typing.AnyStr]) -> typing.AnyStr:
         """Read data from a file.
 
         Args:
@@ -785,7 +785,7 @@ class Blake2SerializerSignerBase(Blake2DualSignerBase, ABC):
         except OSError as exc:
             raise FileError('file can not be read') from exc
 
-    def _write(self, file: typing.IO, data: str) -> None:
+    def _write(self, file: typing.IO[typing.AnyStr], data: str) -> None:
         """Write data to file.
 
         Args:
@@ -804,6 +804,7 @@ class Blake2SerializerSignerBase(Blake2DualSignerBase, ABC):
         data_ = data if file_mode_is_text(file) else self._force_bytes(data)
 
         try:
-            file.write(data_)
+            # ToDo: mypy thinks `data_` is a sequence, we need TypeGuard (3.10) or something else
+            file.write(data_)  # type: ignore
         except OSError as exc:
             raise FileError('file can not be written') from exc

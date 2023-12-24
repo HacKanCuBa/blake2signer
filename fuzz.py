@@ -44,6 +44,7 @@ from typing import Dict
 from typing import Optional
 from typing import Type
 from typing import TypeVar
+from typing import cast
 
 from blake2signer import Blake2SerializerSigner
 from blake2signer import Blake2Signer
@@ -60,7 +61,7 @@ SignedT = TypeVar('SignedT')
 SignerT = TypeVar('SignerT', bound=Blake2SignerBase)
 
 # Global signers collection to save on instantiation time
-signers_ctx: ContextVar[Dict[str, Any]] = ContextVar(  # ToDo: properly type-hint this
+signers_ctx: ContextVar[Dict[str, Blake2SignerBase]] = ContextVar(
     'signers_ctx',
     default={},
 )
@@ -104,7 +105,7 @@ def get_signer(
         signer_name = f'{klass.__name__}_{hasher.value}'
 
         try:
-            signer = signers[signer_name]
+            signer = cast(SignerT, signers[signer_name])
         except KeyError:
             signer = klass(b's' * klass.MIN_SECRET_SIZE, hasher=hasher, **signer_kwargs)
             signers[signer_name] = signer
@@ -246,7 +247,7 @@ def fuzz_blake2serializersigner(buf: bytes) -> None:  # noqa: C901  # pragma: no
         def dump(data: bytes) -> BytesIO:
             """Serialize and sign data to a file."""
             file = BytesIO()
-            try:  # pylint: disable=R8203  # try/except blocks are fine for CPython >= 3.11
+            try:  # try/except blocks are fine for CPython >= 3.11
                 signer.dump(data, file)  # noqa: B023  # pylint: disable=W0640  # usage on purpose
             except ConversionError as exc:  # This should be impossible, so let's check it
                 raise ValueError(

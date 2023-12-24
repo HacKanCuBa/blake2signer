@@ -1,5 +1,5 @@
 """Base classes to test signers."""
-# pylint: disable=R0904,C0302,W8205,R0801
+# pylint: disable=R0904,C0302,R0801
 
 import hashlib
 import re

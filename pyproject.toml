@@ -25,7 +25,6 @@ classifiers = [
     "Natural Language :: English",
     "Operating System :: POSIX :: Linux",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
@@ -44,11 +43,11 @@ classifiers = [
 "Issues" = "https://gitlab.com/hackancuba/blake2signer/-/issues"
 
 [tool.poetry.dependencies]
-python = "^3.7"
+python = ">=3.8.1, <4.0"
 blake3 = {version = ">0.2.0", optional = true}
 
 [tool.poetry.dev-dependencies]
-flake8 = "^5"
+flake8 = "^6.1"
 flake8-2020 = "^1.6.0"
 flake8-quotes = "^3.0.0"
 flake8-bandit = "^4"
@@ -58,7 +57,7 @@ flake8-builtins = "^2"
 flake8-eradicate = "^1.0.0"
 flake8-executable = "^2.0.3"
 flake8-docstrings = "^1.4.0"
-flake8-broken-line = "^0"
+flake8-broken-line = "^1"
 flake8-import-order = "^0"
 flake8-blind-except = "^0"
 flake8-pytest-style = "^1.6.0"
@@ -74,7 +73,7 @@ perflint = "^0"
 pylint = "^2.12.2"
 yapf = "^0"
 toml = "^0"  # yapf now requires this
-add-trailing-comma = "^2.0.1"
+add-trailing-comma = "^3.1.0"
 mypy = "^1"
 types-setuptools = "^69"
 dlint = "^0"
@@ -86,9 +85,9 @@ pytest-cov = "^4"
 pytest-custom_exit_code = "^0"
 pytest-xdist = {extras = ["psutil"], version = "^3"}
 pytest-randomly = "^3.8.0"
-junitparser = "^2.8.0"
+junitparser = "^3.1.0"
 coverage = "^7"
-radon = "^5.0.0"
+radon = "^6.0.1"
 scriv = "^1"
 invoke = "^2"
 blake3 = ">0.2.0"

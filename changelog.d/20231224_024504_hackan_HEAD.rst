@@ -1,0 +1,9 @@
+.. Removed
+.. -------
+..
+.. - Drop Python 3.7.
+..
+.. Changed
+.. -------
+..
+.. - Update dev dependencies.
