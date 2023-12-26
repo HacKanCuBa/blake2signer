@@ -7,7 +7,7 @@ from datetime import datetime
 from datetime import timezone
 
 
-def force_bytes(value: typing.Any) -> bytes:
+def force_bytes(value: typing.Union[str, bytes]) -> bytes:
     """Force a given value into bytes.
 
     Args:
@@ -15,6 +15,9 @@ def force_bytes(value: typing.Any) -> bytes:
 
     Returns:
         Converted value into bytes.
+
+    Raises:
+        TypeError: value is neither bytes nor string.
     """
     if isinstance(value, bytes):
         return value
@@ -22,10 +25,10 @@ def force_bytes(value: typing.Any) -> bytes:
     if isinstance(value, str):
         return value.encode('utf-8', errors='strict')
 
-    return bytes(value)
+    raise TypeError('value must be bytes or str')
 
 
-def force_string(value: typing.Any) -> str:
+def force_string(value: typing.Union[str, bytes]) -> str:
     """Force a given value into string.
 
     Args:
@@ -33,6 +36,9 @@ def force_string(value: typing.Any) -> str:
 
     Returns:
         Converted value into string.
+
+    Raises:
+        TypeError: value is neither bytes nor string.
     """
     if isinstance(value, str):
         return value
@@ -40,7 +46,7 @@ def force_string(value: typing.Any) -> str:
     if isinstance(value, bytes):
         return value.decode('utf-8', errors='strict')
 
-    return f'{value}'
+    raise TypeError('value must be bytes or str')
 
 
 def b64encode(data: bytes) -> bytes:

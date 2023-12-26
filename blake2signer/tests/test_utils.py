@@ -120,7 +120,6 @@ def test_ordinal() -> None:
     (
         (b'abc', b'abc'),
         ('abc', b'abc'),
-        (1, b'\x00'),
     ),
 )
 def test_force_bytes(value: typing.Any, expected: str) -> None:
@@ -131,12 +130,17 @@ def test_force_bytes(value: typing.Any, expected: str) -> None:
     assert expected == forced
 
 
+def test_force_bytes_wrong_type() -> None:
+    """Test that force_bytes raises exception on a wrong type."""
+    with pytest.raises(TypeError, match='value must be bytes or str'):
+        utils.force_bytes(1)  # type: ignore
+
+
 @pytest.mark.parametrize(
     ('value', 'expected'),
     (
         (b'abc', 'abc'),
         ('abc', 'abc'),
-        (1, '1'),
     ),
 )
 def test_force_string(value: typing.Any, expected: str) -> None:
@@ -145,3 +149,9 @@ def test_force_string(value: typing.Any, expected: str) -> None:
 
     assert isinstance(forced, str)
     assert expected == forced
+
+
+def test_force_string_wrong_type() -> None:
+    """Test that force_string raises exception on a wrong type."""
+    with pytest.raises(TypeError, match='value must be bytes or str'):
+        utils.force_string(1)  # type: ignore

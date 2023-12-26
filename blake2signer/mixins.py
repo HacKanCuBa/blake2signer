@@ -28,7 +28,7 @@ class Mixin(ABC):  # pylint: disable=R0903  # noqa: B024  # false positives
     """Base class for a Blake2Signer mixin."""
 
     @staticmethod
-    def _force_bytes(value: typing.Any) -> bytes:
+    def _force_bytes(value: typing.Union[str, bytes]) -> bytes:
         """Force given value into bytes.
 
         Args:
@@ -46,7 +46,7 @@ class Mixin(ABC):  # pylint: disable=R0903  # noqa: B024  # false positives
             raise ConversionError('value can not be converted to bytes') from exc
 
     @staticmethod
-    def _force_string(value: typing.Any) -> str:
+    def _force_string(value: typing.Union[str, bytes]) -> str:
         """Force given value into string.
 
         Args:

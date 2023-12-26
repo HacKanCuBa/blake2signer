@@ -979,6 +979,9 @@ Usually to work with bytes or string one can choose to use either [`Blake2Signer
 
 The [`NullSerializer`](serializers.md#blake2signer.serializers.NullSerializer) is useful when one needs to deal with bytes but want compression and encoding capabilities. Otherwise [`Blake2Signer`](signers.md#blake2signer.signers.Blake2Signer) or [`Blake2TimestampSigner`](signers.md#blake2signer.signers.Blake2TimestampSigner) should be preferred.
 
+!!! warning
+    Only a `bytes` input, or at most a `str` one, can be used with this serializer.
+
 === "Source"
 
     ```python
@@ -999,6 +1002,10 @@ The [`NullSerializer`](serializers.md#blake2signer.serializers.NullSerializer) i
 
     unsigned = signer.loads(signed)
     print('Does it match original data?', data == unsigned)  # True
+
+    # Note that only a bytes input (or string at most) should be used with this
+    # serializer
+    signer.dumps(1)  # Raises SerializationError
     ```
 
 === "Output"
@@ -1006,6 +1013,8 @@ The [`NullSerializer`](serializers.md#blake2signer.serializers.NullSerializer) i
     ```
     Signed: 8wv0U-5sEKwu4dkdKDhyhEkYPpEekblscw8Zog.ZmFjdW5kbyBjYXN0cm8gcHJlc2VudGU
     Does it match original data? True
+    ...
+    SerializationError: data can not be serialized
     ```
 
 !!! tip
