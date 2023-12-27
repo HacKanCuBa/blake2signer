@@ -709,30 +709,31 @@ class SerializerSignerTestsBase(BaseTests, ABC):
             1: 2,
         }
 
-        signed1 = self.sign(
-            signer,
-            data,
-            serializer_kwargs={
-                'separators': ('.', ';'),
-            },
-        )
-        signed1_1 = self.sign(
-            signer,
-            data,
-            serializer_kwargs={
-                'separators': ('.', ';'),
-            },
-        )
-        assert signed1 == signed1_1  # It is effectively deterministic
+        with mock.patch('blake2signer.bases.time', return_value=time()):
+            signed1 = self.sign(
+                signer,
+                data,
+                serializer_kwargs={
+                    'separators': ('.', ';'),
+                },
+            )
+            signed1_1 = self.sign(
+                signer,
+                data,
+                serializer_kwargs={
+                    'separators': ('.', ';'),
+                },
+            )
+            assert signed1 == signed1_1  # It is effectively deterministic
 
-        signed2 = self.sign(
-            signer,
-            data,
-            serializer_kwargs={
-                'separators': ('.', ','),
-            },
-        )
-        assert signed1 != signed2  # Change due only to the serializer options
+            signed2 = self.sign(
+                signer,
+                data,
+                serializer_kwargs={
+                    'separators': ('.', ','),
+                },
+            )
+            assert signed1 != signed2  # Change due only to the serializer options
 
     @pytest.mark.xfail(
         not has_blake3(),
@@ -762,34 +763,35 @@ class SerializerSignerTestsBase(BaseTests, ABC):
             1: 2,
         }
 
-        signer.dump(
-            data,
-            file1,
-            serializer_kwargs={
-                'separators': ('.', ';'),
-            },
-        )
-        signer.dump(
-            data,
-            file1_1,
-            serializer_kwargs={
-                'separators': ('.', ';'),
-            },
-        )
-        file1.seek(0)
-        file1_1.seek(0)
-        assert file1.read() == file1_1.read()  # It is effectively deterministic
+        with mock.patch('blake2signer.bases.time', return_value=time()):
+            signer.dump(
+                data,
+                file1,
+                serializer_kwargs={
+                    'separators': ('.', ';'),
+                },
+            )
+            signer.dump(
+                data,
+                file1_1,
+                serializer_kwargs={
+                    'separators': ('.', ';'),
+                },
+            )
+            file1.seek(0)
+            file1_1.seek(0)
+            assert file1.read() == file1_1.read()  # It is effectively deterministic
 
-        signer.dump(
-            data,
-            file2,
-            serializer_kwargs={
-                'separators': ('.', ','),
-            },
-        )
-        file1.seek(0)
-        file2.seek(0)
-        assert file1.read() != file2.read()  # Change due only to the serializer options
+            signer.dump(
+                data,
+                file2,
+                serializer_kwargs={
+                    'separators': ('.', ','),
+                },
+            )
+            file1.seek(0)
+            file2.seek(0)
+            assert file1.read() != file2.read()  # Change due only to the serializer options
 
     @pytest.mark.xfail(
         not has_blake3(),
@@ -816,30 +818,31 @@ class SerializerSignerTestsBase(BaseTests, ABC):
             1: 2,
         }
 
-        signed1 = self.sign_parts(
-            signer,
-            data,
-            serializer_kwargs={
-                'separators': ('.', ';'),
-            },
-        )
-        signed1_1 = self.sign_parts(
-            signer,
-            data,
-            serializer_kwargs={
-                'separators': ('.', ';'),
-            },
-        )
-        assert signed1 == signed1_1  # It is effectively deterministic
+        with mock.patch('blake2signer.bases.time', return_value=time()):
+            signed1 = self.sign_parts(
+                signer,
+                data,
+                serializer_kwargs={
+                    'separators': ('.', ';'),
+                },
+            )
+            signed1_1 = self.sign_parts(
+                signer,
+                data,
+                serializer_kwargs={
+                    'separators': ('.', ';'),
+                },
+            )
+            assert signed1 == signed1_1  # It is effectively deterministic
 
-        signed2 = self.sign_parts(
-            signer,
-            data,
-            serializer_kwargs={
-                'separators': ('.', ','),
-            },
-        )
-        assert signed1 != signed2  # Change due only to the serializer options
+            signed2 = self.sign_parts(
+                signer,
+                data,
+                serializer_kwargs={
+                    'separators': ('.', ','),
+                },
+            )
+            assert signed1 != signed2  # Change due only to the serializer options
 
     @pytest.mark.xfail(
         not has_blake3(),
