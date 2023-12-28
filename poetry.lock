@@ -1100,6 +1100,21 @@ files = [
 ]
 
 [[package]]
+name = "natsort"
+version = "8.4.0"
+description = "Simple yet flexible natural sorting in Python."
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "natsort-8.4.0-py3-none-any.whl", hash = "sha256:4732914fb471f56b5cce04d7bae6f164a592c7712e1c85f9ef585e197299521c"},
+    {file = "natsort-8.4.0.tar.gz", hash = "sha256:45312c4a0e5507593da193dedd04abb1469253b601ecaf63445ad80f0a1ea581"},
+]
+
+[package.extras]
+fast = ["fastnumbers (>=2.0.0)"]
+icu = ["PyICU (>=1.0.0)"]
+
+[[package]]
 name = "packaging"
 version = "23.2"
 description = "Core utilities for Python packages"
@@ -1289,6 +1304,26 @@ typing-extensions = {version = ">=3.10.0", markers = "python_version < \"3.10\""
 [package.extras]
 spelling = ["pyenchant (>=3.2,<4.0)"]
 testutils = ["gitpython (>3)"]
+
+[[package]]
+name = "pyproject-fmt"
+version = "1.6.0"
+description = "Format your pyproject.toml file"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "pyproject_fmt-1.6.0-py3-none-any.whl", hash = "sha256:f8444c394009939ee75efbfd020c3c498ece2ca6382ee6bb955ab1a459c1ecdd"},
+    {file = "pyproject_fmt-1.6.0.tar.gz", hash = "sha256:80ce38746031ffd2df7e0abc9544060790063b0ffdb17ab4c66e1dab13802a04"},
+]
+
+[package.dependencies]
+natsort = ">=8.4"
+packaging = ">=23.2"
+tomlkit = ">=0.12.3"
+
+[package.extras]
+docs = ["furo (>=2023.9.10)", "sphinx (>=7.2.6)", "sphinx-argparse-cli (>=1.11.1)", "sphinx-autodoc-typehints (>=1.25.2)", "sphinx-copybutton (>=0.5.2)"]
+test = ["covdefaults (>=2.3)", "pytest (>=7.4.3)", "pytest-cov (>=4.1)", "pytest-mock (>=3.12)"]
 
 [[package]]
 name = "pytest"
@@ -1936,4 +1971,4 @@ blake3 = ["blake3"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8.1, <4.0"
-content-hash = "7a18df907b7eda31f62b07fd3d0e5baeb6623d6cc9afbc0b8b1e94865d2f6f99"
+content-hash = "b94843e74efa85e7c5aee6010538ee8b993512c9b44c0a4c319f9c8eaab27589"

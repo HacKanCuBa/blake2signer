@@ -48,8 +48,10 @@ url = "https://gitlab.com/api/v4/projects/19904939/packages/pypi/simple"
 priority = "explicit"
 
 [build-system]
-requires = ["poetry>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
+requires = [
+    "poetry>=1.0.0",
+]
 
 [tool.poetry.extras]
 blake3 = ["blake3"]
@@ -108,6 +110,7 @@ optional = true
 add-trailing-comma = "^3.1.0"
 bandit = "^1.6.2"
 mypy = "^1"
+pyproject-fmt = "^1.5.3"
 # ToDo: pythonfuzz==1.0.10 requires a psutil version that has a security issue, thus I'm not
 #  adding it here yet
 # pythonfuzz = {version = "^1.0.10", source = "pythonfuzz"}

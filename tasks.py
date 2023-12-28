@@ -106,10 +106,15 @@ def trailing_commas(ctx: Context) -> None:
     ctx.run('add-trailing-comma test_fuzz.py', echo=True, pty=True, warn=True)
 
 
-# noinspection PyUnusedLocal
-@task(yapf, trailing_commas)
-def reformat(ctx: Context) -> None:  # pylint: disable=W0613
-    """Reformat code (runs YAPF and add-trailing-comma)."""
+@task
+def pyproject_fmt(ctx: Context) -> None:
+    """Format the pyproject.toml file."""
+    ctx.run('pyproject-fmt --indent 4 --keep-full-version pyproject.toml', echo=True)
+
+
+@task(yapf, trailing_commas, pyproject_fmt)
+def reformat(_: Context) -> None:
+    """Reformat code and other files."""
 
 
 @task
