@@ -804,11 +804,11 @@ It is used internally to mark a compressed payload to prevent [zip bombs](https:
 
     signer = Blake2SerializerSigner(secret)
 
-    with open('somefile', 'wt') as file:
+    with open('somefile', 'wb') as file:
         signed = signer.dump(data, file)  # Signed data returned for convenience
         print('Signed:', signed)  # ....ImZyZWUgT2xhIEJpbmkhISI
 
-    with open('somefile', 'rt') as file:
+    with open('somefile', 'rb') as file:
         unsigned = signer.load(file)
     print('Unsigned file content:', unsigned)  # free Ola Bini!!
     print('Does it match original data?', data == unsigned)  # True
@@ -823,7 +823,7 @@ It is used internally to mark a compressed payload to prevent [zip bombs](https:
     ```
 
 !!! note "Text and binary modes supported"
-    Both opening modes are supported, so given file can be opened in text or binary mode indistinctly.
+    Both opening modes are supported, so given file can be opened in text or binary mode indistinctly. However, [binary mode performs better](performance.md#the-same-goes-for-files).
 
 === "Source"
 
