@@ -1,4 +1,0 @@
-Changed
--------
-
-- `force_bytes` and `force_string` utility functions now only accept either `bytes` or `str`, and raises `TypeError` otherwise. However, signers usages are not affected by this.

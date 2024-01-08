@@ -1,4 +1,0 @@
-Changed
--------
-
-- Upgrade docs Python version to 3.10.

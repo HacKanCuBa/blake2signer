@@ -1,5 +1,14 @@
 # Upgrade guide
 
+## To v3
+
+!!! success "Old signatures will work"
+    Data signed with previous versions (>=2.0, <=3.0) will still be valid.
+
+The biggest change in this version was to drop Python 3.7. Other than that, file-related operations have been normalized internally so that using `bytes` always performs better, and the utility functions [`force_bytes`](utils.md#blake2signer.utils.force_bytes) and [`force_string`](utils.md#blake2signer.utils.force_string) now only accept either `bytes` or `str`, and raises `TypeError` otherwise.
+
+All in all, not very big changes, and thus normal usage is not affected. However, if you were using the utility functions, or had a [custom serializer signer](examples.md#creating-a-custom-serializersigner-class), then [YMMV](https://www.urbandictionary.com/define.php?term=ymmv).
+
 ## To v2.5
 
 !!! success "Old signatures will work"

@@ -1,5 +1,28 @@
 # Changelog
 
+## 3.0.0 - 2024-01-25
+
+**Added**
+
+- Add new create signed tag Invoke task.
+
+**Removed**
+
+- Drop Python 3.7.
+
+**Changed**
+
+- Update dev dependencies.
+- Improve Invoke tasks with type hints.
+- Improve docs and docstrings grammar and wording.
+- [Normalize file-related operations to use bytes](performance.md#the-same-goes-for-files), so we can default to open the file in binary mode for better performance.
+- [`force_bytes`](utils.md#blake2signer.utils.force_bytes) and [`force_string`](utils.md#blake2signer.utils.force_string) utility functions now only accept either `bytes` or `str`, and raises `TypeError` otherwise. However, signers usages are not affected by this.
+- Upgrade docs Python version to 3.10.
+
+**Fixed**
+
+- Fix tests that were failing in PyPy due to `time` not being patched.
+
 ## 2.5.3 - 2023-12-21
 
 *Note: This is the last version supporting Python 3.7!*
@@ -41,7 +64,7 @@
 **Changed**
 
 - Improve the fuzzing script, add instructions on running it, and add it as a CI job for releases.
-- Change the usage of AnyStr in signer's public methods with Union[str, bytes], which is not the same, and they are not generally interchangeably like this, but for this particular usage Union makes more sense, and MyPy seems to agree with this.
+- Change the usage of `AnyStr` in signer's public methods with `Union[str, bytes]`, which is not the same, and they are not generally interchangeably like this, but for this particular usage Union makes more sense, and MyPy seems to agree with this.
 - Several improvements in the CI: fixed coverage report, updated Python versions and Poetry, added fuzzing, etc.
 - Update dev dependencies.
 

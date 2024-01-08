@@ -1,4 +1,0 @@
-Fixed
------
-
-- Fix tests that were failing in PyPy due to `time` not being patched.
