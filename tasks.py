@@ -13,7 +13,7 @@ from unittest.mock import patch
 from invoke import Context
 from invoke import Exit
 from invoke import task
-from junitparser import JUnitXml  # type: ignore
+from junitparser import JUnitXml
 
 from blake2signer import Blake2SerializerSigner
 from blake2signer import Blake2Signer
