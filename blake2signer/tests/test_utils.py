@@ -144,7 +144,7 @@ def test_force_bytes_wrong_type() -> None:
     ),
 )
 def test_force_string(value: typing.Any, expected: str) -> None:
-    """Test that force_string works as correctly."""
+    """Test that force_string works correctly."""
     forced = utils.force_string(value)
 
     assert isinstance(forced, str)

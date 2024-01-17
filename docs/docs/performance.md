@@ -155,9 +155,9 @@ There is [an example](examples.md#real-use-case) of this where the standard libr
 !!! note
     `Blake2TimestampSigner` is equivalent in its instantiation to `Blake2Signer`, so it is not tested here.
 
-## Preferring bytes over string
+## Preferring bytes over strings
 
-Internally, all signers need to work with bytes because the hashers have this requirement. For convenience, both bytes and string are accepted as input, but a conversion happens behind the curtains. This conversion has an impact on performance, and it can be somewhat significant in the long run: when profiling a sign or unsign cycle, one can see that most of the time is spent calculating the hash (this is unavoidable), but a good portion of the rest of the time is spent encoding strings!
+Internally, all signers need to work with `bytes` because the hashers have this requirement. For convenience, both bytes and strings are accepted as input, but a conversion happens behind the curtains. This conversion has an impact on performance, and it can be somewhat significant in the long run: when profiling a sign or unsign cycle, one can see that most of the time is spent calculating the hash (this is unavoidable), but a good portion of the rest of the time is spent encoding strings!
 
 ??? example "Profiling the signer"
     === "Source"
@@ -231,12 +231,12 @@ Internally, all signers need to work with bytes because the hashers have this re
                 1    0.004    0.004    0.132    0.132 <string>:1(<module>)
         ```
 
-Therefore, you should prefer using bytes rather than strings. However, if you can't avoid it, it's fine: don't lose your mind thinking how to do it! The benefit is marginal at best for large payloads, and almost negligible for small ones. So this is to make the point that, in the long run, if you can use bytes, then that should be preferred; otherwise, it's fine.
+Therefore, you should prefer using `bytes` rather than strings. However, if you can't avoid it, it's fine: don't lose your mind thinking how to do it! The benefit is marginal at best for large payloads, and almost negligible for small ones. So this is to make the point that, in the long run, if you can use `bytes`, then that should be preferred; otherwise, it's fine.
 
 ### The same goes for files!
 
 When using file-related methods, like [*Blake2SerializerSigner*](signers.md#blake2signer.signers.Blake2SerializerSigner)'s [`load`](#blake2signer.signers.Blake2SerializerSigner.load) and [`dump`](#blake2signer.signers.Blake2SerializerSigner.dump), this consideration is also pertinent.  
-For both, it is convenient for the file to be opened in **binary** mode, rather than in text mode. This is to prevent a string to bytes conversion in first case, and to prevent a bytes to string conversion in the second case.
+For both, it is convenient for the file to be opened in **binary** mode, rather than in text mode. This is to prevent a `str` to `bytes` conversion in the first case, and to prevent a `bytes` to `str` conversion in the second case.
 
 ## Choosing the right signer
 
@@ -274,7 +274,7 @@ This class offers three signers, and one of them is additionally a serializer, m
         28.9 µs ± 2.07 µs per loop (mean ± std. dev. of 10 runs, 10,000 loops each)
         ```
 
-In the example above, serializing the simple string costs us twice as much as not doing it, which is pretty significant. However, if you don't know from beforehand the kind of objects you will be signing, then going for the serializer signer would be the safe bet.
+In the example above, serializing the simple string costs us almost thrice as much as not doing it, which is pretty significant. However, if you don't know from beforehand the kind of objects you will be signing, then going for the serializer signer would be the safe bet.
 
 ## Compressing has its perks
 

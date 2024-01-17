@@ -17,7 +17,7 @@ def force_bytes(value: typing.Union[str, bytes]) -> bytes:
         Converted value into bytes.
 
     Raises:
-        TypeError: value is neither bytes nor string.
+        TypeError: Value is neither bytes nor string.
     """
     if isinstance(value, bytes):
         return value
@@ -38,7 +38,7 @@ def force_string(value: typing.Union[str, bytes]) -> str:
         Converted value into string.
 
     Raises:
-        TypeError: value is neither bytes nor string.
+        TypeError: Value is neither bytes nor string.
     """
     if isinstance(value, str):
         return value
@@ -149,7 +149,7 @@ def ordinal(number: int) -> str:
     """Convert an integer into its ordinal representation.
 
     Args:
-        number: integer number to get its ordinal representation.
+        number: Integer number to get its ordinal representation.
 
     Returns:
         The ordinal string representation of the number as the number + ordinal suffix.

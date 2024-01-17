@@ -126,10 +126,10 @@ Find more [details](https://blake2signer.hackan.net/en/stable/details) and [exam
 This module provides three signer classes:
 
 * **Blake2SerializerSigner**: a signer class that handles data serialization, compression and encoding along with salted signing and salted timestamped signing. Its public methods are `dumps`, `loads`, `dumps_parts` and `loads_parts`, and `dump` and `load` for files.
-* **Blake2Signer**: a signer class that simply salts, signs and verifies signed data as bytes or string. Its public methods are `sign`, `unsign`, `sign_parts` and `unsign_parts`.
-* **Blake2TimestampSigner**: a signer class that simply salts, signs and verifies signed timestamped data as bytes or string. Its public methods are `sign`, `unsign`, `sign_parts` and `unsign_parts`.
+* **Blake2Signer**: a signer class that signs plain `bytes` or `str` data. Its public methods are `sign`, `unsign`, `sign_parts` and `unsign_parts`.
+* **Blake2TimestampSigner**: a signer class that timestamp signs plain `bytes` or `str` data. Its public methods are `sign`, `unsign`, `sign_parts` and `unsign_parts`.
 
-**You should generally go for Blake2SerializerSigner**, given that it's the most versatile of the three, unless you need to deal with plain bytes or string. Check [details about signers](https://blake2signer.hackan.net/en/stable/details) and [usage examples](https://blake2signer.hackan.net/en/stable/examples) to learn more.
+**You should generally go for Blake2SerializerSigner**, given that it's the most versatile of the three, unless you need to deal with plain `bytes` or strings. Check [details about signers](https://blake2signer.hackan.net/en/stable/details) and [usage examples](https://blake2signer.hackan.net/en/stable/examples) to learn more.
 
 ## Documentation
 

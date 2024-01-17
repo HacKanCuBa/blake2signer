@@ -97,7 +97,7 @@ class Base(Mixin, ABC):
                 derived using BLAKE to ensure it fits the hasher limits, so it
                 has no practical size limit. It defaults to the class name.
             digest_size (optional): Size of output signature (digest) in bytes
-                (default to 16 bytes). The minimum size is enforced to 16 bytes.
+                (defaults to 16 bytes). The minimum size is enforced to 16 bytes.
             hasher (optional): Hash function to use: blake2b (default), blake2s
                 or blake3.
             deterministic (optional): Define if signatures are deterministic or
@@ -163,7 +163,7 @@ class Base(Mixin, ABC):
                 A secret value as bytes.
 
             Raises:
-                InvalidOptionError: the secret in given position is invalid.
+                InvalidOptionError: The secret in given position is invalid.
             """
             coerced = self._force_bytes(secret_)
             if len(coerced) < self.MIN_SECRET_SIZE:
@@ -223,7 +223,7 @@ class Base(Mixin, ABC):
         """Validate the hasher choice.
 
         Args:
-            hasher: the hasher choice to validate.
+            hasher: The hasher choice to validate.
 
         Returns:
             A validated hasher choice as HasherChoice.
@@ -313,7 +313,7 @@ class Blake2SignerBase(EncoderMixin, Base, ABC):
                 derived using BLAKE to ensure it fits the hasher limits, so it
                 has no practical size limit. It defaults to the class name.
             digest_size (optional): Size of output signature (digest) in bytes
-                (default to 16 bytes). The minimum size is enforced to 16 bytes.
+                (defaults to 16 bytes). The minimum size is enforced to 16 bytes.
             hasher (optional): Hash function to use: blake2b (default), blake2s
                 or blake3.
             deterministic (optional): Define if signatures are deterministic or
@@ -372,7 +372,7 @@ class Blake2SignerBase(EncoderMixin, Base, ABC):
 
         Returns:
             A pseudorandom salt for the signature if non-deterministic, otherwise an
-            empty bytes string.
+            empty bytes value.
         """
         if self._deterministic:
             return b''
@@ -402,7 +402,7 @@ class Blake2SignerBase(EncoderMixin, Base, ABC):
         """Decompose a signed data stream into its parts.
 
         Args:
-            signed_data: the signed data stream to decompose.
+            signed_data: The signed data stream to decompose.
 
         Returns:
             The decomposed signed data in a container.
@@ -434,9 +434,9 @@ class Blake2SignerBase(EncoderMixin, Base, ABC):
         The signature is encoded using the chosen encoder.
 
         Keyword Args:
-            data: data to sign.
-            salt: salt to use in the signature.
-            key: the signing key.
+            data: Data to sign.
+            salt: Salt to use in the signature.
+            key: The signing key.
 
         Returns:
             An encoded signature.
@@ -451,7 +451,7 @@ class Blake2SignerBase(EncoderMixin, Base, ABC):
         The signature stream (salt and signature) is encoded using the chosen encoder.
 
         Args:
-            data: data to sign.
+            data: Data to sign.
 
         Returns:
             A signature stream containing salt and signature.
@@ -501,7 +501,7 @@ class Blake2TimestampSignerBase(Blake2SignerBase, ABC):
         """Decode an encoded timestamp whose signature should have been validated.
 
         Args:
-            encoded_timestamp: encoded timestamp to decode.
+            encoded_timestamp: Encoded timestamp to decode.
 
         Returns:
             An integer timestamp.
@@ -519,7 +519,7 @@ class Blake2TimestampSignerBase(Blake2SignerBase, ABC):
         """Decompose data + timestamp value.
 
         Args:
-            timestamped_data: composed data with timestamp to decompose.
+            timestamped_data: Composed data with timestamp to decompose.
 
         Returns:
             A container with data and timestamp.
@@ -555,7 +555,7 @@ class Blake2TimestampSignerBase(Blake2SignerBase, ABC):
         encoded using the chosen encoder.
 
         Args:
-            data: data to sign.
+            data: Data to sign.
 
         Returns:
             A signature stream composed of salt, signature and timestamp.
@@ -656,7 +656,7 @@ class Blake2DualSignerBase(Blake2TimestampSignerBase, ABC):
                 derived using BLAKE to ensure it fits the hasher limits, so it
                 has no practical size limit. It defaults to the class name.
             digest_size (optional): Size of output signature (digest) in bytes
-                (default to 16 bytes). The minimum size is enforced to 16 bytes.
+                (defaults to 16 bytes). The minimum size is enforced to 16 bytes.
             hasher (optional): Hash function to use: blake2b (default), blake2s
                 or blake3.
             deterministic (optional): Define if signatures are deterministic or
@@ -698,7 +698,7 @@ class Blake2DualSignerBase(Blake2TimestampSignerBase, ABC):
         the chosen encoder.
 
         Args:
-            data: data to sign.
+            data: Data to sign.
 
         Returns:
             A signature stream of the salt, signature, and timestamp, if corresponds.
@@ -712,7 +712,7 @@ class Blake2DualSignerBase(Blake2TimestampSignerBase, ABC):
         """Unsign signed data properly with the corresponding signer.
 
         Args:
-            parts: signed data parts to unsign.
+            parts: Signed data parts to unsign.
 
         Returns:
             Original data.
@@ -790,7 +790,7 @@ class Blake2SerializerSignerBase(Blake2DualSignerBase, ABC):
         """Read data from a file.
 
         Args:
-            file: file to read data from.
+            file: Source file for reading data.
 
         Returns:
             File contents.
@@ -807,8 +807,8 @@ class Blake2SerializerSignerBase(Blake2DualSignerBase, ABC):
         """Write data to file.
 
         Args:
-            file: file to write data to.
-            data: data to write to the file.
+            file: Destination file for writing data.
+            data: Data to write to the file.
 
         Notes:
             The file can be either in text or binary mode, therefore, given data

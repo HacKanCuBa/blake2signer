@@ -94,7 +94,7 @@ Finally, the following commands must succeed locally:
 * `inv tests`: run the tests' battery.
 * `inv safety`: run a security analysis over dependencies using `safety`.
 
-You can alternatively run `inv commit` (or `inv ci`) to run all the above, and commit no afterward.
+You can alternatively run `inv commit` (or `inv ci`) to run all the above, and commit afterward.
 
 If the linter complains about *code too complex*, run `inv cc -c` (or the long expression `inv cyclomatic-complexity --complex`) for more information.
 

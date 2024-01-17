@@ -280,7 +280,7 @@ Following is the performance comparison of this lib against [It's Dangerous](htt
 
 Regarding **itsdangerous** (2.0.1), I found this lib to be *marginally faster* when compared to it using blake2b, *somewhat faster* regarding sha256, 384 and 512 and *slower* regarding sha1.
 
-Regarding **django** (4.0), I found this lib to be *quite faster* when compared to it using blake2b, sha256, sha384 and sha512 and *slower* regarding sha1. Note that its Signer doesn't handle arbitrary bytes well (it breaks raising `BadSignature` if you use `data_b` below, so it needs `data_s`).
+Regarding **django** (4.0), I found this lib to be *quite faster* when compared to it using blake2b, sha256, sha384 and sha512 and *slower* regarding sha1. Note that its Signer doesn't handle arbitrary `bytes` well (it breaks raising `BadSignature` if you use `data_b` below, so it needs `data_s`).
 
 Regarding **pyjwt** (2.3.0), I found this lib to be *quite faster* when compared to it using blake2b (hack) and sha256 (hs256).
 

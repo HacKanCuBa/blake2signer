@@ -85,7 +85,7 @@ class CompressorInterface(ABC):
             Correct compression level for the compressor.
 
         Raises:
-            CompressionError: the compression level is out of bounds.
+            CompressionError: The compression level is out of bounds.
         """
         if level is None:
             return self.default_compression_level

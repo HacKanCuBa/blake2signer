@@ -99,7 +99,7 @@ class SerializerMixin(Mixin, ABC):
         """Serialize given data.  Additional kwargs are passed to the serializer.
 
         Args:
-            data: data to serialize.
+            data: Data to serialize.
 
         Keyword Args:
             **kwargs: Additional keyword only arguments for the serializer.
@@ -119,7 +119,7 @@ class SerializerMixin(Mixin, ABC):
         """Unserialize given data.
 
         Args:
-            data: serialized data to unserialize.
+            data: Serialized data to unserialize.
 
         Returns:
             Original data.
@@ -160,7 +160,7 @@ class CompressorMixin(Mixin, ABC):
                 It must not belong to the encoder alphabet and be ASCII (defaults
                 to ".").
             compression_ratio (optional): Desired minimal compression ratio, between
-                0 and below 100 (default to 5). It is used to calculate when
+                0 and below 100 (defaults to 5). It is used to calculate when
                 to consider a payload sufficiently compressed to detect detrimental
                 compression. By default, if compression achieves less than 5% of
                 size reduction, it is considered detrimental.
@@ -181,13 +181,13 @@ class CompressorMixin(Mixin, ABC):
         """Validate the compression flag value and return it clean.
 
         Args:
-            flag: compression flag to validate.
+            flag: Compression flag to validate.
 
         Returns:
             Validated compression flag as bytes.
 
         Raises:
-            InvalidOptionError: the compression flag is not valid.
+            InvalidOptionError: The compression flag is not valid.
         """
         if not flag:
             raise InvalidOptionError('the compression flag character must have a value')
@@ -202,13 +202,13 @@ class CompressorMixin(Mixin, ABC):
         """Validate the compression ratio value and return it clean.
 
         Args:
-            ratio: compression ratio to validate.
+            ratio: Compression ratio to validate.
 
         Returns:
             Validated compression ratio as float.
 
         Raises:
-            InvalidOptionError: the compression ratio is out of bounds.
+            InvalidOptionError: The compression ratio is out of bounds.
         """
         if 0.0 <= ratio < 100.0:
             return float(ratio)
@@ -298,7 +298,7 @@ class CompressorMixin(Mixin, ABC):
         """Decompress given data.
 
         Args:
-            data: compressed data to decompress.
+            data: Compressed data to decompress.
 
         Returns:
              Original data.
@@ -348,13 +348,13 @@ class EncoderMixin(Mixin, ABC):
         """Validate the encoder characteristics and return it clean.
 
         Args:
-            encoder_class: encoder class to validate.
+            encoder_class: Encoder class to validate.
 
         Returns:
             Validated encoder instance.
 
         Raises:
-            InvalidOptionError: the encoder alphabet is empty or is not ASCII.
+            InvalidOptionError: The encoder alphabet is empty or is not ASCII.
         """
         encoder = encoder_class()
 
@@ -370,7 +370,7 @@ class EncoderMixin(Mixin, ABC):
         """Encode given data.
 
         Args:
-            data: data to encode.
+            data: Data to encode.
 
         Returns:
             Encoded data.
@@ -387,7 +387,7 @@ class EncoderMixin(Mixin, ABC):
         """Decode given encoded data.
 
         Args:
-            data: encoded data to decode.
+            data: Encoded data to decode.
 
         Returns:
             Original data.

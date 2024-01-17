@@ -414,7 +414,7 @@ class Blake2SerializerSigner(
                 derived using BLAKE to ensure it fits the hasher limits, so it
                 has no practical size limit. It defaults to the class name.
             digest_size (optional): Size of output signature (digest) in bytes
-                (default to 16 bytes). The minimum size is enforced to 16 bytes.
+                (defaults to 16 bytes). The minimum size is enforced to 16 bytes.
             hasher (optional): Hash function to use: blake2b (default), blake2s
                 or blake3.
             deterministic (optional): Define if signatures are deterministic or
@@ -438,7 +438,7 @@ class Blake2SerializerSigner(
                 It must not belong to the encoder alphabet and be ASCII (defaults
                 to ".").
             compression_ratio (optional): Desired minimal compression ratio, between
-                0 and below 100 (default to 5). It is used to calculate when
+                0 and below 100 (defaults to 5). It is used to calculate when
                 to consider a payload sufficiently compressed to detect detrimental
                 compression. By default, if compression achieves less than 5% of
                 size reduction, it is considered detrimental.

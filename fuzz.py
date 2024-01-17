@@ -182,7 +182,7 @@ def fuzz_blake2signer(buf: bytes) -> None:  # pragma: nocover
     """Fuzz Blake2Signer to search for vulnerabilities.
 
     Raises:
-        ValueError: unsigned data doesn't match original data.
+        ValueError: Unsigned data doesn't match original data.
     """
     hasher: HasherChoice  # PyCharm wrongly thinks that `hasher` is a string...
     for hasher in HasherChoice:
@@ -200,7 +200,7 @@ def fuzz_blake2timestampsigner(buf: bytes) -> None:  # pragma: nocover
     """Fuzz Blake2TimestampSigner to search for vulnerabilities.
 
     Raises:
-        ValueError: unsigned data doesn't match original data.
+        ValueError: Unsigned data doesn't match original data.
     """
     hasher: HasherChoice  # PyCharm wrongly thinks that `hasher` is a string...
     for hasher in HasherChoice:
@@ -226,7 +226,7 @@ def fuzz_blake2serializersigner(buf: bytes) -> None:  # noqa: C901  # pragma: no
     """Fuzz Blake2SerializerSigner to search for vulnerabilities.
 
     Raises:
-        ValueError: unsigned data doesn't match original data.
+        ValueError: Unsigned data doesn't match original data.
     """
     hasher: HasherChoice  # PyCharm wrongly thinks that `hasher` is a string...
     for hasher in HasherChoice:

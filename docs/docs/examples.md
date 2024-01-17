@@ -182,8 +182,8 @@ You can quickly get any python object serialized and signed using [`Blake2Serial
     Does it match original data? True
     ```
 
-!!! tip "Favor bytes over string"
-    Even though [`Blake2SerializerSigner`](signers.md#blake2signer.signers.Blake2SerializerSigner) accepts parameters as string (`secret`, `personalisation`, `separator` and `compression_flag`) you should use bytes instead: it will try to convert any given string to bytes **assuming it's UTF-8 encoded** which might not be correct (an [`errors.ConversionError`](errors.md#blake2signer.errors.ConversionError) exception is raised); if you are certain that the string given is UTF-8 then it's OK, otherwise ensure encoding the string correctly and using bytes instead.
+!!! tip "Favor bytes over strings"
+    Even though [`Blake2SerializerSigner`](signers.md#blake2signer.signers.Blake2SerializerSigner) accepts parameters as strings (`secret`, `personalisation`, `separator` and `compression_flag`) you should use bytes instead: it will try to convert any given `str` to `bytes` **assuming it's UTF-8 encoded** which might not be correct (an [`errors.ConversionError`](errors.md#blake2signer.errors.ConversionError) exception is raised); if you are certain that the string given is UTF-8 then it's OK, otherwise ensure encoding the string correctly and using `bytes` instead.
 
 ### Using non-serializer signers
 
@@ -244,7 +244,7 @@ You may not want all that [`Blake2SerializerSigner`](signers.md#blake2signer.sig
 
 ### Changing the serializer
 
-There are two [serializers provided by this package](details.md#encoders-serializers-and-compressors): a JSON serializer (default) and a Null serializer, which is useful to [deal with bytes using `Blake2SerializerSigner`](#using-the-nullserializer).
+There are two [serializers provided by this package](details.md#encoders-serializers-and-compressors): a JSON serializer (default) and a Null serializer, which is useful to [deal with `bytes` using `Blake2SerializerSigner`](#using-the-nullserializer).
 
 === "Source"
 
@@ -425,7 +425,7 @@ You can use a custom JSON encoder to serialize values that are not supported by 
         ```
 
 !!! warning
-    Using a custom JSON encoder to deal with data that is pure bytes is a bad idea performance-wise. You should prefer using the [`NullSerializer`](#using-the-nullserializer) or [other signers](#signing-raw-bytes-or-strings) instead.
+    Using a custom JSON encoder to deal with data that is pure `bytes` is a bad idea performance-wise. You should prefer using the [`NullSerializer`](#using-the-nullserializer) or [other signers](#signing-raw-bytes-or-strings) instead.
 
 ### Using a custom serializer
 
@@ -961,23 +961,23 @@ Sometimes you don't have to deal with a complex data structure and all you need 
     Does it match original data? True
     ```
 
-!!! tip "Favor bytes over string"
-    Even though both [`Blake2Signer`](signers.md#blake2signer.signers.Blake2Signer) and [`Blake2TimestampSigner`](signers.md#blake2signer.signers.Blake2TimestampSigner) accepts data and parameters (`secret`, `personalisation` and `separator`) as string you should use bytes instead: both classes will try to convert any given string to bytes **assuming it's UTF-8 encoded** which might not be correct (an [`errors.ConversionError`](errors.md#blake2signer.errors.ConversionError) exception is raised); if you are certain that the string given is UTF-8 then it's OK, otherwise ensure encoding the string correctly and using bytes instead. Additionally, when *unsigned*, the data type will be bytes and not string (again, you can convert it if you know the encoding).
+!!! tip "Favor bytes over strings"
+    Even though both [`Blake2Signer`](signers.md#blake2signer.signers.Blake2Signer) and [`Blake2TimestampSigner`](signers.md#blake2signer.signers.Blake2TimestampSigner) accepts data and parameters (`secret`, `personalisation` and `separator`) as `str` you should use `bytes` instead: both classes will try to convert any given `str` to `bytes` **assuming it's UTF-8 encoded** which might not be correct (an [`errors.ConversionError`](errors.md#blake2signer.errors.ConversionError) exception is raised); if you are certain that the string given is UTF-8 then it's OK, otherwise ensure encoding the string correctly and using `bytes` instead. Additionally, when *unsigned*, the data type will be `bytes` and not `str` (again, you can convert it if you know the encoding).
 
 ### I need to work with raw bytes, but I want compression and encoding
 
-Usually to work with bytes or string one can choose to use either [`Blake2Signer`](signers.md#blake2signer.signers.Blake2Signer) or [`Blake2TimestampSigner`](signers.md#blake2signer.signers.Blake2TimestampSigner). However, if you also want to have compression and encoding, you need [`Blake2SerializerSigner`](signers.md#blake2signer.signers.Blake2SerializerSigner). The problem now is that JSON doesn't support bytes, so the class as-is won't work. There are a couple of solutions:
+Usually to work with bytes or strings one can choose to use either [`Blake2Signer`](signers.md#blake2signer.signers.Blake2Signer) or [`Blake2TimestampSigner`](signers.md#blake2signer.signers.Blake2TimestampSigner). However, if you also want to have compression and encoding, you need [`Blake2SerializerSigner`](signers.md#blake2signer.signers.Blake2SerializerSigner). The problem now is that JSON doesn't support `bytes`, so the class as-is won't work. There are a couple of solutions:
 
 1. Use the [`NullSerializer`](serializers.md#blake2signer.serializers.NullSerializer) from the [`serializers`](serializers.md) submodule with [`Blake2SerializerSigner`](signers.md#blake2signer.signers.Blake2SerializerSigner) ([see example](#using-the-nullserializer) below).
-1. Create a custom JSON encoder that encodes bytes ([see example](#using-a-custom-json-encoder) above).
-1. Use the `MsgpackSerializer` given that *msgpack* does handle bytes serialization ([see example](#using-a-custom-serializer) above).
+1. Create a custom JSON encoder that encodes `bytes` ([see example](#using-a-custom-json-encoder) above).
+1. Use the `MsgpackSerializer` given that *msgpack* does handle `bytes` serialization ([see example](#using-a-custom-serializer) above).
 1. Create a custom class inheriting from [`CompressorMixin`](mixins.md#blake2signer.mixins.CompressorMixin) and [`Blake2SerializerSignerBase`](bases.md#blake2signer.bases.Blake2SerializerSignerBase) - which already contains [`EncoderMixin`](mixins.md#blake2signer.mixins.EncoderMixin) - ([see example](#creating-a-custom-serializersigner-class) below).
 
 #### Using the NullSerializer
 
 !!! info "New in v2.0.0"
 
-The [`NullSerializer`](serializers.md#blake2signer.serializers.NullSerializer) is useful when one needs to deal with bytes but want compression and encoding capabilities. Otherwise [`Blake2Signer`](signers.md#blake2signer.signers.Blake2Signer) or [`Blake2TimestampSigner`](signers.md#blake2signer.signers.Blake2TimestampSigner) should be preferred.
+The [`NullSerializer`](serializers.md#blake2signer.serializers.NullSerializer) is useful when one needs to deal with `bytes` but want compression and encoding capabilities. Otherwise [`Blake2Signer`](signers.md#blake2signer.signers.Blake2Signer) or [`Blake2TimestampSigner`](signers.md#blake2signer.signers.Blake2TimestampSigner) should be preferred.
 
 !!! warning
     Only a `bytes` input, or at most a `str` one, can be used with this serializer.
@@ -1096,13 +1096,13 @@ You can limit the lifetime of the signature with both [`Blake2SerializerSigner`]
     ```
 
 !!! tip
-    Sice v2.0.0, the [`ExpiredSignatureError`](errors.md#blake2signer.errors.ExpiredSignatureError) exception contains the signature timestamp as an aware datetime object (in UTC) in case you need that information to display something meaningful to the user, and from v2.5.0, it also contains the _valid_ unsigned data, which you can safely access (yet considering that it hasn't passed the timestamp check!). If the exception is raised by a serializer signer, you need to unserialize/uncompress/undecode it using the method [`data_from_exc`](signers.md#blake2signer.signers.Blake2SerializerSigner.data_from_exc). Read on for [details](details.md#exceptions).
+    From v2.0.0, the [`ExpiredSignatureError`](errors.md#blake2signer.errors.ExpiredSignatureError) exception contains the signature timestamp as an aware datetime object (in UTC) in case you need that information to display something meaningful to the user, and from v2.5.0, it also contains the _valid_ unsigned data, which you can safely access (yet considering that it hasn't passed the timestamp check!). If the exception is raised by a serializer signer, you need to unserialize/uncompress/undecode it using the method [`data_from_exc`](signers.md#blake2signer.signers.Blake2SerializerSigner.data_from_exc). Read on for [details](details.md#exceptions).
 
 ### Choosing when to check the timestamp
 
 !!! info "New in v2.4.0"
 
-Sometimes it can be useful to make certain data expire, but there are situations that require us to get that data as if it would never expire.
+Sometimes it can be useful to make certain data expire, but there are situations that require us to get that data as if it had never expired.
 
 !!! success inline end "Signatures are always checked"
 
@@ -1342,7 +1342,7 @@ There are some situations were you need to transmit data and signature through d
     ```
 
 !!! note
-    Signature containers [`Blake2Signature`](bases.md#blake2signer.bases.Blake2Signature) and [`Blake2SignatureDump`](bases.md#blake2signer.bases.Blake2SignatureDump) are equivalent, but the first one contains only bytes whereas the second one, only string.
+    Signature containers [`Blake2Signature`](bases.md#blake2signer.bases.Blake2Signature) and [`Blake2SignatureDump`](bases.md#blake2signer.bases.Blake2SignatureDump) are equivalent, but the first one contains only `bytes` whereas the second one, only `str`.
 
 ## Generating deterministic signatures
 

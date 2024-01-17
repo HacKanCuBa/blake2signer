@@ -375,7 +375,7 @@ def generate_trusted_comment_parts(  # noqa: R701
     pubkey: str,
     email: str,
 ) -> typing.List[typing.Tuple[str, str]]:
-    """Generate a trusted comment parts for a minisign signature."""
+    """Generate trusted comment parts for a minisign signature."""
     if not timestamp:
         timestamp = int(datetime.now(timezone.utc).timestamp())
 

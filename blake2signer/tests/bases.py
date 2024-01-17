@@ -215,7 +215,7 @@ class BaseTests(ABC):
 
         Args:
             signer: The signer to use.
-            data: data to be signed.
+            data: Data to be signed.
 
         Returns:
             Signed data, like `signer.sign(data)`, but bypassing checks if any.

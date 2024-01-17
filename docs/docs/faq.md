@@ -26,7 +26,7 @@ No, not yet. I'm [looking for it](security.md#external-security-review).
 
 ## Can I sign an email or stuff like that like with PGP?
 
-No, you can't. These package and others like this one deal with symmetric keys and a signing mechanism known as [HMAC](https://en.wikipedia.org/wiki/HMAC). What you are looking for is a signer that deals with asymmetric keys such as [GnuPG](https://www.gnupg.org) or [minisign](https://jedisct1.github.io/minisign).
+No, you can't. This package and others like this one deal with symmetric keys and a signing mechanism known as [HMAC](https://en.wikipedia.org/wiki/HMAC). What you are looking for is a signer that deals with asymmetric keys such as [GnuPG](https://www.gnupg.org) or [minisign](https://jedisct1.github.io/minisign).
 
 ## Where can I discuss about implementation details, usage, etc.?
 

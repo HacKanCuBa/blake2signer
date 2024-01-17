@@ -71,7 +71,7 @@ class BLAKEHasher(ABC):
         """Validate the digest_size value and return it clean.
 
         Args:
-            digest_size: digest size to validate.
+            digest_size: Digest size to validate.
 
         Returns:
             Validated digest size.

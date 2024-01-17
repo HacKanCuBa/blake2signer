@@ -7,10 +7,10 @@ Some details and general information about the signers in this lib.
 This module provides three signer classes:
 
 * [**Blake2SerializerSigner**](signers.md#blake2signer.signers.Blake2SerializerSigner): a signer class that handles data serialization, compression and encoding along with salted signing and salted timestamped signing. Its public methods are `dumps`, `loads`, `dumps_parts` and `loads_parts`, and `dump` and `load` for files.
-* [**Blake2Signer**](signers.md#blake2signer.signers.Blake2Signer): a signer class that simply salts, signs and verifies signed data as bytes or string. Its public methods are `sign`, `unsign`, `sign_parts` and `unsign_parts`.
-* [**Blake2TimestampSigner**](signers.md#blake2signer.signers.Blake2TimestampSigner): a signer class that simply salts, signs and verifies signed timestamped data as bytes or string. Its public methods are `sign`, `unsign`, `sign_parts` and `unsign_parts`.
+* [**Blake2Signer**](signers.md#blake2signer.signers.Blake2Signer): a signer class that signs plain `bytes` or `str` data. Its public methods are `sign`, `unsign`, `sign_parts` and `unsign_parts`.
+* [**Blake2TimestampSigner**](signers.md#blake2signer.signers.Blake2TimestampSigner): a signer class that timestamp signs plain `bytes` or `str` data. Its public methods are `sign`, `unsign`, `sign_parts` and `unsign_parts`.
 
-**You should generally go for [Blake2SerializerSigner](signers.md#blake2signer.signers.Blake2SerializerSigner)**, given that it's the most versatile of the three, unless you need to deal with plain bytes or string.
+**You should generally go for [Blake2SerializerSigner](signers.md#blake2signer.signers.Blake2SerializerSigner)**, given that it's the most versatile of the three, unless you need to deal with plain bytes or strings.
 
 !!! tip
     [Serializing with JSON has a cost](performance.md#choosing-the-right-signer), even for small payloads (at least twice as much time as not serializing); so think about what you need to sign to pick the right signer. Also, note that [you can change the serializer](examples.md#using-a-custom-serializer) for better performance.
@@ -23,7 +23,7 @@ All [signers](signers.md) share the following instantiation parameters:
 * `personalisation`: Personalisation string (which will be derived using BLAKE) to force the hash function to produce different digests for the same input (no size limit).
 * `digest_size`: Size of output signature (digest) in bytes (from v2.0.0 it defaults to 16, which is the minimum size allowed).
 * `hasher`: Hash function to use, `blake2b` (default), `blake2s`, or from v2.2.0, `blake3`; the first one is optimized for 64b platforms; the second, for 8-32b platforms (read more about them in their [official site](https://blake2.net/)) and the third, for any platform (read more in the [official site](https://github.com/BLAKE3-team/BLAKE3-specs)).
-* `deterministic`: (New in v1.2.0) Define if signatures are deterministic or non-deterministic (default). Non-deterministic sigs are preferred, and achieved through the use of a random salt (it can't be changed or set). For deterministic sigs, no salt is used: this means that the result is idempotent, so for the same payload, the same sig is obtained (the advantage is that the sig is shorter, and producing it is faster).
+* `deterministic`: (New in v1.2.0) Define if signatures are deterministic or non-deterministic (default). Non-deterministic sigs are preferred, and achieved through the use of a random salt (it can't be changed or set). For deterministic ones, no salt is used: this means that the result is idempotent, so for the same payload, the same sig is obtained (the advantage is that the sig is shorter, and producing it is faster).
 * `separator`: (New in v2.0.0) Character to separate the signature, the timestamp and the payload. It must not belong to the encoder alphabet and be ASCII (defaults to `.`).
 * `encoder`: (New in v2.0.0) Encoder class to use (defaults to a Base64 URL safe encoder). Note that `Blake2Signer` and `Blake2TimestampSigner` only encodes the signature, whereas `Blake2SerializerSigner` encodes everything.
 
@@ -213,7 +213,7 @@ The encoding doesn't matter, the secret value is used as-is, and derived to obta
 ### Secret rotation
 
 !!! info "New in v2.3.0"
-    The `secret` parameter can be bytes, string or any sequence of them (list, tuple, etc.).
+    The `secret` parameter can be bytes, strings or any sequence of them (list, tuple, etc.).
 
 From v2.3.0, `secret` can also be a sequence of secrets instead of a single one to support _secret rotation_, considering them ordered from oldest to newest, so that signatures are made with the newest secret but verifications are done using all of them.  Every secret must comply with the restrictions enforced as a single secret does.
 
@@ -284,7 +284,7 @@ Signers support changing the encoder class (from v2.0.0) and [*Blake2SerializerS
     * Hex/Base16 encoder: uses only numbers, and the uppercase English alphabet letters from A to F.
 * Serializers
     * JSON serializer: serializes most Python basic types into a string in [JSON](https://www.json.org/json-en.html).
-    * Null serializer: doesn't serialize, but otherwise converts given input to bytes.
+    * Null serializer: doesn't serialize, but otherwise converts given input to `bytes`.
 * Compressors
     * Zlib compressor: compresses using [ZLib](https://zlib.net/).
     * Gzip compressor: compresses using [GZip](https://www.gzip.org/).
@@ -357,6 +357,6 @@ It is important to note that if said exception is raised by a serializer signer,
         Does it match original data? True
         ```
 
-This can be used to act upon such an event, like informing of something to a user. Again, do note that the signature is expired!.
+This can be used to act upon such an event, like informing something to a user. Again, do note that the signature is expired!.
 
 Check the [limiting signature lifetime](examples.md#limiting-signature-lifetime) and [the ExpiredSignatureError exception](examples.md#the-expired-signature-exception) examples.
