@@ -646,12 +646,59 @@ def check(_: Context) -> None:
     aliases=['tag'],
     help={
         'tag': 'git tag to create',
-        'sign': 'sign the tag with minisign',
+        'sign': 'sign the tag, and the archives if any, with minisign',
+        'archives': 'create zip and tar.gz archives',
     },
 )
-def create_tag(ctx: Context, tag: str, sign: bool = False) -> None:
+def create_tag(ctx: Context, tag: str, sign: bool = False, archives: bool = False) -> None:
     """Create an annotated git tag, optionally signing it with minisign."""
     ctx.run(f'git tag -a {tag}', pty=True)
 
     if sign:
         sign_tag(ctx, tag)
+
+    if archives:
+        create_archives(ctx, tag, sign)
+
+
+@task(
+    aliases=['archive'],
+    help={
+        'tag': 'git tag as archives source',
+        'sign': 'sign the archives with minisign',
+    },
+)
+def create_archives(ctx: Context, tag: str, sign: bool = False) -> None:
+    """Create zip and tar.gz archives for given tag, optionally signing them with minisign."""
+
+    def get_create_archive_command(fmt_: typing.Literal['zip', 'tar.gz'], /) -> str:
+        """Get the command to create the archive for the given format."""
+        if fmt_ == 'zip':
+            return (
+                f'git archive --format zip --prefix "{prefix}/" --output "{prefix}.zip" '
+                + f'-- "{tag}"'
+            )
+
+        # For some reason, instead of using --format tar.gz, Gitlab does the following:
+        # (see https://gitlab.com/gitlab-org/gitlab_git/-/
+        # blob/5dba9a33e5319a366d01b4f5b71e6b017095391b/lib/gitlab_git/repository.rb#L1110-1146)
+        return (
+            f'git archive --format tar --prefix "{prefix}/" -- "{tag}" '
+            + f'| gzip --no-name > "{prefix}.tar.gz"'
+        )
+
+    formats: tuple[typing.Literal['zip'], typing.Literal['tar.gz']] = ('zip', 'tar.gz')
+    prefix = f'blake2signer-{tag}'
+
+    for fmt in formats:
+        print('Creating', fmt, 'archive...')
+        ctx.run(
+            get_create_archive_command(typing.cast(typing.Literal['zip', 'tar.gz'], fmt)),
+            env={
+                'TZ': 'UTC',
+            },
+        )
+
+        if sign:
+            print('Signing', fmt, 'archive...')
+            sign_file(ctx, f'{prefix}.{fmt}')
