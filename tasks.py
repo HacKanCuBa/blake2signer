@@ -28,9 +28,9 @@ def flake8(ctx: Context) -> None:
     ctx.run('flake8 --exclude tests blake2signer/', echo=True)
     ctx.run('flake8 --ignore=S101,R701,C901 blake2signer/tests/', echo=True)
     ctx.run('flake8 --ignore=S101,R701,C901 tests/', echo=True)
-    ctx.run('flake8 tasks.py', echo=True)
-    ctx.run('flake8 fuzz.py', echo=True)
-    ctx.run('flake8 --ignore=S101,R701,C901 test_fuzz.py', echo=True)
+    ctx.run('flake8 ./tasks.py', echo=True)
+    ctx.run('flake8 ./fuzz.py', echo=True)
+    ctx.run('flake8 --ignore=S101,R701,C901 ./test_fuzz.py', echo=True)
 
 
 @task
@@ -62,9 +62,9 @@ def bandit(ctx: Context) -> None:
     )
     ctx.run('bandit --confidence --recursive --skip B101 blake2signer/tests/', echo=True)
     ctx.run('bandit --confidence --recursive --skip B101 tests/', echo=True)
-    ctx.run('bandit --confidence --recursive tasks.py', echo=True)
-    ctx.run('bandit --confidence --recursive fuzz.py', echo=True)
-    ctx.run('bandit --confidence --recursive --skip B101 test_fuzz.py', echo=True)
+    ctx.run('bandit --confidence --recursive ./tasks.py', echo=True)
+    ctx.run('bandit --confidence --recursive ./fuzz.py', echo=True)
+    ctx.run('bandit --confidence --recursive --skip B101 ./test_fuzz.py', echo=True)
 
 
 @task
