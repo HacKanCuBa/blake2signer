@@ -192,24 +192,27 @@ def tests(  # noqa: C901,R701
     if not coverage:
         cmd.append('--no-cov')
 
-    cmd0, cmd1, cmd2 = cmd.copy(), cmd.copy(), cmd.copy()
+    commands = cmd.copy(), cmd.copy(), cmd.copy()
 
     if junit_report:
-        cmd0.append('--junitxml=report0.xml')
-        cmd1.append('--junitxml=report1.xml')
-        cmd2.append('--junitxml=report2.xml')
+        commands[0].append('--junitxml=report0.xml')
+        commands[1].append('--junitxml=report1.xml')
+        commands[2].append('--junitxml=report2.xml')
 
     if coverage:
-        cmd1.append('--cov-append')
-        cmd2.extend(('--cov-append', '--cov fuzz'))
+        commands[1].append('--cov-append')
+        commands[2].extend(('--cov-append', '--cov fuzz'))
 
-    cmd0.append('blake2signer')
-    cmd1.append('tests')
-    cmd2.append('test_fuzz.py')
+    commands[0].append('blake2signer')
+    commands[1].append('tests')
+    commands[2].append('test_fuzz.py')
 
-    ctx.run(' '.join(cmd0), pty=True, echo=True)
-    ctx.run(' '.join(cmd1), pty=True, echo=True)
-    ctx.run(' '.join(cmd2), pty=True, echo=True)
+    code = 0
+    for cmd in commands:
+        result = ctx.run(' '.join(cmd), pty=True, echo=True, warn=True)
+        if result is not None:
+            code = code or result.return_code  # We only really care about the first non-zero code
+        print()
 
     if junit_report:
         report0 = JUnitXml().fromfile('report0.xml')
@@ -218,6 +221,9 @@ def tests(  # noqa: C901,R701
         xml = report0 + report1 + report2
         xml.write('report.xml')
         print('JUnit reports merged into report.xml')
+
+    if code:
+        raise Exit(code=code)
 
 
 @task

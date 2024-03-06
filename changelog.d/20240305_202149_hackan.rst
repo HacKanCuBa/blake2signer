@@ -1,0 +1,4 @@
+Changed
+-------
+
+- Fix Invoke tests task cancellation: prevent one test command failure to cancel the execution of the rest, thus still having a `report.xml` file generated, while exiting with the proper error code.
