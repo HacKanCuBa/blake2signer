@@ -1274,6 +1274,15 @@ class TestsBlake2SerializerSignerTimestamp(
 
         return super().signer(secret, **kwargs)
 
+    @staticmethod
+    def get_expired_signature_error_data(
+        exc: errors.ExpiredSignatureError,
+        *,
+        signer: Signer,
+    ) -> typing.Any:
+        """Get expired signature error data."""
+        return signer.data_from_exc(exc)
+
     @pytest.mark.xfail(
         not has_blake3(),
         reason='blake3 is not installed',
@@ -1445,39 +1454,6 @@ class TestsBlake2SerializerSignerTimestamp(
     ) -> None:
         """Test if previous versions' signed data is compatible with the current one."""
         super().test_versions_compat(version, hasher, signed, compat)
-
-    @pytest.mark.xfail(
-        not has_blake3(),
-        reason='blake3 is not installed',
-        raises=errors.MissingDependencyError,
-    )
-    @pytest.mark.parametrize(
-        'hasher',
-        (
-            HasherChoice.blake2b,
-            HasherChoice.blake2s,
-            HasherChoice.blake3,
-        ),
-    )
-    def test_sign_unsign_timestamp_expired(
-        self,
-        hasher: HasherChoice,
-    ) -> None:
-        """Test unsigning with timestamp is correct."""
-        signer = self.signer(self.secret, hasher=hasher)
-        signed = self.sign(signer, self.data)
-
-        self.mock_time.return_value += 10
-        with pytest.raises(
-                errors.ExpiredSignatureError,
-                match='signature has expired',
-        ) as exc:
-            self.unsign(signer, signed)
-
-        assert exc.value.__cause__ is None
-        assert isclose(self.now, exc.value.timestamp.timestamp())
-        assert b'ImRhdGFkYXRhIg' == exc.value.data  # serialized+encoded data
-        assert self.data == signer.data_from_exc(exc.value)
 
     @pytest.mark.xfail(
         not has_blake3(),
