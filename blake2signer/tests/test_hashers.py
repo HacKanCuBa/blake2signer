@@ -116,6 +116,7 @@ class TestsBLAKE2Hasher(BaseTests[BLAKE2Hasher]):
         person = hasher._person  # pylint: disable=W0212
         calls = [mock.call(secret, person=person) for secret in self.secrets]
         mock_derive_key.assert_has_calls(calls)
+        assert len(calls) == mock_derive_key.call_count
 
         # Ensure the hasher gets called properly
         hasher_to_patch = f'blake2signer.hashers.blakehashers.hashlib.{choice.value}'
@@ -132,6 +133,9 @@ class TestsBLAKE2Hasher(BaseTests[BLAKE2Hasher]):
             calls.append(mock.call(secret, digest_size=12, person=b'abc123'))
             calls.append(mock.call().digest())
         mock_hasher.assert_has_calls(calls)
+        expected_call_count = len(calls) // 2
+        assert expected_call_count == mock_hasher.call_count
+        assert expected_call_count == mock_hasher.return_value.digest.call_count
 
     @pytest.mark.parametrize(
         ('choice', 'data', 'salt', 'expected_digest'),
@@ -239,6 +243,7 @@ class TestsBLAKE3Hasher(BaseTests[BLAKE3Hasher]):
         person = hasher._person  # pylint: disable=W0212
         calls = [mock.call(secret, person=person) for secret in self.secrets]
         mock_derive_key.assert_has_calls(calls)
+        assert len(calls) == mock_derive_key.call_count
 
         # Ensure the hasher gets called properly
         with mock.patch('blake2signer.hashers.blakehashers.blake3') as mock_hasher:
@@ -253,6 +258,10 @@ class TestsBLAKE3Hasher(BaseTests[BLAKE3Hasher]):
             calls.append(mock.call().update(self.person))
             calls.append(mock.call().digest(length=16))
         mock_hasher.assert_has_calls(calls)
+        expected_call_count = len(calls) // 3
+        assert expected_call_count == mock_hasher.call_count
+        assert expected_call_count == mock_hasher.return_value.update.call_count
+        assert expected_call_count == mock_hasher.return_value.digest.call_count
 
     @pytest.mark.parametrize(
         ('data', 'salt', 'expected_digest'),
