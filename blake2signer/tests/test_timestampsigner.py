@@ -3,9 +3,8 @@
 
 import typing
 from abc import ABC
-from abc import abstractmethod
 from datetime import timedelta
-from time import time
+from math import isclose
 from unittest import mock
 
 import pytest
@@ -24,29 +23,17 @@ from ..signers import Blake2TimestampSigner
 class TimestampSignerTestsBase(BaseTests, ABC):
     """Base to test a timestamp signer."""
 
-    @pytest.mark.xfail(
-        not has_blake3(),
-        reason='blake3 is not installed',
-        raises=errors.MissingDependencyError,
-    )
-    @pytest.mark.parametrize(
-        'hasher',
-        (
-            HasherChoice.blake2b,
-            HasherChoice.blake2s,
-            HasherChoice.blake3,
-        ),
-    )
-    @mock.patch('blake2signer.bases.time')
-    def test_sign_unsign_deterministic(  # pylint: disable=W0221
-        self,
-        mock_time: mock.MagicMock,
-        hasher: HasherChoice,
-    ) -> None:
-        """Test sign and unsign with a deterministic signature."""
-        mock_time.return_value = time()
+    now = 531810000.0  # Signatures for version compat test were made with this time
+    patch_time = mock.patch('blake2signer.bases.get_current_time', return_value=now)
+    mock_time: mock.MagicMock
 
-        super().test_sign_unsign_deterministic(hasher)
+    def setup_method(self):
+        """Tests set-up."""
+        self.mock_time = self.patch_time.start()
+
+    def teardown_method(self):
+        """Tests teardown."""
+        self.patch_time.stop()
 
     @pytest.mark.xfail(
         not has_blake3(),
@@ -61,99 +48,23 @@ class TimestampSignerTestsBase(BaseTests, ABC):
             HasherChoice.blake3,
         ),
     )
-    @mock.patch('blake2signer.bases.time')
-    def test_sign_unsign_parts_deterministic(  # pylint: disable=W0221
-        self,
-        mock_time: mock.MagicMock,
-        hasher: HasherChoice,
-    ) -> None:
-        """Test signing and unsigning in parts deterministically."""
-        mock_time.return_value = time()
-
-        super().test_sign_unsign_parts_deterministic(hasher)
-
-    @pytest.mark.xfail(
-        not has_blake3(),
-        reason='blake3 is not installed',
-        raises=errors.MissingDependencyError,
-    )
-    @pytest.mark.parametrize(
-        'hasher',
-        (
-            HasherChoice.blake2b,
-            HasherChoice.blake2s,
-            HasherChoice.blake3,
-        ),
-    )
-    @mock.patch('blake2signer.bases.time')
-    def test_sign_is_unique_non_deterministic(  # pylint: disable=W0221
-        self,
-        mock_time: mock.MagicMock,
-        hasher: HasherChoice,
-    ) -> None:
-        """Test that each signing is unique because of salt."""
-        mock_time.return_value = time()
-
-        super().test_sign_is_unique_non_deterministic(hasher)
-
-    @pytest.mark.xfail(
-        not has_blake3(),
-        reason='blake3 is not installed',
-        raises=errors.MissingDependencyError,
-    )
-    @pytest.mark.parametrize(
-        'hasher',
-        (
-            HasherChoice.blake2b,
-            HasherChoice.blake2s,
-            HasherChoice.blake3,
-        ),
-    )
-    @mock.patch('blake2signer.bases.time')
-    def test_sign_parts_is_unique_non_deterministic(  # pylint: disable=W0221
-        self,
-        mock_time: mock.MagicMock,
-        hasher: HasherChoice,
-    ) -> None:
-        """Test that each signing in parts is unique because of salt."""
-        mock_time.return_value = time()
-
-        super().test_sign_parts_is_unique_non_deterministic(hasher)
-
-    @pytest.mark.xfail(
-        not has_blake3(),
-        reason='blake3 is not installed',
-        raises=errors.MissingDependencyError,
-    )
-    @pytest.mark.parametrize(
-        'hasher',
-        (
-            HasherChoice.blake2b,
-            HasherChoice.blake2s,
-            HasherChoice.blake3,
-        ),
-    )
-    @mock.patch('blake2signer.bases.time')
     def test_sign_unsign_timestamp_expired(
         self,
-        mock_time: mock.MagicMock,
         hasher: HasherChoice,
     ) -> None:
         """Test unsigning with timestamp is correct."""
-        timestamp = int(time())
-        mock_time.return_value = timestamp
         signer = self.signer(self.secret, hasher=hasher)
-
         signed = self.sign(signer, self.data)
 
-        mock_time.return_value += 10
+        self.mock_time.return_value += 10
         with pytest.raises(
                 errors.ExpiredSignatureError,
                 match='signature has expired',
         ) as exc:
             self.unsign(signer, signed)
+
         assert exc.value.__cause__ is None
-        assert timestamp == exc.value.timestamp.timestamp()
+        assert isclose(self.now, exc.value.timestamp.timestamp())
         assert self.data == exc.value.data
 
     @pytest.mark.xfail(
@@ -169,26 +80,23 @@ class TimestampSignerTestsBase(BaseTests, ABC):
             HasherChoice.blake3,
         ),
     )
-    @mock.patch('blake2signer.bases.time')
     def test_sign_unsign_timestamp_future(
         self,
-        mock_time: mock.MagicMock,
         hasher: HasherChoice,
     ) -> None:
         """Test signing in the future, then unsigning, causes an exception."""
-        timestamp = int(time())
-        mock_time.return_value = timestamp
         signer = self.signer(hasher=hasher)
         signed = self.sign(signer, self.data)
 
         # Back to the future
-        mock_time.return_value -= 10
+        self.mock_time.return_value -= 10
         with pytest.raises(
                 errors.ExpiredSignatureError,
                 match='< 0 seconds',
         ) as exc:
             self.unsign(signer, signed, max_age=5)
-        assert timestamp == exc.value.timestamp.timestamp()
+
+        assert isclose(self.now, exc.value.timestamp.timestamp())
 
     @pytest.mark.xfail(
         not has_blake3(),
@@ -203,26 +111,23 @@ class TimestampSignerTestsBase(BaseTests, ABC):
             HasherChoice.blake3,
         ),
     )
-    @mock.patch('blake2signer.bases.time')
     def test_sign_unsign_timestamp_in_exc_is_an_aware_datetime(
         self,
-        mock_time: mock.MagicMock,
         hasher: HasherChoice,
     ) -> None:
         """Test that the timestamp in ExpiredSignatureError is an aware datetime."""
-        timestamp = int(time())
-        mock_time.return_value = timestamp
         signer = self.signer(hasher=hasher)
         signed = self.sign(signer, self.data)
 
-        mock_time.return_value += 10
+        self.mock_time.return_value += 10
         with pytest.raises(
                 errors.ExpiredSignatureError,
                 match='signature has expired',
         ) as exc:
             self.unsign(signer, signed, max_age=5)
+
         assert exc.value.__cause__ is None
-        assert timestamp == exc.value.timestamp.timestamp()
+        assert isclose(self.now, exc.value.timestamp.timestamp())
         assert timedelta() == exc.value.timestamp.utcoffset()  # Aware in UTC
 
     @pytest.mark.xfail(
@@ -241,24 +146,27 @@ class TimestampSignerTestsBase(BaseTests, ABC):
     def test_unsign_wrong_data_without_timestamp(self, hasher: HasherChoice) -> None:
         """Test unsign wrong data."""
         signer = self.signer(hasher=hasher)
-
         trick_signed = self.trick_sign(signer, self.data)
+
         with pytest.raises(
                 errors.SignatureError,
                 match='separator not found in timestamped data',
         ) as exc:
             self.unsign(signer, trick_signed)
+
         assert exc.value.__cause__ is None
 
         trick_signed = self.trick_sign(
             signer,
             signer._separator + signer._force_bytes(self.data),  # pylint: disable=W0212
         )
+
         with pytest.raises(
                 errors.SignatureError,
                 match='timestamp information is missing',
         ) as exc:
             self.unsign(signer, trick_signed, max_age=1)
+
         assert exc.value.__cause__ is None
 
     @pytest.mark.xfail(
@@ -277,13 +185,14 @@ class TimestampSignerTestsBase(BaseTests, ABC):
     def test_unsign_wrong_timestamped_data(self, hasher: HasherChoice) -> None:
         """Test unsign wrong timestamped data."""
         signer = self.signer(hasher=hasher)
-
         trick_signed = self.trick_sign(
             signer,
             b'-' + signer._separator + signer._force_bytes(self.data),  # pylint: disable=W0212
         )
+
         with pytest.raises(errors.DecodeError, match='can not be decoded') as exc:
             self.unsign(signer, trick_signed)
+
         assert exc.value.__cause__ is not None
 
     @pytest.mark.xfail(
@@ -299,20 +208,18 @@ class TimestampSignerTestsBase(BaseTests, ABC):
             HasherChoice.blake3,
         ),
     )
-    @mock.patch('blake2signer.bases.time')
     def test_sign_timestamp_overflow(
         self,
-        mock_time: mock.MagicMock,
         hasher: HasherChoice,
     ) -> None:
         """Test signing with timestamp after 2106 which causes an integer overflow.
 
         With four unsigned bytes, we can represent up to 2106-02-07 3:28:15.
         """
-        mock_time.return_value = int.from_bytes(b'\xff' * 4, 'big', signed=False) + 1
+        self.mock_time.return_value = int.from_bytes(b'\xff' * 4, 'big') + 1
         signer = self.signer(hasher=hasher)
 
-        with pytest.raises(RuntimeError):
+        with pytest.raises(RuntimeError, match='can not represent this timestamp in bytes'):
             self.sign(signer, self.data)
 
     def test_sign_unsign_with_different_signer(self) -> None:
@@ -327,20 +234,6 @@ class TimestampSignerTestsBase(BaseTests, ABC):
         signed2 = signer2.sign(self.data)
         with pytest.raises(errors.InvalidSignatureError):
             self.unsign(signer1, signed2)
-
-    @abstractmethod
-    def test_versions_compat(
-        self,
-        version: str,
-        hasher: HasherChoice,
-        signed: str,
-        compat: bool,
-    ) -> None:
-        """Test if previous versions' signed data is compatible with the current one."""
-        timestamp: int = 531810000  # Signatures were made w/ this timestamp, too.
-
-        with mock.patch('blake2signer.bases.time', return_value=timestamp):
-            super().test_versions_compat(version, hasher, signed, compat)
 
 
 class TestsBlake2TimestampSigner(TimestampSignerTestsBase, TestsBlake2Signer):
@@ -388,26 +281,22 @@ class TestsBlake2TimestampSigner(TimestampSignerTestsBase, TestsBlake2Signer):
         'max_age',
         (2, 2.5, timedelta(hours=2)),
     )
-    @mock.patch('blake2signer.bases.time')
     def test_max_age_can_be_changed(
         self,
-        mock_time: mock.MagicMock,
         max_age: typing.Union[int, float, timedelta],
         hasher: HasherChoice,
     ) -> None:
         """Test that max age can be changed correctly."""
-        timestamp = int(time())
-        mock_time.return_value = timestamp
         signer = self.signer(hasher=hasher)
 
         signed = self.sign(signer, self.data)
         assert self.data == self.unsign(signer, signed, max_age=max_age)
 
         if isinstance(max_age, timedelta):
-            mock_time.return_value += max_age.total_seconds()
+            self.mock_time.return_value += max_age.total_seconds()
         else:
-            mock_time.return_value += max_age
-        mock_time.return_value += 0.1  # It has to be a bit bigger than max_age
+            self.mock_time.return_value += max_age
+        self.mock_time.return_value += 0.1  # It has to be a bit bigger than max_age
 
         with pytest.raises(
                 errors.ExpiredSignatureError,
@@ -415,11 +304,11 @@ class TestsBlake2TimestampSigner(TimestampSignerTestsBase, TestsBlake2Signer):
         ) as exc:
             self.unsign(signer, signed, max_age=max_age)
         assert exc.value.__cause__ is None
-        assert timestamp == exc.value.timestamp.timestamp()
+        assert isclose(self.now, exc.value.timestamp.timestamp())
         assert self.data == exc.value.data
 
         # called twice, during sign and unsign
-        mock_time.assert_has_calls([mock.call(), mock.call()])
+        self.mock_time.assert_has_calls([mock.call(), mock.call()])
 
     @pytest.mark.xfail(
         not has_blake3(),
@@ -434,15 +323,11 @@ class TestsBlake2TimestampSigner(TimestampSignerTestsBase, TestsBlake2Signer):
             HasherChoice.blake3,
         ),
     )
-    @mock.patch('blake2signer.bases.time')
     def test_max_age_can_be_null(
         self,
-        mock_time: mock.MagicMock,
         hasher: HasherChoice,
     ) -> None:
         """Test that `max_age` can be null."""
-        timestamp = int(time())
-        mock_time.return_value = timestamp
         signer = self.signer(hasher=hasher)
 
         signed = self.sign(signer, self.data)
@@ -451,7 +336,7 @@ class TestsBlake2TimestampSigner(TimestampSignerTestsBase, TestsBlake2Signer):
         assert self.data == unsigned
 
         # called once when getting the time during sign, and not during unsign
-        mock_time.assert_called_once_with()
+        self.mock_time.assert_called_once_with()
 
     @pytest.mark.xfail(
         not has_blake3(),
@@ -466,15 +351,11 @@ class TestsBlake2TimestampSigner(TimestampSignerTestsBase, TestsBlake2Signer):
             HasherChoice.blake3,
         ),
     )
-    @mock.patch('blake2signer.bases.time')
     def test_max_age_can_be_null_in_parts(
         self,
-        mock_time: mock.MagicMock,
         hasher: HasherChoice,
     ) -> None:
         """Test that `max_age` can be null."""
-        timestamp = int(time())
-        mock_time.return_value = timestamp
         signer = self.signer(hasher=hasher)
 
         signed = self.sign_parts(signer, self.data)
@@ -483,7 +364,7 @@ class TestsBlake2TimestampSigner(TimestampSignerTestsBase, TestsBlake2Signer):
         assert self.data == unsigned
 
         # called once when getting the time during sign, and not during unsign
-        mock_time.assert_called_once_with()
+        self.mock_time.assert_called_once_with()
 
     @pytest.mark.xfail(
         not has_blake3(),

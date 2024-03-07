@@ -5,6 +5,7 @@ import io
 import typing
 from datetime import datetime
 from datetime import timezone
+from time import time
 
 
 def force_bytes(value: typing.Union[str, bytes]) -> bytes:
@@ -169,3 +170,8 @@ def ordinal(number: int) -> str:
         suffix = suffixes[idx]
 
     return f'{number}{suffix}'
+
+
+def get_current_time() -> float:
+    """Return the current time in seconds since the Epoch."""
+    return time()
