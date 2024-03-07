@@ -35,6 +35,15 @@ class TimestampSignerTestsBase(BaseTests, ABC):
         """Tests teardown."""
         self.patch_time.stop()
 
+    @staticmethod
+    def get_expired_signature_error_data(
+        exc: errors.ExpiredSignatureError,
+        *,
+        signer: Signer,  # pylint: disable=W0613
+    ) -> typing.Any:
+        """Get expired signature error data."""
+        return exc.data
+
     @pytest.mark.xfail(
         not has_blake3(),
         reason='blake3 is not installed',
@@ -65,7 +74,7 @@ class TimestampSignerTestsBase(BaseTests, ABC):
 
         assert exc.value.__cause__ is None
         assert isclose(self.now, exc.value.timestamp.timestamp())
-        assert self.data == exc.value.data
+        assert self.data == self.get_expired_signature_error_data(exc.value, signer=signer)
 
     @pytest.mark.xfail(
         not has_blake3(),
