@@ -72,6 +72,7 @@ def test_get_signer_wrong_secret() -> None:
                 mock.call(b's' * klass.MIN_SECRET_SIZE, hasher=hasher),
             ],
         )
+        assert 2 == klass.call_count
 
     mock_signers_ctx.get.assert_called_once_with()
     mock_signers_ctx.set.assert_called_once_with({

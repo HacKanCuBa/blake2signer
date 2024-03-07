@@ -297,9 +297,12 @@ class TestsBlake2TimestampSigner(TimestampSignerTestsBase, TestsBlake2Signer):
     ) -> None:
         """Test that max age can be changed correctly."""
         signer = self.signer(hasher=hasher)
-
         signed = self.sign(signer, self.data)
+
         assert self.data == self.unsign(signer, signed, max_age=max_age)
+
+        # called twice, during sign and unsign
+        assert 2 == self.mock_time.call_count
 
         if isinstance(max_age, timedelta):
             self.mock_time.return_value += max_age.total_seconds()
@@ -312,12 +315,13 @@ class TestsBlake2TimestampSigner(TimestampSignerTestsBase, TestsBlake2Signer):
                 match='signature has expired',
         ) as exc:
             self.unsign(signer, signed, max_age=max_age)
+
         assert exc.value.__cause__ is None
         assert isclose(self.now, exc.value.timestamp.timestamp())
         assert self.data == exc.value.data
 
-        # called twice, during sign and unsign
-        self.mock_time.assert_has_calls([mock.call(), mock.call()])
+        # called one more time during unsign
+        assert 3 == self.mock_time.call_count
 
     @pytest.mark.xfail(
         not has_blake3(),
