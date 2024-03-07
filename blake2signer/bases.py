@@ -6,7 +6,6 @@ from abc import ABC
 from abc import abstractmethod
 from datetime import timedelta
 from secrets import compare_digest
-from time import time
 
 from .encoders import B64URLEncoder
 from .errors import ExpiredSignatureError
@@ -22,6 +21,7 @@ from .interfaces import EncoderInterface
 from .mixins import EncoderMixin
 from .mixins import Mixin
 from .utils import file_mode_is_text
+from .utils import get_current_time
 from .utils import ordinal
 from .utils import timestamp_to_aware_datetime
 
@@ -486,7 +486,7 @@ class Blake2TimestampSignerBase(Blake2SignerBase, ABC):
 
     def _get_timestamp(self) -> bytes:
         """Get the encoded timestamp value."""
-        timestamp = int(time())  # It's easier to encode and decode an integer
+        timestamp = int(get_current_time())  # It's easier to encode and decode an integer
         try:
             timestamp_b = timestamp.to_bytes(4, 'big', signed=False)
         except OverflowError as exc:  # This will happen in ~2106-02-07
@@ -599,7 +599,7 @@ class Blake2TimestampSignerBase(Blake2SignerBase, ABC):
         if max_age is None:
             return timestamped_parts.data
 
-        now = time()
+        now = get_current_time()
         age = now - timestamped_parts.timestamp
         ttl = self._get_ttl_from_max_age(max_age)
 

@@ -7,8 +7,8 @@ import typing
 import zlib
 from abc import ABC
 from datetime import timedelta
+from math import isclose
 from secrets import token_bytes
-from time import time
 from unittest import mock
 
 import pytest
@@ -18,6 +18,7 @@ from .bases import Signature
 from .bases import Signer
 from .test_timestampsigner import TimestampSignerTestsBase
 from .. import errors
+from ..bases import Secret
 from ..compressors import GzipCompressor
 from ..compressors import ZlibCompressor
 from ..encoders import B32Encoder
@@ -709,31 +710,30 @@ class SerializerSignerTestsBase(BaseTests, ABC):
             1: 2,
         }
 
-        with mock.patch('blake2signer.bases.time', return_value=time()):
-            signed1 = self.sign(
-                signer,
-                data,
-                serializer_kwargs={
-                    'separators': ('.', ';'),
-                },
-            )
-            signed1_1 = self.sign(
-                signer,
-                data,
-                serializer_kwargs={
-                    'separators': ('.', ';'),
-                },
-            )
-            assert signed1 == signed1_1  # It is effectively deterministic
+        signed1 = self.sign(
+            signer,
+            data,
+            serializer_kwargs={
+                'separators': ('.', ';'),
+            },
+        )
+        signed1_1 = self.sign(
+            signer,
+            data,
+            serializer_kwargs={
+                'separators': ('.', ';'),
+            },
+        )
+        assert signed1 == signed1_1  # It is effectively deterministic
 
-            signed2 = self.sign(
-                signer,
-                data,
-                serializer_kwargs={
-                    'separators': ('.', ','),
-                },
-            )
-            assert signed1 != signed2  # Change due only to the serializer options
+        signed2 = self.sign(
+            signer,
+            data,
+            serializer_kwargs={
+                'separators': ('.', ','),
+            },
+        )
+        assert signed1 != signed2  # Change due only to the serializer options
 
     @pytest.mark.xfail(
         not has_blake3(),
@@ -763,35 +763,34 @@ class SerializerSignerTestsBase(BaseTests, ABC):
             1: 2,
         }
 
-        with mock.patch('blake2signer.bases.time', return_value=time()):
-            signer.dump(
-                data,
-                file1,
-                serializer_kwargs={
-                    'separators': ('.', ';'),
-                },
-            )
-            signer.dump(
-                data,
-                file1_1,
-                serializer_kwargs={
-                    'separators': ('.', ';'),
-                },
-            )
-            file1.seek(0)
-            file1_1.seek(0)
-            assert file1.read() == file1_1.read()  # It is effectively deterministic
+        signer.dump(
+            data,
+            file1,
+            serializer_kwargs={
+                'separators': ('.', ';'),
+            },
+        )
+        signer.dump(
+            data,
+            file1_1,
+            serializer_kwargs={
+                'separators': ('.', ';'),
+            },
+        )
+        file1.seek(0)
+        file1_1.seek(0)
+        assert file1.read() == file1_1.read()  # It is effectively deterministic
 
-            signer.dump(
-                data,
-                file2,
-                serializer_kwargs={
-                    'separators': ('.', ','),
-                },
-            )
-            file1.seek(0)
-            file2.seek(0)
-            assert file1.read() != file2.read()  # Change due only to the serializer options
+        signer.dump(
+            data,
+            file2,
+            serializer_kwargs={
+                'separators': ('.', ','),
+            },
+        )
+        file1.seek(0)
+        file2.seek(0)
+        assert file1.read() != file2.read()  # Change due only to the serializer options
 
     @pytest.mark.xfail(
         not has_blake3(),
@@ -818,31 +817,30 @@ class SerializerSignerTestsBase(BaseTests, ABC):
             1: 2,
         }
 
-        with mock.patch('blake2signer.bases.time', return_value=time()):
-            signed1 = self.sign_parts(
-                signer,
-                data,
-                serializer_kwargs={
-                    'separators': ('.', ';'),
-                },
-            )
-            signed1_1 = self.sign_parts(
-                signer,
-                data,
-                serializer_kwargs={
-                    'separators': ('.', ';'),
-                },
-            )
-            assert signed1 == signed1_1  # It is effectively deterministic
+        signed1 = self.sign_parts(
+            signer,
+            data,
+            serializer_kwargs={
+                'separators': ('.', ';'),
+            },
+        )
+        signed1_1 = self.sign_parts(
+            signer,
+            data,
+            serializer_kwargs={
+                'separators': ('.', ';'),
+            },
+        )
+        assert signed1 == signed1_1  # It is effectively deterministic
 
-            signed2 = self.sign_parts(
-                signer,
-                data,
-                serializer_kwargs={
-                    'separators': ('.', ','),
-                },
-            )
-            assert signed1 != signed2  # Change due only to the serializer options
+        signed2 = self.sign_parts(
+            signer,
+            data,
+            serializer_kwargs={
+                'separators': ('.', ','),
+            },
+        )
+        assert signed1 != signed2  # Change due only to the serializer options
 
     @pytest.mark.xfail(
         not has_blake3(),
@@ -1268,11 +1266,12 @@ class TestsBlake2SerializerSignerTimestamp(
 
     def signer(
         self,
-        secret: typing.Union[None, str, bytes] = None,
+        secret: typing.Union[Secret, typing.Sequence[Secret], None] = None,
         **kwargs: typing.Any,
     ) -> Signer:
         """Get the signer to test."""
         kwargs.setdefault('max_age', 5)
+
         return super().signer(secret, **kwargs)
 
     @pytest.mark.xfail(
@@ -1292,35 +1291,32 @@ class TestsBlake2SerializerSignerTimestamp(
         'max_age',
         (None, 2, 2.5, timedelta(hours=2)),
     )
-    @mock.patch('blake2signer.bases.time')
     def test_max_age_can_be_changed(
         self,
-        mock_time: mock.MagicMock,
         max_age: typing.Union[None, int, float, timedelta],
         hasher: HasherChoice,
     ) -> None:
         """Test that max age can be changed correctly."""
-        timestamp = int(time())
-        mock_time.return_value = timestamp
         signer = self.signer(max_age=max_age, hasher=hasher)
-
         signed = self.sign(signer, self.data)
+
         assert self.data == self.unsign(signer, signed)
 
         if max_age:
             if isinstance(max_age, timedelta):
-                mock_time.return_value += max_age.total_seconds()
+                self.mock_time.return_value += max_age.total_seconds()
             else:
-                mock_time.return_value += max_age
-            mock_time.return_value += 0.1  # It has to be a bit bigger than max_age
+                self.mock_time.return_value += max_age
+            self.mock_time.return_value += 0.1  # It has to be a bit bigger than max_age
 
             with pytest.raises(
                     errors.ExpiredSignatureError,
                     match='signature has expired',
             ) as exc:
                 self.unsign(signer, signed)
+
             assert exc.value.__cause__ is None
-            assert exc.value.timestamp.timestamp() == timestamp
+            assert isclose(self.now, exc.value.timestamp.timestamp())
 
     @pytest.mark.xfail(
         not has_blake3(),
@@ -1463,27 +1459,23 @@ class TestsBlake2SerializerSignerTimestamp(
             HasherChoice.blake3,
         ),
     )
-    @mock.patch('blake2signer.bases.time')
     def test_sign_unsign_timestamp_expired(
         self,
-        mock_time: mock.MagicMock,
         hasher: HasherChoice,
     ) -> None:
         """Test unsigning with timestamp is correct."""
-        timestamp = int(time())
-        mock_time.return_value = timestamp
         signer = self.signer(self.secret, hasher=hasher)
-
         signed = self.sign(signer, self.data)
 
-        mock_time.return_value += 10
+        self.mock_time.return_value += 10
         with pytest.raises(
                 errors.ExpiredSignatureError,
                 match='signature has expired',
         ) as exc:
             self.unsign(signer, signed)
+
         assert exc.value.__cause__ is None
-        assert timestamp == exc.value.timestamp.timestamp()
+        assert isclose(self.now, exc.value.timestamp.timestamp())
         assert b'ImRhdGFkYXRhIg' == exc.value.data  # serialized+encoded data
         assert self.data == signer.data_from_exc(exc.value)
 
@@ -1500,27 +1492,24 @@ class TestsBlake2SerializerSignerTimestamp(
             HasherChoice.blake3,
         ),
     )
-    @mock.patch('blake2signer.bases.time')
     def test_data_from_exc_with_null_serializer(
         self,
-        mock_time: mock.MagicMock,
         hasher: HasherChoice,
     ) -> None:
         """Test that data_from_exc works with a NullSerializer."""
-        timestamp = int(time())
-        mock_time.return_value = timestamp
         signer = self.signer(self.secret, hasher=hasher, serializer=NullSerializer)
         data = b'datadata'
         signed = self.sign(signer, data)
 
-        mock_time.return_value += 10
+        self.mock_time.return_value += 10
         with pytest.raises(
                 errors.ExpiredSignatureError,
                 match='signature has expired',
         ) as exc:
             self.unsign(signer, signed)
+
         assert exc.value.__cause__ is None
-        assert timestamp == exc.value.timestamp.timestamp()
+        assert isclose(self.now, exc.value.timestamp.timestamp())
         assert data == signer.data_from_exc(exc.value)
 
     @pytest.mark.xfail(
@@ -1536,27 +1525,24 @@ class TestsBlake2SerializerSignerTimestamp(
             HasherChoice.blake3,
         ),
     )
-    @mock.patch('blake2signer.bases.time')
     def test_data_from_exc_with_null_serializer_with_compression(
         self,
-        mock_time: mock.MagicMock,
         hasher: HasherChoice,
     ) -> None:
         """Test that data_from_exc works with compression."""
-        timestamp = int(time())
-        mock_time.return_value = timestamp
         signer = self.signer(self.secret, hasher=hasher, serializer=NullSerializer)
         data = b'datadatadatadata'
         signed = self.sign(signer, data, force_compression=True)
 
-        mock_time.return_value += 10
+        self.mock_time.return_value += 10
         with pytest.raises(
                 errors.ExpiredSignatureError,
                 match='signature has expired',
         ) as exc:
             self.unsign(signer, signed)
+
         assert exc.value.__cause__ is None
-        assert timestamp == exc.value.timestamp.timestamp()
+        assert isclose(self.now, exc.value.timestamp.timestamp())
         assert data == signer.data_from_exc(exc.value)
 
     @pytest.mark.xfail(
@@ -1572,15 +1558,11 @@ class TestsBlake2SerializerSignerTimestamp(
             HasherChoice.blake3,
         ),
     )
-    @mock.patch('blake2signer.bases.time')
     def test_data_from_exc_raises_exceptions(
         self,
-        mock_time: mock.MagicMock,
         hasher: HasherChoice,
     ) -> None:
         """Test that data_from_exc raises exceptions."""
-        timestamp = int(time())
-        mock_time.return_value = timestamp
         signer = self.signer(
             self.secret,
             hasher=hasher,
@@ -1590,7 +1572,7 @@ class TestsBlake2SerializerSignerTimestamp(
         )
         signed = self.sign(signer, self.data_compressible, force_compression=True)
 
-        mock_time.return_value += 10
+        self.mock_time.return_value += 10
         with pytest.raises(
                 errors.ExpiredSignatureError,
                 match='signature has expired',
@@ -1603,6 +1585,7 @@ class TestsBlake2SerializerSignerTimestamp(
                     match='data can not be decompressed',
             ) as exc:
                 signer.data_from_exc(expired_sig_exc.value)
+
             assert isinstance(exc.value.__cause__, zlib.error)
 
         with mock.patch('blake2signer.serializers.json.loads', side_effect=ValueError):
@@ -1611,6 +1594,7 @@ class TestsBlake2SerializerSignerTimestamp(
                     match='data can not be unserialized',
             ) as exc:
                 signer.data_from_exc(expired_sig_exc.value)
+
             assert isinstance(exc.value.__cause__, ValueError)
 
         with mock.patch('blake2signer.utils.base64.urlsafe_b64decode', side_effect=TypeError):
@@ -1619,6 +1603,7 @@ class TestsBlake2SerializerSignerTimestamp(
                     match='data can not be decoded',
             ) as exc:
                 signer.data_from_exc(expired_sig_exc.value)
+
             assert isinstance(exc.value.__cause__, TypeError)
 
 

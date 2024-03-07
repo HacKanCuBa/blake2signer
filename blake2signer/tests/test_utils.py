@@ -4,6 +4,7 @@ import io
 import typing
 from datetime import datetime
 from datetime import timedelta
+from unittest import mock
 
 import pytest
 
@@ -155,3 +156,13 @@ def test_force_string_wrong_type() -> None:
     """Test that force_string raises exception on a wrong type."""
     with pytest.raises(TypeError, match='value must be bytes or str'):
         utils.force_string(1)  # type: ignore
+
+
+def test_get_current_time() -> None:
+    """Test that get_current_time returns the result of `time.time()`."""
+    now = 1709782484.3680992
+
+    with mock.patch.object(utils, 'time', return_value=now) as mock_time:
+        assert now == utils.get_current_time()
+
+        mock_time.assert_called_once_with()
