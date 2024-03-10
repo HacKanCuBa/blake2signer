@@ -274,7 +274,7 @@ def commit(ctx: Context, amend: bool = False) -> None:
 def docs_venv(ctx: Context) -> None:
     """Ensure venv for the docs."""
     if not Path('tasks.py').exists():
-        raise Exit("You can only run this command from the project's root directory", code=1)
+        raise Exit("You can only run this command from the project's root directory")
 
     if Path('docs/.venv/bin/python').exists():
         return
@@ -606,21 +606,32 @@ def verify_file(ctx: Context, file: str) -> None:
 
 @task(
     help={
-        'short': 'run a short fuzzing session',
+        'signer': 'the signer to fuzz, or empty to fuzz them all (default)',
+        'short': 'run a short fuzzing session (default)',
     },
 )
-def fuzz(ctx: Context, short: bool = True) -> None:
-    """Run an infinite fuzzer over all signers, unless a short session is specified.
+def fuzz(ctx: Context, signer: str = '', short: bool = True) -> None:  # noqa: R701
+    """Run a fuzzer over all signers, or the specified one, infinitely or in a short session.
 
     This command will store session files per signer in the ".fuzzed" directory.
 
-    Use CTRL+C to cancel current fuzzing session.
+    Use CTRL+C to cancel the current fuzzing session.
+
+    Raises:
+        Exit: Invalid signer choice.
     """
     fuzzed_dir = '.fuzzed'  # If changed, make sure to also change it in the CI job, and gitignore
     (Path(ctx.cwd) / Path(fuzzed_dir)).mkdir(mode=0o755, exist_ok=True)
 
     args = ('python', 'fuzz.py')
+    signers: typing.Tuple[str, ...]
     signers = ('blake2signer', 'blake2timestampsigner', 'blake2serializersigner')
+
+    if signer:
+        if signer not in signers:
+            raise Exit(f'Invalid signer choice, must be one of: {", ".join(signers)}')
+
+        signers = (signer,)
 
     additional_args: typing.Tuple[str, ...]
     if short:
@@ -631,12 +642,13 @@ def fuzz(ctx: Context, short: bool = True) -> None:
     print(
         'Starting',
         'short' if short else 'infinite',
-        'fuzzing session, press CTRL+C to cancel at any time, and proceed with the next signer...',
+        'fuzzing session, press CTRL+C to cancel at any time, and proceed with the next signer',
+        '(if any)...',
     )
     print()
-    for signer in signers:
+    for signer_ in signers:
         ctx.run(
-            ' '.join(chain(args, (signer, f'{fuzzed_dir}/{signer}/'), additional_args)),
+            ' '.join(chain(args, (signer_, f'{fuzzed_dir}/{signer_}/'), additional_args)),
             warn=True,  # So user can cancel one run, and proceed w/ the next one.
         )
 
