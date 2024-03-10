@@ -400,18 +400,16 @@ security scanning:
       - tags
       - main
 
-fuzz:
+.fuzz:
   stage: security_analysis
   image: "registry.gitlab.com/nevrona/public/poetry-docker:1.7.1-3.12"
   needs:
     - poetry cache py3.12
   before_script:
     - poetry add --group dev --source pythonfuzz pythonfuzz
-  script:
-    - time poetry run inv fuzz --short
   cache:
     - key:
-        prefix: "py311"
+        prefix: "py312"
         files:
           - poetry.lock
       policy: pull
@@ -423,6 +421,21 @@ fuzz:
         - .fuzzed/
   only:
     - /^release\/.+$/
+
+fuzz blake2signer:
+  extends: .fuzz
+  script:
+    - time poetry run inv fuzz --short --signer blake2signer
+
+fuzz blake2timestampsigner:
+  extends: .fuzz
+  script:
+    - time poetry run inv fuzz --short --signer blake2timestampsigner
+
+fuzz blake2serializersigner:
+  extends: .fuzz
+  script:
+    - time poetry run inv fuzz --short --signer blake2serializersigner
 
 .publish:
   stage: publish
