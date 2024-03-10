@@ -424,27 +424,40 @@ fuzz:
   only:
     - /^release\/.+$/
 
-publish test:
+.publish:
   stage: publish
+  before_script:
+    - echo "Artifacts from this job are temporary, and its sole purpose is to verify everything was published successfully without malicious intermediaries. Do not link nor depend on these artifacts! Fetch the package from PyPi or as specified in the README or docs."
+  after_script:
+    - apt-get update
+    - apt-get -y install --no-install-recommends b3sum
+    - sha256sum dist/*
+    - sha512sum dist/*
+    - b2sum dist/*
+    - b2sum -l 256 dist/*
+    - b3sum dist/*
+  artifacts:
+    paths:
+      - dist/
+    expire_in: 1 week
+
+publish test:
+  extends: .publish
   script:
     - set -euo pipefail
     - MAX_TRIES=${PUBLISH_TEST_MAX_TRIES:-10}
     - poetry config repositories.testpypi https://test.pypi.org/legacy/
     - poetry config pypi-token.testpypi "${POETRY_PYPI_TOKEN_TESTPYPI:?env var unset (forgot to protect branch?)}"
     - count=0; while [ $count -lt $MAX_TRIES ]; do printf "Attempt %d of %d\n" "$((count + 1))" "$MAX_TRIES"; sleep "$((count / 2))"; poetry version prerelease && poetry publish --build -r testpypi && break || let "count+=1"; done
-    - sha256sum dist/*
-    - sha512sum dist/*
     - if [ $count -ge $MAX_TRIES ]; then exit 1; fi
   only:
     - /^release\/.+$/
 
 publish:
-  stage: publish
+  extends: .publish
   script:
     - set -euo pipefail
     - poetry config pypi-token.pypi "${POETRY_PYPI_TOKEN_PYPI:?env var unset (forgot to protect branch?)}"
     - poetry publish --build
-    - sha256sum dist/*
-    - sha512sum dist/*
   only:
     - tags
