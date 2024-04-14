@@ -71,6 +71,48 @@ def test_hexencode_accepts_bytes() -> None:
     assert encoded == b'616263'
 
 
+def test_b58decode_works() -> None:
+    """Test b58decode works correctly."""
+    decoded = utils.b58decode(b'ZiCa')
+    assert decoded == b'abc'
+
+
+def test_b58decode_adds_leading_zeroes() -> None:
+    """Test b58decode adds leading zeroes correctly."""
+    decoded = utils.b58decode(b'111ZiCa')
+    assert decoded == b'\x00\x00\x00abc'
+
+
+def test_b58decode_fails_unknown_char() -> None:
+    """Test b58decode fails when unknown char is passed."""
+    with pytest.raises(KeyError, match=str(int.from_bytes(b'I', 'big'))):
+        utils.b58decode(b'abcI')
+
+
+def test_b58encode_works() -> None:
+    """Test b58encode works correctly."""
+    encoded = utils.b58encode(b'abc')
+    assert encoded == b'ZiCa'
+
+    # Test vectors from "The Base58 Encoding Scheme"
+    # https://datatracker.ietf.org/doc/html/draft-msporny-base58#page-6
+    encoded = utils.b58encode(b'Hello World!')
+    assert encoded == b'2NEpo7TZRRrLZSi2U'
+
+    encoded = utils.b58encode(b'The quick brown fox jumps over the lazy dog.')
+    assert encoded == b'USm3fpXnKG5EUBx2ndxBDMPVciP5hGey2Jh4NDv6gmeo1LkMeiKrLJUUBk6Z'
+
+    num = 0x0000287fb4cd
+    encoded = utils.b58encode(num.to_bytes(2 + (num.bit_length() + 7) // 8, 'big'))
+    assert encoded == b'11233QC4'
+
+
+def test_b58encode_encodes_leading_zeroes() -> None:
+    """Test b58encode encodes leading zeroes correctly."""
+    encoded = utils.b58encode(b'\x00\x00\x00abc')
+    assert encoded == b'111ZiCa'
+
+
 def test_timestamp_to_aware_datetime_accepts_int() -> None:
     """Test timestamp_to_aware_datetime accepts int timestamps."""
     timestamp = 1619064799

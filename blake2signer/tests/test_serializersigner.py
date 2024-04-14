@@ -22,6 +22,7 @@ from ..bases import Secret
 from ..compressors import GzipCompressor
 from ..compressors import ZlibCompressor
 from ..encoders import B32Encoder
+from ..encoders import B58Encoder
 from ..encoders import B64URLEncoder
 from ..encoders import HexEncoder
 from ..hashers import HasherChoice
@@ -145,6 +146,10 @@ class SerializerSignerTestsBase(BaseTests, ABC):
             (B64URLEncoder, r'^[a-zA-Z0-9_\-]+(\.[a-zA-Z0-9_\-]+)?\.[a-zA-Z0-9_\-]+$'),
             (B32Encoder, r'^[A-Z2-7]+(\.[A-Z2-7]+)?\.[A-Z2-7]+$'),
             (HexEncoder, r'^[A-F0-9]+(\.[A-F0-9]+)?\.[A-F0-9]+$'),
+            (
+                B58Encoder,
+                r'^[1-9A-HJ-NP-Za-km-z]+(\.[1-9A-HJ-NP-Za-km-z]+)?\.[1-9A-HJ-NP-Za-km-z]+$',
+            ),
         ),
     )
     def test_sign_unsign_with_encoder(
@@ -1141,6 +1146,7 @@ class SerializerSignerTestsBase(BaseTests, ABC):
             (B64URLEncoder, b'A'),
             (B32Encoder, b'A'),
             (HexEncoder, b'A'),
+            (B58Encoder, b'A'),
         ),
     )
     def test_compression_flag_in_encoder_alphabet(

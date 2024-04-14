@@ -1530,7 +1530,7 @@ You can use BLAKE3 if you have the [`blake3`](https://pypi.org/project/blake3/) 
 
 ## Changing the encoder
 
-There are three [encoders provided by this package](details.md#encoders-serializers-and-compressors): a [Base64 URL safe encoder](encoders.md#blake2signer.encoders.B64URLEncoder) (default), a [Base 32 encoder](encoders.md#blake2signer.encoders.B32Encoder) and a [Base 16/Hex encoder](encoders.md#blake2signer.encoders.HexEncoder).
+There are four [encoders provided by this package](details.md#encoders-serializers-and-compressors): a [Base64 URL safe encoder](encoders.md#blake2signer.encoders.B64URLEncoder) (default), a [Base 32 encoder](encoders.md#blake2signer.encoders.B32Encoder), a [Base 16/Hex encoder](encoders.md#blake2signer.encoders.HexEncoder) and a [Base 58 encoder](encoders.md#blake2signer.encoders.B58Encoder) (from v3.1.0).
 
 !!! info "This can be done in every signer from v2.0.0"
 
@@ -1625,6 +1625,115 @@ There are three [encoders provided by this package](details.md#encoders-serializ
 
 !!! tip "Custom encoder"
     You can [create a custom encoder](#using-a-custom-encoder).
+
+### Creating signed API keys
+
+!!! info "*Base 58* is new in v3.1.0"
+
+Due to the human-friendly characteristic of Base 58, one common usage is to create API keys that have to be typed by humans or reviewed by human eyes.  
+The following example could use any [encoder](#changing-the-encoder), but Base 58 is more appropriate for this.
+
+Here is a comparison of example key sizes:
+
+| Description                                    | Example API key                                    |
+|------------------------------------------------|----------------------------------------------------|
+| Random, prefixed UUID4 API key                 | `prefix_8d5fabe6-cf60-4bc6-84c0-7f323f71f4a3`      |
+| Random, prefixed Base64 API key                | `prefix_hcva2Ili1pMBYbNpUf7bUQ`                    |
+| Random, prefixed Base58 API key                | `prefix_D17ebRPWKZPA7qf5AwYovp`                    |
+| Signed, prefixed Base58 API key                | `prefix_V7pWPqnHma9rSrZ5yJAaxG_6koHwmA2Gdf`        |
+| Signed, self-expiring, prefixed Base58 API key | `prefix_KAayXu3u2C7qYJLQ8iEQpF_3cPDHv_6koHwmA2Gdf` |
+
+=== "Source"
+
+    ```python
+    """Creating signed API keys."""
+
+    from dataclasses import dataclass
+    from time import sleep
+
+    from blake2signer import Blake2SerializerSigner
+    from blake2signer.encoders import B58Encoder
+
+    secret = b'las vacunas salvan vidas!'
+    signer = Blake2SerializerSigner(
+        secret,
+        deterministic=True,  # We choose deterministic for shorter lengths
+        personalisation=b'api key generation',
+        encoder=B58Encoder,
+        separator=b'_',
+    )
+
+    @dataclass(frozen=True)
+    class User:
+        """Example user class."""
+        username: str
+
+
+    def generate_api_key(*, prefix: str = '', user: User) -> str:
+        """Generate an API key by signing user data."""
+        key = signer.dumps(user.username)  # Of course, `username` must be unique!
+        # Otherwise, different users sharing the same username would get the same key.
+
+        if prefix:
+            return f'{prefix}_{key}'
+
+        return key
+
+
+    def verify_api_key(key: str, *, usage: str) -> User:
+        """Verify a given API key."""
+
+        if key.count('_') > 1:  # We have a prefixed key
+            key_prefix, key = key.split('_', maxsplit=1)
+            # You should check that the prefix is valid for this usage
+            if key_prefix != usage:
+                raise ValueError('This key is not valid for this usage')
+
+        return User(username=signer.loads(key))
+
+
+    # It's a good practice to generate API keys with a prefix related to its usage,
+    # to help identify them.
+    user = User(username='hackan')
+    print('Hello', user.username, '!, here is your API key:')
+    print(api_key := generate_api_key(prefix='apiv2', user=user))  # apiv2_V7pWPqnHma9rSrZ5yJAaxG_6koHwmA2Gdf
+
+    # We now verify that the key is valid for usage in `apiv2`,
+    # and that it represents the current user.
+    print('Is it valid?', user == verify_api_key(api_key, usage='apiv2'))  # True
+
+    # We can also make self-expiring API keys!
+    signer = Blake2SerializerSigner(
+        secret,
+        deterministic=True,  # We choose deterministic for shorter lengths
+        personalisation=b'api key generation',
+        encoder=B58Encoder,
+        separator=b'_',
+        max_age=3,
+    )
+    print('Hello', user.username, '!, here is your timestamped API key:')
+    print(api_key := generate_api_key(prefix='apiv2', user=user))  # apiv2_KAayXu3u2C7qYJLQ8iEQpF_3cPDHv_6koHwmA2Gdf
+    sleep(3)  # Let's expire it
+    print('Is it valid?', user == verify_api_key(api_key, usage='apiv2'))  # ExpiredSignatureError
+    ```
+
+=== "Output"
+
+    ```
+    Hello hackan !, here is your API key:
+    apiv2_V7pWPqnHma9rSrZ5yJAaxG_6koHwmA2Gdf
+    Is it valid? True
+    Hello hackan !, here is your timestamped API key:
+    apiv2_KAayXu3u2C7qYJLQ8iEQpF_3cPDHv_6koHwmA2Gdf
+    Traceback (most recent call last):
+      ...
+        raise ExpiredSignatureError(
+    blake2signer.errors.ExpiredSignatureError: signature has expired, age 3.1927380561828613 > 3.0 seconds
+    ```
+
+This is a heavily simplified example, and you could store more information if you want, given that [compression](#compressing-data) will help trimming the size of the signed payload. But beware, too much data, and you risk an overly long key, for which you may want to fall back to something random with database search. Or store and sign a random unique ID.
+
+Additionally, this example proposes using a [_prefix_](https://duckduckgo.com/?q=api+key+with+prefix) for the API key, which is an overall good practice, although [YMMV](https://www.urbandictionary.com/define.php?term=ymmv). And you could also opt for a _self-expiring_ API key.
 
 ## Using a custom encoder
 

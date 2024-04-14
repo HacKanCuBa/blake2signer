@@ -2,13 +2,16 @@
 
 import base64
 import io
-import typing
+import typing as t
 from datetime import datetime
 from datetime import timezone
+from functools import lru_cache
 from time import time
 
+B58_ALPHABET: t.Final[bytes] = b'123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
 
-def force_bytes(value: typing.Union[str, bytes]) -> bytes:
+
+def force_bytes(value: t.Union[str, bytes]) -> bytes:
     """Force a given value into bytes.
 
     Args:
@@ -29,7 +32,7 @@ def force_bytes(value: typing.Union[str, bytes]) -> bytes:
     raise TypeError('value must be bytes or str')
 
 
-def force_string(value: typing.Union[str, bytes]) -> str:
+def force_string(value: t.Union[str, bytes]) -> str:
     """Force a given value into string.
 
     Args:
@@ -122,7 +125,65 @@ def hexdecode(data: bytes) -> bytes:
     return base64.b16decode(data)
 
 
-def timestamp_to_aware_datetime(timestamp: typing.Union[int, float]) -> datetime:
+def b58encode(data: bytes) -> bytes:
+    """Encode data as Base 58.
+
+    Base 58 has no padding, and it contains characters from a-z (except l), A-Z (except I and O),
+    and numbers 1-9, to improve readability and reduce transcription errors.
+
+    Args:
+        data: Data to encode.
+
+    Returns:
+        Encoded data.
+    """
+    scrubbed_data = data.lstrip(b'\x00')
+    num = int.from_bytes(scrubbed_data, 'big')
+    base = len(B58_ALPHABET)
+    encoded = []
+
+    while num > 0:
+        num, rem = divmod(num, base)
+        encoded.append(B58_ALPHABET[rem:rem + 1])
+
+    encoded.reverse()
+
+    leading_zeroes_as_first_char = B58_ALPHABET[0:1] * (len(data) - len(scrubbed_data))
+
+    return leading_zeroes_as_first_char + b''.join(encoded)
+
+
+@lru_cache(maxsize=None)
+def _b58_char_to_index_map() -> t.Mapping[int, int]:
+    return {
+        char: idx
+        for idx, char in enumerate(B58_ALPHABET)
+    }
+
+
+def b58decode(data: bytes) -> bytes:
+    """Decode data encoded as Base 58.
+
+    Args:
+        data: Data to decode.
+
+    Returns:
+        Original data.
+    """
+    scrubbed_data = data.lstrip(B58_ALPHABET[0:1])
+    char_to_index = _b58_char_to_index_map()
+    base = len(B58_ALPHABET)
+    num = 0
+    for char in scrubbed_data:
+        num = num * base + char_to_index[char]
+
+    number_of_leading_zeroes = len(data) - len(scrubbed_data)
+    decoded = num.to_bytes(number_of_leading_zeroes + (num.bit_length() + 7) // 8, 'big')
+
+    return decoded
+
+
+def timestamp_to_aware_datetime(timestamp: t.Union[int, float]) -> datetime:
     """Convert a UNIX timestamp into an aware datetime in UTC.
 
     Args:
@@ -134,7 +195,7 @@ def timestamp_to_aware_datetime(timestamp: typing.Union[int, float]) -> datetime
     return datetime.fromtimestamp(timestamp, tz=timezone.utc)
 
 
-def file_mode_is_text(file: typing.IO[typing.AnyStr]) -> bool:
+def file_mode_is_text(file: t.IO[t.AnyStr]) -> bool:
     """Check if a given file is opened in text mode, or otherwise in binary mode.
 
     Args:

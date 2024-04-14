@@ -16,6 +16,7 @@ from ..bases import Blake2SignatureDump
 from ..bases import HasherChoice
 from ..bases import Secret
 from ..encoders import B32Encoder
+from ..encoders import B58Encoder
 from ..encoders import B64URLEncoder
 from ..encoders import HexEncoder
 from ..hashers import BLAKE2Hasher
@@ -606,6 +607,7 @@ class BaseTests(ABC):
             (B64URLEncoder, r'^[a-zA-Z0-9_\-]+(\.[a-zA-Z0-9_\-]+)?\.datadata$'),
             (B32Encoder, r'^[A-Z2-7]+(\.[A-Z2-7]+)?\.datadata$'),
             (HexEncoder, r'^[A-F0-9]+(\.[A-F0-9]+)?\.datadata$'),
+            (B58Encoder, r'^[1-9A-HJ-NP-Za-km-z]+(\.[1-9A-HJ-NP-Za-km-z]+)?\.datadata$'),
         ),
     )
     def test_sign_unsign_with_encoder(
@@ -873,6 +875,7 @@ class BaseTests(ABC):
             (B64URLEncoder, b'A'),
             (B32Encoder, b'A'),
             (HexEncoder, b'A'),
+            (B58Encoder, b'A'),
         ),
     )
     def test_separator_in_encoder_alphabet(
