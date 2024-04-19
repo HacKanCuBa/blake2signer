@@ -185,14 +185,89 @@ However, you shouldn't solely rely on this characteristic: always set a proper `
 
 ## About the secret
 
-It is of utmost importance that the secret value not only remains secret but also to be a cryptographically secure pseudorandom value. It can be arbitrarily long given that it is internally derived, along with the personalisation value, to produce the signing key.
+It is of the utmost importance that the secret value not only remains secret but also to be a cryptographically secure pseudorandom value. It can be arbitrarily long given that it is internally derived, along with the _personalisation_ value, to produce the signing key.
+
+!!! success "Recommended way to generate a secret"
+    From v3.1.0, you can generate a secret using the function `blake2signer.utils.generate_secret`. See [generating a secret](#generating-a-secret).
 
 Usually the secret will be obtained from your app's settings or similar, which in turn will get it from the environment or some keyring or secret storage. Whichever the case, ensure that it has at least 256 bits of pseudorandom data, and **not** some manually splashed letters!.
 
 !!! tip
-    You can share the same secret with all the signers in use, there's no need to use a different secret for each. Make sure to [set `personalisation` accordingly](#about-salt-and-personalisation).
+    You can, and probably should, share the same secret with all the signers in use, there's no need to use a different one for each. Make sure to [set `personalisation` accordingly](#about-salt-and-personalisation), as this removes the complexity of having to maintain several different secrets.
+
+### Generating a secret
 
 You can generate the secret value in any of the following ways:
+
+**Recommended**:
+
+* `python3 -c 'from blake2signer.utils import generate_secret; print(generate_secret(), end="")'`
+
+??? example "Generating and using a secret"
+    === "Source"
+
+        ```python
+        """Generating a secret."""
+
+        from blake2signer.utils import generate_secret
+
+
+        secret = generate_secret()
+        with open('.env', 'wt') as env_file:
+            env_file.write(f'SECRET="{generate_secret()}"')
+
+        print('Secret saved in .env file:', secret)
+        ```
+
+        ```python
+        """Using a secret from env."""
+
+        import os
+
+        from blake2signer import Blake2Signer
+
+
+        def read_secret() -> str:
+            """Toy example of reading a secret from env vars or a file."""
+            secret = os.getenv('SECRET')
+            if secret:
+                return secret
+
+            # Normally, the env var is loaded into the application environment, so this file
+            # is supposed to be interpreted by a shell. In this toy example, we read from
+            # the file and parse it, which is not recommended to do in a production system
+            # like this.
+            with open('.env') as env_file:
+                for line in env_file:
+                    if line.startswith('SECRET='):
+                        secret = line.strip().removeprefix('SECRET="').removesuffix('"')
+                        if secret:
+                            return secret
+
+                        break
+
+            raise RuntimeError('Secret value could not be found')
+
+        secret = read_secret()
+        data = b"YMMV"
+
+        signer = Blake2Signer(secret)
+
+        print(
+            'Does signing and unsigning works?',
+            data == signer.unsign(signer.sign(data)),  # True
+        )
+        ```
+
+    === "Output"
+
+        ```
+        Secret saved in .env file: 2iLJRCcUEQMukjghDCU5BTjnUZg4JmsmV759TswSPDDwQU6uHgkt1p9vnanpzSMuPdJKC3GU39kjBMsEk1XyexSQ
+        ```
+
+        ```
+        Does signing and unsigning works? True
+        ```
 
 Base64 encoded:
 

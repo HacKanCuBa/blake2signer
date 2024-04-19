@@ -208,3 +208,14 @@ def test_get_current_time() -> None:
         assert now == utils.get_current_time()
 
         mock_time.assert_called_once_with()
+
+
+def test_generate_secret() -> None:
+    """Test that generate_secret returns a value.
+
+    We are not checking entropy nor anything like that, it would be pointless.
+    """
+    key = utils.generate_secret()
+
+    assert isinstance(key, str)
+    assert key  # Assert we have a value

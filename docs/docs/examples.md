@@ -1441,6 +1441,9 @@ Secrets can be rotated by an external mechanism, and passed to a signer as a seq
     Does it match original data? True
     ```
 
+!!! tip "Generating a secret"
+    From v3.1.0, you can generate a secret using the function `blake2signer.utils.generate_secret`. See [generating a secret](details.md#generating-a-secret).
+
 ## Changing the hasher
 
 You can use either `blake2b` or `blake2s`: the first one is optimized for 64b platforms, and the second, for 8-32b platforms (read more about them in their [official site](https://blake2.net/)).
