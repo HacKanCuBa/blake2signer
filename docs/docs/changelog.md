@@ -1,5 +1,20 @@
 # Changelog
 
+## 3.1.0 - 2024-04-22
+
+**Added**
+
+- Add Base58 encoder, and some example usages like creating signed API keys.
+- Add utility function to generate a secure secret: `blake2signer.utils.generate_secret`.
+- Add `create-archives` Invoke task, to aide on signing releases.
+
+**Changed**
+
+- Always mock current time on timestamp signers tests, which makes testing timestamp-related signers easier, and less error-prone.
+- Fix Invoke tests task cancellation: prevent one test command failure to cancel the execution of the rest, thus still having a `report.xml` file generated, while exiting with the proper error code.
+- Change the fuzz task to allow selecting a specific signer.
+- Change fuzz CI job to fuzz all signers in parallel.
+
 ## 3.0.0 - 2024-01-25
 
 **Added**

@@ -1,5 +1,16 @@
 # Upgrade guide
 
+## To v3.1
+
+!!! success "Old signatures will work"
+    Data signed with previous versions (>=2.0, <=3.1) will still be valid.
+
+A new [Base 58](encoders.md#blake2signer.encoders.B58Encoder) encoder has been added, implemented given it is not present in the standard library, so in example, this library could be used to [generate signed API keys](examples.md#creating-signed-api-keys).
+
+Also, a new utility function has been included, [`blake2signer.utils.generate_secret`](utils.md#blake2signer.utils.generate_secret), to [help create secrets](details.md#generating-a-secret) in an _official way_, to reduce the cognitive load of choosing "the right way" to do it.
+
+Finally, several maintenance improvements were done.
+
 ## To v3
 
 !!! success "Old signatures will work"

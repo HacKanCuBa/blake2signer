@@ -33,7 +33,7 @@ from .signers import Blake2SignatureDump
 from .signers import Blake2Signer
 from .signers import Blake2TimestampSigner
 
-__version__ = '3.0.0'
+__version__ = '3.1.0'
 
 __all__ = (
     'errors',

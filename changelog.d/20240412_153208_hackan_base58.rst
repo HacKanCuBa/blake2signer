@@ -1,4 +1,0 @@
-Added
------
-
-- Add Base58 encoder, and some example usages like creating signed API keys.

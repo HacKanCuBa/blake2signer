@@ -1,4 +1,0 @@
-Added
------
-
-- Add utility function to generate a secure secret: `blake2signer.utils.generate_secret`.
