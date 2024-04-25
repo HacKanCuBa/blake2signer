@@ -4,7 +4,7 @@ repo_url: https://gitlab.com/hackancuba/blake2signer
 edit_uri: ''
 site_description: Blake2Signer documentation
 site_author: HacKan
-copyright: Copyright &copy; 2020 - 2024 HacKan
+copyright: Copyright &copy; 2020-2024 HacKan
 site_url: https://blake2signer.hackan.net/
 
 theme:

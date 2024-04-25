@@ -188,7 +188,7 @@ However, you shouldn't solely rely on this characteristic: always set a proper `
 It is of the utmost importance that the secret value not only remains secret but also to be a cryptographically secure pseudorandom value. It can be arbitrarily long given that it is internally derived, along with the _personalisation_ value, to produce the signing key.
 
 !!! success "Recommended way to generate a secret"
-    From v3.1.0, you can generate a secret using the function `blake2signer.utils.generate_secret`. See [generating a secret](#generating-a-secret).
+    From v3.1.0, you can generate a secret using the function [`blake2signer.utils.generate_secret`](utils.md#blake2signer.utils.generate_secret). See [generating a secret](#generating-a-secret).
 
 Usually the secret will be obtained from your app's settings or similar, which in turn will get it from the environment or some keyring or secret storage. Whichever the case, ensure that it has at least 256 bits of pseudorandom data, and **not** some manually splashed letters!.
 

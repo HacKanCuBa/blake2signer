@@ -108,7 +108,7 @@ class HexEncoder(EncoderInterface):
 class B58Encoder(EncoderInterface):
     """Base58 encoder.
 
-    It contains characters from a-z (except l), A-Z (except I and O), and numbers 1-9,
+    It contains characters from a-z (except `l`), A-Z (except `I` and `O`), and numbers 1-9,
     to improve readability and reduce transcription errors.
     """
 

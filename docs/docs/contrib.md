@@ -128,9 +128,9 @@ Once everything is ready for release, follow these steps:
 1. Edit the changelog to properly indicate the version: `CHANGELOG.rst`.
 1. Copy the edition to the changelog in the docs: `docs/docs/changelog.md`.
 1. If necessary, write the upgrade guide in the docs.
-1. Update docs requirements, so it installs the newest Blake2Signer version: `inv docs-reqs -u`.
+1. Update docs requirements, so it installs the newest Blake2Signer version: `inv docs-reqs -u`
 1. Run all checks, including fuzzing: `inv check`
-1. Commit, push branch and create MR to `develop`. A CI job will publish the package to Test PyPy as a prerelease. If something went wrong, fix, commit and push again; the CI job will change the release number and publish it again.
+1. Commit, push branch and create MR to `develop`. A CI job will publish the package to Test PyPy as a pre-release. If something went wrong, fix, commit and push again; the CI job will change the release number and publish it again.
 1. Merge into `develop`, and create MR to `main`.
 1. Merge into `main`.
 1. Create an annotated tag, signed with minisign: `inv tag -s <M.m.p>` (alternatively, `git tag -a <M.m.p>` and then `inv sign-tag <M.m.p>`).
