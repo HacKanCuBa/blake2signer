@@ -86,7 +86,7 @@ from datetime import timedelta
 from blake2signer import Blake2SerializerSigner
 from blake2signer import errors
 
-secret = b'secure-secret-that-nobody-knows!'
+secret = b'secure-secret-that-nobody-knows!'  # See `blake2signer.utils.generate_secret`
 # Some arbitrary data to sign
 data = {'user_id': 1, 'is_admin': True, 'username': 'hackan'}
 

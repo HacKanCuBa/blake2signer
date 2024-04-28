@@ -12,7 +12,7 @@ from datetime import timedelta
 from blake2signer import Blake2SerializerSigner
 from blake2signer import errors
 
-secret = b'secure-secret-that-nobody-knows!'
+secret = b'secure-secret-that-nobody-knows!'  # See `blake2signer.utils.generate_secret`
 # Some arbitrary data to sign
 data = {'user_id': 1, 'is_admin': True, 'username': 'hackan'}
 
@@ -51,7 +51,8 @@ print(unsigned)  # {'user_id': 1, 'is_admin': True, 'username': 'hackan'}
     It is always a good idea to set the [`personalisation` parameter](details.md#about-salt-and-personalisation): it helps to defeat the abuse of using a signed stream for different signers that share the same key by changing the digest computation result. For example, if you use a signer for cookies set something like `b'cookies-signer'` or if you use it for some user-related data signing it could be `b'user data signer'`, or when used for signing a special value it could be `b'the-special-value-signer`, etc.
 
 !!! tip "A good secret"
-    Ensure that the [secret](details.md#about-the-secret) has at least 256 bits of cryptographically secure pseudorandom data, and **not** some manually splashed letters!
+    Ensure that the [secret](details.md#about-the-secret) has at least 256 bits of cryptographically secure pseudorandom data, and **not** some manually splashed letters!  
+    From v3.1.0, you can generate a secret using the function `blake2signer.utils.generate_secret`. See [generating a secret](details.md#generating-a-secret).
 
 ## Real use case
 
