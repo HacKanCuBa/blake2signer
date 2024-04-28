@@ -6,7 +6,7 @@ Added
 
 - Add Base58 encoder, and some example usages like creating signed API keys.
 - Add utility function to generate a secure secret: `blake2signer.utils.generate_secret`.
-- Add `create-archives` Invoke task, to aide on signing releases.
+- Add `create-archives` Invoke task, to aid on signing releases.
 
 Changed
 -------
