@@ -406,7 +406,8 @@ security scanning:
   needs:
     - poetry cache py3.12
   before_script:
-    - poetry add --group dev --source pythonfuzz pythonfuzz
+    - poetry add --group fuzz --source pythonfuzz pythonfuzz
+    - poetry install --with fuzz
   cache:
     - key:
         prefix: "py312"

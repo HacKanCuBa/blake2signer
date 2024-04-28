@@ -12,6 +12,7 @@ from unittest.mock import patch
 
 from invoke import Context
 from invoke import Exit
+from invoke import Result
 from invoke import task
 from junitparser import JUnitXml
 
@@ -162,6 +163,24 @@ def clean(ctx: Context) -> None:
     ctx.run('find . -type f -name "*.pyc" -delete', echo=True)
 
 
+def update_exit_code_value_from_result(
+    current_code: int,
+    /,
+    result: typing.Optional[Result],
+) -> int:
+    """Get up-to-date exit code value from current code value and Invoke result.
+
+    Important: this function only updates the exit code value if the result exit code is non-zero.
+
+    Returns:
+        Updated exit code value.
+    """
+    if result is not None and result.return_code > 0:
+        return result.return_code
+
+    return current_code
+
+
 @task(
     aliases=['test'],
     help={
@@ -210,8 +229,7 @@ def tests(  # noqa: C901,R701
     code = 0
     for cmd in commands:
         result = ctx.run(' '.join(cmd), pty=True, echo=True, warn=True)
-        if result is not None:
-            code = code or result.return_code  # We only really care about the first non-zero code
+        code = update_exit_code_value_from_result(code, result)
         print()
 
     if junit_report:
@@ -610,7 +628,7 @@ def verify_file(ctx: Context, file: str) -> None:
         'short': 'run a short fuzzing session (default)',
     },
 )
-def fuzz(ctx: Context, signer: str = '', short: bool = True) -> None:  # noqa: R701
+def fuzz(ctx: Context, signer: str = '', short: bool = True) -> None:  # noqa: R701, C901
     """Run a fuzzer over all signers, or the specified one, infinitely or in a short session.
 
     This command will store session files per signer in the ".fuzzed" directory.
@@ -646,13 +664,17 @@ def fuzz(ctx: Context, signer: str = '', short: bool = True) -> None:  # noqa: R
         '(if any)...',
     )
     print()
+    code = 0
     for signer_ in signers:
-        ctx.run(
+        result = ctx.run(
             ' '.join(chain(args, (signer_, f'{fuzzed_dir}/{signer_}/'), additional_args)),
             warn=True,  # So user can cancel one run, and proceed w/ the next one.
         )
-
+        code = update_exit_code_value_from_result(code, result)
         print()
+
+    if code:
+        raise Exit(code=code)
 
 
 @task(reformat, lint, tests, safety, fuzz)

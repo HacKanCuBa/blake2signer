@@ -111,11 +111,15 @@ add-trailing-comma = "^3.1.0"
 bandit = "^1.6.2"
 mypy = "^1"
 pyproject-fmt = "^1.5.3"
-# ToDo: pythonfuzz==1.0.10 requires a psutil version that has a security issue, thus I'm not
-#  adding it here yet
-# pythonfuzz = {version = "^1.0.10", source = "pythonfuzz"}
 safety = "^3"
 scriv = "^1"
 toml = "^0"  # yapf now requires this
 types-setuptools = "^69"
 yapf = "^0"
+
+[tool.poetry.group.fuzz]
+optional = true
+
+[tool.poetry.group.fuzz.dependencies]
+# ToDo: pythonfuzz==1.0.10 requires a psutil version that has a security issue
+#pythonfuzz = {version = "^1.0.10", source = "pythonfuzz"}

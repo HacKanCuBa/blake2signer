@@ -1,0 +1,4 @@
+Fixed
+-----
+
+- Fix fuzz task and CI jobs.
