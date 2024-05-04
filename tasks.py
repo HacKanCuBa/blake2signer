@@ -4,6 +4,7 @@ import typing
 from contextlib import contextmanager
 from datetime import datetime
 from datetime import timezone
+from email.utils import parsedate_to_datetime
 from functools import partial
 from itertools import chain
 from pathlib import Path
@@ -22,6 +23,8 @@ from blake2signer import Blake2TimestampSigner
 # noinspection PyProtectedMember
 from blake2signer import __version__
 
+REPO_ARCHIVES_SIGNATURES_PATH: typing.Final[Path] = Path('sdist', 'repo')
+
 
 @task
 def flake8(ctx: Context) -> None:
@@ -29,7 +32,7 @@ def flake8(ctx: Context) -> None:
     ctx.run('flake8 --exclude tests blake2signer/', echo=True)
     ctx.run('flake8 --ignore=S101,R701,C901 blake2signer/tests/', echo=True)
     ctx.run('flake8 --ignore=S101,R701,C901 tests/', echo=True)
-    ctx.run('flake8 ./tasks.py', echo=True)
+    ctx.run('flake8 --max-complexity 10 --radon-max-cc 10 ./tasks.py', echo=True)
     ctx.run('flake8 ./fuzz.py', echo=True)
     ctx.run('flake8 --ignore=S101,R701,C901 ./test_fuzz.py', echo=True)
 
@@ -129,9 +132,8 @@ def pylint(ctx: Context) -> None:
     ctx.run('pylint test_fuzz.py --exit-zero', echo=True, pty=True, warn=True)
 
 
-# noinspection PyUnusedLocal
 @task(flake8, pylint, pydocstyle, darglint, mypy, bandit)
-def lint(ctx: Context) -> None:  # pylint: disable=W0613
+def lint(_: Context) -> None:  # pylint: disable=W0613
     """Lint code, and run static analysis.
 
     Runs flake8, pylint, pydocstyle, darglint, mypy, and bandit.
@@ -190,7 +192,7 @@ def update_exit_code_value_from_result(
         'report': 'produce a JUnit XML report file as "report.xml" (requires coverage)',
     },
 )
-def tests(  # noqa: C901,R701
+def tests(  # noqa: C901
     ctx: Context,
     watch: bool = False,
     seed: int = 0,
@@ -358,9 +360,8 @@ def docs_requirements(ctx: Context, update: bool = False) -> None:
         ctx.run('poetry export -f requirements.txt -o readthedocs.requirements.txt')
 
 
-# noinspection PyUnusedLocal
 @task
-def check_compat(ctx: Context) -> None:  # pylint: disable=W0613
+def check_compat(_: Context) -> None:
     """Print current version signatures to check compatibility with previous versions."""
 
     def sign(
@@ -397,7 +398,23 @@ def check_compat(ctx: Context) -> None:  # pylint: disable=W0613
                 )
 
 
-def generate_trusted_comment_parts(  # noqa: R701
+def get_timestamp(now: typing.Optional[datetime] = None) -> int:
+    """Get timestamp for given datetime, or current datetime if none provided."""
+    if now is None:
+        now = datetime.now(timezone.utc)
+
+    return int(now.astimezone(timezone.utc).timestamp())
+
+
+def get_tag_creation(ctx: Context, tag: str) -> typing.Optional[datetime]:
+    """Get the tag creation datetime value, if possible."""
+    result = ctx.run(f'git for-each-ref --format="%(creatordate)" "refs/tags/{tag}"', hide=True)
+    now = parsedate_to_datetime(result.stdout.strip()) if result else None
+
+    return now
+
+
+def generate_trusted_comment_parts(
     ctx: Context,
     *,
     timestamp: int,
@@ -406,7 +423,7 @@ def generate_trusted_comment_parts(  # noqa: R701
 ) -> typing.List[typing.Tuple[str, str]]:
     """Generate trusted comment parts for a minisign signature."""
     if not timestamp:
-        timestamp = int(datetime.now(timezone.utc).timestamp())
+        timestamp = get_timestamp()
 
     if not pubkey:
         with open('minisign.pub', encoding='utf-8') as pubkeyfile:
@@ -509,9 +526,9 @@ def sign_tag(  # pylint: disable=R0913
     """Sign given tag with minisign.
 
     If trusted_comment is not specified, a default one is created composed of key:value
-    separated by tabs, using the following information: timestamp (defaults to current
-    timestamp), git object hash, signer public key (defaults to a hardcoded public key),
-    signer email (defaults to a hardcoded email).
+    separated by tabs, using the following information: timestamp (defaults to tag
+    creation time, or current timestamp), git object hash, signer public key (defaults to
+    a hardcoded public key), signer email (defaults to a hardcoded email).
 
     If untrusted comment is not specified, a default hardcoded one is used.
 
@@ -525,7 +542,7 @@ def sign_tag(  # pylint: disable=R0913
         trusted_comment = generate_trusted_comment_for_tag(
             ctx,
             tag=tag,
-            timestamp=timestamp,
+            timestamp=timestamp if timestamp else get_timestamp(get_tag_creation(ctx, tag)),
             pubkey=pubkey,
             email=email,
         )
@@ -560,7 +577,7 @@ def sign_tag(  # pylint: disable=R0913
 )
 def sign_file(  # pylint: disable=R0913
     ctx: Context,
-    file: str,
+    file: typing.Union[str, Path],
     trusted_comment: str = '',
     untrusted_comment: str = '',
     seckey: str = '',
@@ -599,14 +616,14 @@ def sign_file(  # pylint: disable=R0913
         '-S',
         f'-t "{trusted_comment}"',
         f'-c "{untrusted_comment}"',
-        f'-m "{file}"',
+        f'-m "{filepath}"',
     ]
     if seckey:
         args.append(f'-S "{seckey}"')
 
     ctx.run(' '.join(args), echo=True, pty=True)
 
-    print('File signed as:', file + '.minisig')
+    print('File signed as:', filepath.with_suffix(filepath.suffix + '.minisig'))
 
 
 @task
@@ -628,7 +645,7 @@ def verify_file(ctx: Context, file: str) -> None:
         'short': 'run a short fuzzing session (default)',
     },
 )
-def fuzz(ctx: Context, signer: str = '', short: bool = True) -> None:  # noqa: R701, C901
+def fuzz(ctx: Context, signer: str = '', short: bool = True) -> None:  # noqa: C901
     """Run a fuzzer over all signers, or the specified one, infinitely or in a short session.
 
     This command will store session files per signer in the ".fuzzed" directory.
@@ -682,40 +699,19 @@ def check(_: Context) -> None:
     """Run all checks."""
 
 
-@task(
-    aliases=['tag'],
-    help={
-        'tag': 'git tag to create',
-        'sign': 'sign the tag, and the archives if any, with minisign',
-        'archives': 'create zip and tar.gz archives',
-    },
-)
-def create_tag(ctx: Context, tag: str, sign: bool = False, archives: bool = False) -> None:
-    """Create an annotated git tag, optionally signing it with minisign."""
-    ctx.run(f'git tag -a {tag}', pty=True)
+def _create_archives(ctx: Context, *, tag: str, sign: bool, timestamp: int = 0) -> None:
+    """Create zip and tar.gz archives for given tag, optionally signing them with minisign.
 
-    if sign:
-        sign_tag(ctx, tag)
-
-    if archives:
-        create_archives(ctx, tag, sign)
-
-
-@task(
-    aliases=['archive'],
-    help={
-        'tag': 'git tag as archives source',
-        'sign': 'sign the archives with minisign',
-    },
-)
-def create_archives(ctx: Context, tag: str, sign: bool = False) -> None:
-    """Create zip and tar.gz archives for given tag, optionally signing them with minisign."""
+    If timestamp is non-zero, it will be used as signing timestamp.
+    """
 
     def get_create_archive_command(fmt_: typing.Literal['zip', 'tar.gz'], /) -> str:
         """Get the command to create the archive for the given format."""
+        output = REPO_ARCHIVES_SIGNATURES_PATH / f'{prefix}.{fmt_}'
+
         if fmt_ == 'zip':
             return (
-                f'git archive --format zip --prefix "{prefix}/" --output "{prefix}.zip" '
+                f'git archive --format zip --prefix "{prefix}/" --output "{output}" '
                 + f'-- "{tag}"'
             )
 
@@ -724,11 +720,12 @@ def create_archives(ctx: Context, tag: str, sign: bool = False) -> None:
         # blob/5dba9a33e5319a366d01b4f5b71e6b017095391b/lib/gitlab_git/repository.rb#L1110-1146)
         return (
             f'git archive --format tar --prefix "{prefix}/" -- "{tag}" '
-            + f'| gzip --no-name > "{prefix}.tar.gz"'
+            + f'| gzip --no-name > "{output}"'
         )
 
     formats: tuple[typing.Literal['zip'], typing.Literal['tar.gz']] = ('zip', 'tar.gz')
     prefix = f'blake2signer-{tag}'
+    REPO_ARCHIVES_SIGNATURES_PATH.mkdir(parents=True, exist_ok=True)
 
     for fmt in formats:
         print('Creating', fmt, 'archive...')
@@ -741,4 +738,57 @@ def create_archives(ctx: Context, tag: str, sign: bool = False) -> None:
 
         if sign:
             print('Signing', fmt, 'archive...')
-            sign_file(ctx, f'{prefix}.{fmt}')
+            sign_file(ctx, REPO_ARCHIVES_SIGNATURES_PATH / f'{prefix}.{fmt}', timestamp=timestamp)
+
+        print('Done.')
+        print()
+
+
+@task(
+    aliases=['tag'],
+    help={
+        'tag': 'git tag to create',
+        'sign': 'sign the tag, and the archives if any, with minisign',
+        'archives': 'create zip and tar.gz archives',
+    },
+)
+def create_tag(ctx: Context, tag: str, sign: bool = False, archives: bool = False) -> None:
+    """Create an annotated git tag, optionally signing it with minisign."""
+    ctx.run(f'git tag -a {tag}', pty=True)
+
+    now = get_tag_creation(ctx, tag)
+    timestamp = get_timestamp(now)
+
+    if sign:
+        print(
+            'Using',
+            'the tag creation timestamp' if now else 'current time',
+            'for signing the tag',
+            'and archives' if archives else '',
+        )
+        sign_tag(ctx, tag, timestamp=timestamp)
+
+    if archives:
+        _create_archives(ctx, tag=tag, sign=sign, timestamp=timestamp)
+
+
+@task(
+    aliases=['archive'],
+    help={
+        'tag': 'git tag as archives source',
+        'sign': 'sign the archives with minisign',
+    },
+)
+def create_archives(ctx: Context, tag: str, sign: bool = False) -> None:
+    """Create zip and tar.gz archives for given tag, optionally signing them with minisign."""
+    now = get_tag_creation(ctx, tag)
+    timestamp = get_timestamp(now)
+
+    if sign:
+        print(
+            'Using',
+            'the tag creation timestamp' if now else 'current time',
+            'for signing the archives',
+        )
+
+    return _create_archives(ctx, tag=tag, sign=sign, timestamp=timestamp)

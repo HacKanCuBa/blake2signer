@@ -135,7 +135,12 @@ Once everything is ready for release, follow these steps:
 1. Merge into `main`.
 1. Create an annotated tag, signed with minisign: `inv tag -s <M.m.p>` (alternatively, `git tag -a <M.m.p>` and then `inv sign-tag <M.m.p>`).
 1. Push tags and notes: `git push --tags && git push origin refs/notes/commits`. A CI job will publish the package to PyPi.
-1. Create a [release in Gitlab](https://gitlab.com/hackancuba/blake2signer/-/releases) and [properly sign packages](https://gist.github.com/HacKanCuBa/6fabded3565853adebf3dd140e72d33e).
+1. Create a [release in Gitlab](https://gitlab.com/hackancuba/blake2signer/-/releases)
+1. Finally, [properly sign packages](https://gist.github.com/HacKanCuBa/6fabded3565853adebf3dd140e72d33e). The following can be used to that end:
+    1. Create the repository archives locally, and sign them: `inv archive -s <M.m.p>`
+    2. Compute the necessary hashes.
+    3. Download remote archives, and check the signatures against them.
+        - If the signature fails, then there's an issue with the remote archives, which could imply that they are being modified! 
 
 ### Signing
 
