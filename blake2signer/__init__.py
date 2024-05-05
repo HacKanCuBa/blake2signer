@@ -27,9 +27,9 @@ See examples and more info in the README.
 """
 
 from . import errors
+from .bases import Blake2Signature
+from .bases import Blake2SignatureDump
 from .signers import Blake2SerializerSigner
-from .signers import Blake2Signature
-from .signers import Blake2SignatureDump
 from .signers import Blake2Signer
 from .signers import Blake2TimestampSigner
 

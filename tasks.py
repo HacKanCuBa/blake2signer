@@ -74,11 +74,14 @@ def bandit(ctx: Context) -> None:
 @task
 def mypy(ctx: Context) -> None:
     """Lint code with mypy."""
-    ctx.run('mypy blake2signer/', echo=True, pty=True)
-    ctx.run('mypy tests/', echo=True, pty=True)
-    ctx.run('mypy fuzz.py', echo=True, pty=True)
-    ctx.run('mypy test_fuzz.py', echo=True, pty=True)
-    ctx.run('mypy tasks.py', echo=True, pty=True)
+    base = 'mypy --pretty --extra-checks'
+    base_strict = f'{base} --strict'
+
+    ctx.run(f'{base_strict} blake2signer/', echo=True, pty=True)
+    ctx.run(f'{base_strict} tests/', echo=True, pty=True)
+    ctx.run(f'{base_strict} fuzz.py', echo=True, pty=True)
+    ctx.run(f'{base} test_fuzz.py', echo=True, pty=True)
+    ctx.run(f'{base} tasks.py', echo=True, pty=True)
 
 
 @task

@@ -1,0 +1,4 @@
+Changed
+-------
+
+- Run mypy in strict mode, consequently fixing some minor details in the code.

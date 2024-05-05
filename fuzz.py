@@ -259,7 +259,8 @@ def fuzz_blake2serializersigner(buf: bytes) -> None:  # noqa: C901  # pragma: no
         def load(file: BytesIO) -> bytes:
             """Recover original data from a signed serialized file from `dump`."""
             file.seek(0)
-            return signer.load(file)  # noqa: B023  # pylint: disable=W0640  # usage on purpose
+            # usage on purpose
+            return cast(bytes, signer.load(file))  # noqa: B023  # pylint: disable=W0640
 
         check_signing(buf, sign=dump, unsign=load)
 

@@ -9,10 +9,10 @@ from .bases import Blake2Signature
 from .bases import Blake2SignatureDump
 from .bases import Blake2SignerBase
 from .bases import Blake2TimestampSignerBase
-from .bases import HasherChoice
 from .bases import Secret
 from .compressors import ZlibCompressor
 from .encoders import B64URLEncoder
+from .hashers import HasherChoice
 from .interfaces import CompressorInterface
 from .interfaces import EncoderInterface
 from .interfaces import SerializerInterface

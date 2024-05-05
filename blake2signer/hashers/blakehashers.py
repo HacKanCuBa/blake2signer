@@ -245,7 +245,7 @@ class BLAKE3Hasher(BLAKEHasher):
         hasher = blake3(secret, derive_key_context=ctx)
         hasher.update(person)
 
-        return hasher.digest(length=hasher.key_size)
+        return typing.cast(bytes, hasher.digest(length=hasher.key_size))
 
     def digest(
         self,
@@ -261,4 +261,4 @@ class BLAKE3Hasher(BLAKEHasher):
         payload = salt + self._person + data
         hasher = blake3(payload, key=key)
 
-        return hasher.digest(length=self._digest_size)
+        return typing.cast(bytes, hasher.digest(length=self._digest_size))
