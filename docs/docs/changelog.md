@@ -183,7 +183,7 @@
 
 **Fixed**
 
-- Fix wrong exception being raised in [`Blake2TimestampSignerBase._decode_timestamp()`](bases.md#blake2signer.bases.Blake2TimestampSignerBase._decode_timestamp).
+- Fix wrong exception being raised in [`Blake2TimestampSignerBase._decode_timestamp()`](bases.md#blake2signer.bases.Blake2TimestampSignerBase).
 
 ## 1.2.0 - 2021-04-24
 

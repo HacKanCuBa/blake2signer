@@ -235,7 +235,7 @@ Therefore, you should prefer using `bytes` rather than strings. However, if you 
 
 ### The same goes for files!
 
-When using file-related methods, like [*Blake2SerializerSigner*](signers.md#blake2signer.signers.Blake2SerializerSigner)'s [`load`](#blake2signer.signers.Blake2SerializerSigner.load) and [`dump`](#blake2signer.signers.Blake2SerializerSigner.dump), this consideration is also pertinent.  
+When using file-related methods, like [*Blake2SerializerSigner*](signers.md#blake2signer.signers.Blake2SerializerSigner)'s [`load`](signers.md#blake2signer.signers.Blake2SerializerSigner.load) and [`dump`](signers.md#blake2signer.signers.Blake2SerializerSigner.dump), this consideration is also pertinent.  
 For both, it is convenient for the file to be opened in **binary** mode, rather than in text mode. This is to prevent a `str` to `bytes` conversion in the first case, and to prevent a `bytes` to `str` conversion in the second case.
 
 ## Choosing the right signer
