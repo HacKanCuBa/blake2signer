@@ -123,3 +123,9 @@ optional = true
 [tool.poetry.group.fuzz.dependencies]
 # ToDo: pythonfuzz==1.0.10 requires a psutil version that has a security issue
 #pythonfuzz = {version = "^1.0.10", source = "pythonfuzz"}
+
+[tool.poetry.group.examples]
+optional = true
+
+[tool.poetry.group.examples.dependencies]
+fastapi = {extras = ["all"], version = "^0.111.0"}

@@ -96,6 +96,12 @@ markdown_extensions:
   - pymdownx.tabbed:
       alternate_style: true
   - md_in_html
+  - mdx_include:
+      base_path: ./docs  # From project root
+      allow_remote: false
+      recurs_local: null
+      recurs_remote: false
+
 
 extra:
   social:

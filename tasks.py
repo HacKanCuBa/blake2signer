@@ -35,6 +35,10 @@ def flake8(ctx: Context) -> None:
     ctx.run('flake8 --max-complexity 10 --radon-max-cc 10 ./tasks.py', echo=True)
     ctx.run('flake8 ./fuzz.py', echo=True)
     ctx.run('flake8 --ignore=S101,R701,C901 ./test_fuzz.py', echo=True)
+    ctx.run(
+        'flake8 --max-complexity 10 --radon-max-cc 10  --ignore=S101,D107 docs/src/',
+        echo=True,
+    )
 
 
 @task
@@ -55,20 +59,21 @@ def darglint(ctx: Context) -> None:
     ctx.run('darglint -v2 tasks.py', echo=True)
     ctx.run('darglint -v2 fuzz.py', echo=True)
     ctx.run('darglint -v2 test_fuzz.py', echo=True)
+    ctx.run('darglint -v2 docs/src/', echo=True)
 
 
 @task
 def bandit(ctx: Context) -> None:
     """Run bandit with proper exclusions."""
-    ctx.run(
-        'bandit --confidence --recursive --exclude blake2signer/tests blake2signer/',
-        echo=True,
-    )
-    ctx.run('bandit --confidence --recursive --skip B101 blake2signer/tests/', echo=True)
-    ctx.run('bandit --confidence --recursive --skip B101 tests/', echo=True)
-    ctx.run('bandit --confidence --recursive ./tasks.py', echo=True)
-    ctx.run('bandit --confidence --recursive ./fuzz.py', echo=True)
-    ctx.run('bandit --confidence --recursive --skip B101 ./test_fuzz.py', echo=True)
+    base = 'bandit --confidence --recursive'
+
+    ctx.run(f'{base} --exclude blake2signer/tests blake2signer/', echo=True)
+    ctx.run(f'{base} --skip B101 blake2signer/tests/', echo=True)
+    ctx.run(f'{base} --skip B101 tests/', echo=True)
+    ctx.run(f'{base} ./tasks.py', echo=True)
+    ctx.run(f'{base} ./fuzz.py', echo=True)
+    ctx.run(f'{base} --skip B101 ./test_fuzz.py', echo=True)
+    ctx.run(f'{base} --skip B101 docs/src/', echo=True)
 
 
 @task
@@ -82,6 +87,7 @@ def mypy(ctx: Context) -> None:
     ctx.run(f'{base_strict} fuzz.py', echo=True, pty=True)
     ctx.run(f'{base} test_fuzz.py', echo=True, pty=True)
     ctx.run(f'{base} tasks.py', echo=True, pty=True)
+    ctx.run(f'{base_strict} docs/src/', echo=True, pty=True)
 
 
 @task
@@ -98,6 +104,7 @@ def yapf(ctx: Context, diff: bool = False) -> None:
     cmd.append('tasks.py')
     cmd.append('fuzz.py')
     cmd.append('test_fuzz.py')
+    cmd.append('docs/src/')
 
     ctx.run(' '.join(cmd), echo=True)
 
@@ -106,11 +113,13 @@ def yapf(ctx: Context, diff: bool = False) -> None:
 def trailing_commas(ctx: Context) -> None:
     """Add missing trailing commas, or remove them if necessary."""
     opts = r'-type f -name "*.py" -exec add-trailing-comma "{}" \+'  # noqa: P103
+
     ctx.run('find blake2signer/ ' + opts, echo=True, pty=True, warn=True)
     ctx.run('find tests/ ' + opts, echo=True, pty=True, warn=True)
     ctx.run('add-trailing-comma tasks.py', echo=True, pty=True, warn=True)
     ctx.run('add-trailing-comma fuzz.py', echo=True, pty=True, warn=True)
     ctx.run('add-trailing-comma test_fuzz.py', echo=True, pty=True, warn=True)
+    ctx.run('find docs/src/ ' + opts, echo=True, pty=True, warn=True)
 
 
 @task
@@ -127,12 +136,15 @@ def reformat(_: Context) -> None:
 @task
 def pylint(ctx: Context) -> None:
     """Run pylint."""
-    ctx.run('pylint blake2signer/ --ignore tests', echo=True, pty=True, warn=True)
-    ctx.run('pylint blake2signer/tests/ --exit-zero', echo=True, pty=True, warn=True)
-    ctx.run('pylint tests/ --exit-zero', echo=True, pty=True, warn=True)
-    ctx.run('pylint tasks.py --exit-zero', echo=True, pty=True, warn=True)
-    ctx.run('pylint fuzz.py --exit-zero', echo=True, pty=True, warn=True)
-    ctx.run('pylint test_fuzz.py --exit-zero', echo=True, pty=True, warn=True)
+    base = 'pylint --jobs 0'
+
+    ctx.run(f'{base} blake2signer/ --ignore tests', echo=True, pty=True)
+    ctx.run(f'{base} blake2signer/tests/', echo=True, pty=True)
+    ctx.run(f'{base} tests/', echo=True, pty=True)
+    ctx.run(f'{base} tasks.py', echo=True, pty=True)
+    ctx.run(f'{base} fuzz.py --exit-zero', echo=True, pty=True, warn=True)
+    ctx.run(f'{base} test_fuzz.py --exit-zero', echo=True, pty=True, warn=True)
+    ctx.run(f'{base} docs/src/ --exit-zero', echo=True, pty=True, warn=True)
 
 
 @task(flake8, pylint, pydocstyle, darglint, mypy, bandit)
@@ -294,7 +306,7 @@ def commit(ctx: Context, amend: bool = False) -> None:
     ctx.run(' '.join(cmd), pty=True)
 
 
-def docs_venv(ctx: Context) -> None:
+def docs_venv(ctx: Context, /) -> None:
     """Ensure venv for the docs."""
     if not Path('tasks.py').exists():
         raise Exit("You can only run this command from the project's root directory")
@@ -305,9 +317,6 @@ def docs_venv(ctx: Context) -> None:
     print('Creating docs venv...')
     with ctx.cd('docs'):
         ctx.run('python -m venv .venv')
-        print('Installing dependencies...')
-        with ctx.prefix('source .venv/bin/activate'):
-            ctx.run('poetry install --no-ansi --no-root')
 
 
 @contextmanager
@@ -317,7 +326,10 @@ def docs_context(ctx: Context) -> typing.Iterator[None]:
 
     with ctx.cd('docs'):
         with ctx.prefix('source .venv/bin/activate'):
-            yield
+            ctx.run('poetry install --no-ansi --sync --no-root --with dev')
+
+    with ctx.prefix('source docs/.venv/bin/activate'):
+        yield
 
 
 @task(
@@ -334,9 +346,11 @@ def docs(ctx: Context, build: bool = False, verbose: bool = False) -> None:
         args.append('--verbose')
 
     if build:
-        args.extend(['build', '--clean'])
+        args.extend(('build', '--clean'))
     else:
         args.append('serve')
+
+    args.extend(('--config-file', 'docs/mkdocs.yml'))
 
     with docs_context(ctx):
         ctx.run(' '.join(args))
@@ -356,7 +370,6 @@ def docs_requirements(ctx: Context, update: bool = False) -> None:
     with docs_context(ctx):
         if update:
             print('Updating docs dependencies...')
-            ctx.run('poetry install --no-ansi --sync --no-root')
             ctx.run('poetry update --no-ansi')
 
         print('Exporting docs requirements to readthedocs.requirements.txt...')

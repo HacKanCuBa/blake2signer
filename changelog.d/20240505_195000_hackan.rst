@@ -1,0 +1,4 @@
+Added
+-----
+
+- Add examples showcasing generating and using secrets, and using `Blake2TimestampSigner` for API keys.

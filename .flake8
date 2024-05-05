@@ -39,3 +39,7 @@ per-file-ignores =
     blake2signer/errors.py: D417
     blake2signer/mixins.py: D417
     # <>
+
+    # Docs
+    docs/src/fastapi_signed_api_keys_v2.py: B008
+    docs/src/fastapi_signed_api_keys_v3.py: B008

@@ -269,6 +269,9 @@ You can generate the secret value in any of the following ways:
         Does signing and unsigning works? True
         ```
 
+!!! example "Generating and using a secret with FastAPI"
+    Check it out in [this example](examples.md#signed-api-keys-with-fastapi).
+
 Base64 encoded:
 
 * `python3 -c 'import secrets; print(secrets.token_urlsafe(64), end="")'`

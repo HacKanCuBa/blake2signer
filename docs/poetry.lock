@@ -208,6 +208,17 @@ files = [
 ]
 
 [[package]]
+name = "cyclic"
+version = "1.0.0"
+description = "Handle cyclic relations"
+optional = false
+python-versions = "*"
+files = [
+    {file = "cyclic-1.0.0-py3-none-any.whl", hash = "sha256:32d8181d7698f426bce6f14f4c3921ef95b6a84af9f96192b59beb05bc00c3ed"},
+    {file = "cyclic-1.0.0.tar.gz", hash = "sha256:ecddd56cb831ee3e6b79f61ecb0ad71caee606c507136867782911aa01c3e5eb"},
+]
+
+[[package]]
 name = "ghp-import"
 version = "2.1.0"
 description = "Copy your docs directly to the gh-pages branch."
@@ -349,6 +360,22 @@ files = [
     {file = "MarkupSafe-2.1.5-cp39-cp39-win_amd64.whl", hash = "sha256:fa173ec60341d6bb97a89f5ea19c85c5643c1e7dedebc22f5181eb73573142c5"},
     {file = "MarkupSafe-2.1.5.tar.gz", hash = "sha256:d283d37a890ba4c1ae73ffadf8046435c76e7bc2247bbb63c00bd1a709c6544b"},
 ]
+
+[[package]]
+name = "mdx-include"
+version = "1.4.2"
+description = "Python Markdown extension to include local or remote files"
+optional = false
+python-versions = "*"
+files = [
+    {file = "mdx_include-1.4.2-py3-none-any.whl", hash = "sha256:cfbeadd59985f27a9b70cb7ab0a3d209892fe1bb1aa342df055e0b135b3c9f34"},
+    {file = "mdx_include-1.4.2.tar.gz", hash = "sha256:992f9fbc492b5cf43f7d8cb4b90b52a4e4c5fdd7fd04570290a83eea5c84f297"},
+]
+
+[package.dependencies]
+cyclic = "*"
+Markdown = ">=2.6"
+rcslice = ">=1.1.0"
 
 [[package]]
 name = "mergedeep"
@@ -674,6 +701,17 @@ files = [
 pyyaml = "*"
 
 [[package]]
+name = "rcslice"
+version = "1.1.0"
+description = "Slice a list of sliceables (1 indexed, start and end index both are inclusive)"
+optional = false
+python-versions = "*"
+files = [
+    {file = "rcslice-1.1.0-py3-none-any.whl", hash = "sha256:1b12fc0c0ca452e8a9fd2b56ac008162f19e250906a4290a7e7a98be3200c2a6"},
+    {file = "rcslice-1.1.0.tar.gz", hash = "sha256:a2ce70a60690eb63e52b722e046b334c3aaec5e900b28578f529878782ee5c6e"},
+]
+
+[[package]]
 name = "regex"
 version = "2024.4.28"
 description = "Alternative regular expression module, to replace re."
@@ -854,4 +892,4 @@ watchmedo = ["PyYAML (>=3.10)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "40b289f7c91ae35cac4b9f216ae6a7bc71a1cd078c106ba444ca52e1b0aa9d86"
+content-hash = "5b1496883ea2e70592aeb7841405a7d43ac85202bab7c45fd32374c6c53b2d55"

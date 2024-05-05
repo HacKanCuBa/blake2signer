@@ -1739,6 +1739,27 @@ This is a heavily simplified example, and you could store more information if yo
 
 Additionally, this example proposes using a [_prefix_](https://duckduckgo.com/?q=api+key+with+prefix) for the API key, which is an overall good practice, although [YMMV](https://www.urbandictionary.com/define.php?term=ymmv). And you could also opt for a _self-expiring_ API key.
 
+#### Signed API keys with FastAPI
+
+This toy example showcases the following topics:
+
+* Generating a secret, and storing it in a `.env` file.
+* Reading a secret from the environment.
+* Using [Blake2TimestampSigner](signers.md#blake2signer.signers.Blake2TimestampSigner) to sign self-expiring API keys.
+* Having prefixed API keys.
+
+=== "v3"
+
+    ```python
+    {!> src/fastapi_signed_api_keys_v3.py !}
+    ```
+
+=== "v2"
+
+    ```python
+    {!> src/fastapi_signed_api_keys_v2.py !}
+    ```
+
 ## Using a custom encoder
 
 If you need to use an encoder not implemented by this package, such as A85 or UUencode, you can do so: all you need to do is implement the [`EncoderInterface`](interfaces.md#blake2signer.interfaces.EncoderInterface), and define how is your encoder encoding and decoding, as well as indicating its alphabet. That's it.
