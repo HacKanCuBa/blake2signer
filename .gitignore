@@ -142,4 +142,4 @@ dmypy.json
 cython_debug/
 
 # Fuzzer
-/.fuzzed/
+scripts/.fuzzed/

@@ -33,8 +33,8 @@ def flake8(ctx: Context) -> None:
     ctx.run('flake8 --ignore=S101,R701,C901 blake2signer/tests/', echo=True)
     ctx.run('flake8 --ignore=S101,R701,C901 tests/', echo=True)
     ctx.run('flake8 --max-complexity 10 --radon-max-cc 10 ./tasks.py', echo=True)
-    ctx.run('flake8 ./fuzz.py', echo=True)
-    ctx.run('flake8 --ignore=S101,R701,C901 ./test_fuzz.py', echo=True)
+    ctx.run('flake8 scripts/fuzz.py', echo=True)
+    ctx.run('flake8 --ignore=S101,R701,C901 scripts/test_fuzz.py', echo=True)
     ctx.run(
         'flake8 --max-complexity 10 --radon-max-cc 10  --ignore=S101,D107 docs/src/',
         echo=True,
@@ -47,8 +47,8 @@ def pydocstyle(ctx: Context) -> None:
     ctx.run('pydocstyle --explain blake2signer/', echo=True)
     ctx.run('pydocstyle --explain tests/', echo=True)
     ctx.run('pydocstyle --explain tasks.py', echo=True)
-    ctx.run('pydocstyle --explain fuzz.py', echo=True)
-    ctx.run('pydocstyle --explain test_fuzz.py', echo=True)
+    ctx.run('pydocstyle --explain scripts/fuzz.py', echo=True)
+    ctx.run('pydocstyle --explain scripts/test_fuzz.py', echo=True)
 
 
 @task
@@ -57,8 +57,8 @@ def darglint(ctx: Context) -> None:
     ctx.run('darglint -v2 blake2signer/', echo=True)
     ctx.run('darglint -v2 tests/', echo=True)
     ctx.run('darglint -v2 tasks.py', echo=True)
-    ctx.run('darglint -v2 fuzz.py', echo=True)
-    ctx.run('darglint -v2 test_fuzz.py', echo=True)
+    ctx.run('darglint -v2 scripts/fuzz.py', echo=True)
+    ctx.run('darglint -v2 scripts/test_fuzz.py', echo=True)
     ctx.run('darglint -v2 docs/src/', echo=True)
 
 
@@ -70,9 +70,9 @@ def bandit(ctx: Context) -> None:
     ctx.run(f'{base} --exclude blake2signer/tests blake2signer/', echo=True)
     ctx.run(f'{base} --skip B101 blake2signer/tests/', echo=True)
     ctx.run(f'{base} --skip B101 tests/', echo=True)
-    ctx.run(f'{base} ./tasks.py', echo=True)
-    ctx.run(f'{base} ./fuzz.py', echo=True)
-    ctx.run(f'{base} --skip B101 ./test_fuzz.py', echo=True)
+    ctx.run(f'{base} tasks.py', echo=True)
+    ctx.run(f'{base} scripts/fuzz.py', echo=True)
+    ctx.run(f'{base} --skip B101 scripts/test_fuzz.py', echo=True)
     ctx.run(f'{base} --skip B101 docs/src/', echo=True)
 
 
@@ -84,8 +84,8 @@ def mypy(ctx: Context) -> None:
 
     ctx.run(f'{base_strict} blake2signer/', echo=True, pty=True)
     ctx.run(f'{base_strict} tests/', echo=True, pty=True)
-    ctx.run(f'{base_strict} fuzz.py', echo=True, pty=True)
-    ctx.run(f'{base} test_fuzz.py', echo=True, pty=True)
+    ctx.run(f'{base_strict} scripts/fuzz.py', echo=True, pty=True)
+    ctx.run(f'{base} scripts/test_fuzz.py', echo=True, pty=True)
     ctx.run(f'{base} tasks.py', echo=True, pty=True)
     ctx.run(f'{base_strict} docs/src/', echo=True, pty=True)
 
@@ -102,8 +102,8 @@ def yapf(ctx: Context, diff: bool = False) -> None:
     cmd.append('blake2signer/')
     cmd.append('tests/')
     cmd.append('tasks.py')
-    cmd.append('fuzz.py')
-    cmd.append('test_fuzz.py')
+    cmd.append('scripts/fuzz.py')
+    cmd.append('scripts/test_fuzz.py')
     cmd.append('docs/src/')
 
     ctx.run(' '.join(cmd), echo=True)
@@ -117,8 +117,8 @@ def trailing_commas(ctx: Context) -> None:
     ctx.run('find blake2signer/ ' + opts, echo=True, pty=True, warn=True)
     ctx.run('find tests/ ' + opts, echo=True, pty=True, warn=True)
     ctx.run('add-trailing-comma tasks.py', echo=True, pty=True, warn=True)
-    ctx.run('add-trailing-comma fuzz.py', echo=True, pty=True, warn=True)
-    ctx.run('add-trailing-comma test_fuzz.py', echo=True, pty=True, warn=True)
+    ctx.run('add-trailing-comma scripts/fuzz.py', echo=True, pty=True, warn=True)
+    ctx.run('add-trailing-comma scripts/test_fuzz.py', echo=True, pty=True, warn=True)
     ctx.run('find docs/src/ ' + opts, echo=True, pty=True, warn=True)
 
 
@@ -142,8 +142,8 @@ def pylint(ctx: Context) -> None:
     ctx.run(f'{base} blake2signer/tests/', echo=True, pty=True)
     ctx.run(f'{base} tests/', echo=True, pty=True)
     ctx.run(f'{base} tasks.py', echo=True, pty=True)
-    ctx.run(f'{base} fuzz.py --exit-zero', echo=True, pty=True, warn=True)
-    ctx.run(f'{base} test_fuzz.py --exit-zero', echo=True, pty=True, warn=True)
+    ctx.run(f'{base} scripts/fuzz.py --exit-zero', echo=True, pty=True, warn=True)
+    ctx.run(f'{base} scripts/test_fuzz.py --exit-zero', echo=True, pty=True, warn=True)
     ctx.run(f'{base} docs/src/ --exit-zero', echo=True, pty=True, warn=True)
 
 
@@ -241,7 +241,7 @@ def tests(  # noqa: C901
 
     commands[0].append('blake2signer')
     commands[1].append('tests')
-    commands[2].append('test_fuzz.py')
+    commands[2].append('scripts/test_fuzz.py')
 
     code = 0
     for cmd in commands:
@@ -672,9 +672,9 @@ def fuzz(ctx: Context, signer: str = '', short: bool = True) -> None:  # noqa: C
         Exit: Invalid signer choice.
     """
     fuzzed_dir = '.fuzzed'  # If changed, make sure to also change it in the CI job, and gitignore
-    (Path(ctx.cwd) / Path(fuzzed_dir)).mkdir(mode=0o755, exist_ok=True)
+    Path(ctx.cwd, 'scripts', fuzzed_dir).mkdir(mode=0o755, exist_ok=True)
 
-    args = ('python', 'fuzz.py')
+    args = ('python3', 'scripts/fuzz.py')
     signers: typing.Tuple[str, ...]
     signers = ('blake2signer', 'blake2timestampsigner', 'blake2serializersigner')
 
